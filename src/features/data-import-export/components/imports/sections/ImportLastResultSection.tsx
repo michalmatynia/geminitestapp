@@ -17,9 +17,9 @@ export function ImportLastResultSection(): React.JSX.Element | null {
       {lastResult.summaryMessage ? (
         <p className='mt-1 text-xs text-gray-400'>{lastResult.summaryMessage}</p>
       ) : null}
-      {lastResult.preflight.issues.length > 0 ? (
+      {(lastResult.preflight?.issues?.length ?? 0) > 0 ? (
         <div className='mt-3 space-y-1 text-xs text-gray-400'>
-          {lastResult.preflight.issues.map((issue, index: number) => (
+          {lastResult.preflight?.issues?.map((issue, index: number) => (
             <p key={`${issue.code}-${index}`}>• {issue.message}</p>
           ))}
         </div>

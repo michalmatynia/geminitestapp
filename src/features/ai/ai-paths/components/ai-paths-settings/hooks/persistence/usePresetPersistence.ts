@@ -10,14 +10,13 @@ import {
   DB_QUERY_PRESETS_KEY,
 } from '@/shared/lib/ai-paths';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
-import type { 
+import type {
   PersistSettingsPayload,
-  UseAiPathsPersistenceArgs 
 } from '../../useAiPathsPersistence.types';
 
 export function usePresetPersistence(
-  args: UseAiPathsPersistenceArgs,
-  core: { 
+  _args: unknown,
+  core: {
     enqueueSettingsWrite: <T>(operation: () => Promise<T>) => Promise<T>;
     stringifyForStorage: (value: unknown, label: string) => string;
   }

@@ -1,4 +1,5 @@
-import type { AudioWaveform, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import type { AudioWaveform } from '@/shared/contracts/ai-paths-core/base';
+import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { coerceInput } from '../../utils';
@@ -178,8 +179,8 @@ const playSignalOnMonoSpeaker = async (
   const effectiveGain = clampNumber(signal.gain * speakerGain, 0, 1);
 
   oscillator.type = signal.waveform;
-  oscillator.frequency.setValueAtTime(signal.frequencyHz, now);
-  gainNode.gain.setValueAtTime(effectiveGain, now);
+  oscillator.frequency.setValueAtTime((signal.frequencyHz as number) ?? 440, now);
+  gainNode.gain.setValueAtTime((effectiveGain as number) ?? 0.25, now);
 
   oscillator.connect(gainNode);
   gainNode.connect(context.destination);
@@ -198,7 +199,7 @@ const playSignalOnMonoSpeaker = async (
 
   state.activeByNode.set(nodeId, { oscillator, gainNode });
   oscillator.start(now);
-  oscillator.stop(now + signal.durationMs / 1000);
+  oscillator.stop(now + ((signal.durationMs as number) ?? 400) / 1000);
   return 'playing';
 };
 
@@ -297,7 +298,7 @@ export const handleAudioSpeaker: NodeHandler = async ({
     node.id,
     signal,
     speakerGain,
-    config.stopPrevious
+    config.stopPrevious as any
   );
 
   const statusLabel =

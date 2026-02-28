@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import { dtoBaseSchema } from '../base';
 import { playwrightSettingsSchema } from '../playwright';
-import { aiNodeTypeSchema } from './base';
 
 export const triggerConfigSchema = z.object({
   event: z.string(),
@@ -44,21 +42,36 @@ export type ViewerConfig = ViewerConfigDto;
 
 export const contextConfigSchema = z.object({
   role: z.string(),
+  entityType: z.string().optional(),
+  entityIdSource: z.string().optional(),
+  entityId: z.string().optional(),
+  scopeMode: z.string().optional(),
+  scopeTarget: z.string().optional(),
+  includePaths: z.array(z.string()).optional(),
+  excludePaths: z.array(z.string()).optional(),
 });
 
 export type ContextConfigDto = z.infer<typeof contextConfigSchema>;
 export type ContextConfig = ContextConfigDto;
 
 export const audioOscillatorConfigSchema = z.object({
-  frequency: z.number(),
-  type: z.enum(['sine', 'square', 'sawtooth', 'triangle']),
+  waveform: z.enum(['sine', 'square', 'triangle', 'sawtooth']).optional(),
+  frequencyHz: z.number().optional(),
+  gain: z.number().optional(),
+  durationMs: z.number().optional(),
+  frequency: z.number().optional(),
+  type: z.enum(['sine', 'square', 'sawtooth', 'triangle']).optional(),
 });
 
 export type AudioOscillatorConfigDto = z.infer<typeof audioOscillatorConfigSchema>;
 export type AudioOscillatorConfig = AudioOscillatorConfigDto;
 
 export const audioSpeakerConfigSchema = z.object({
-  volume: z.number(),
+  enabled: z.boolean().optional(),
+  autoPlay: z.boolean().optional(),
+  gain: z.number().optional(),
+  stopPrevious: z.boolean().optional(),
+  volume: z.number().optional(),
 });
 
 export type AudioSpeakerConfigDto = z.infer<typeof audioSpeakerConfigSchema>;
@@ -66,6 +79,8 @@ export type AudioSpeakerConfig = AudioSpeakerConfigDto;
 
 export const mapperConfigSchema = z.object({
   mappings: z.record(z.string(), z.string()),
+  outputs: z.array(z.string()).optional(),
+  jsonIntegrityPolicy: z.string().optional(),
 });
 
 export type MapperConfigDto = z.infer<typeof mapperConfigSchema>;
@@ -80,8 +95,27 @@ export const boundsNormalizerFormatSchema = z.enum([
 
 export type BoundsNormalizerFormat = z.infer<typeof boundsNormalizerFormatSchema>;
 
+export const boundsNormalizerInputFormatSchema = z.enum([
+  'pixels_tlwh',
+  'pixels_tlbr',
+  'gemini_millirelative',
+  'relative_xywh',
+  'percentage_tlwh',
+  'auto',
+]);
+
+export type BoundsNormalizerInputFormat = z.infer<typeof boundsNormalizerInputFormatSchema>;
+
 export const boundsNormalizerConfigSchema = z.object({
-  format: boundsNormalizerFormatSchema,
+  format: boundsNormalizerFormatSchema.optional(),
+  inputFormat: boundsNormalizerInputFormatSchema.optional(),
+  boundsPath: z.string().optional(),
+  imageWidthPath: z.string().optional(),
+  imageHeightPath: z.string().optional(),
+  leftField: z.string().optional(),
+  topField: z.string().optional(),
+  widthField: z.string().optional(),
+  heightField: z.string().optional(),
   rootPath: z.string().optional(),
   fieldOverrides: z
     .object({
@@ -99,6 +133,8 @@ export type BoundsNormalizerConfigDto = z.infer<typeof boundsNormalizerConfigSch
 export type BoundsNormalizerConfig = BoundsNormalizerConfigDto;
 
 export const canvasOutputConfigSchema = z.object({
+  outputKey: z.string().optional(),
+  boundsPath: z.string().optional(),
   rootPath: z.string().optional(),
   leftField: z.string().optional(),
   topField: z.string().optional(),
@@ -113,14 +149,44 @@ export type CanvasOutputConfig = CanvasOutputConfigDto;
 
 export const mutatorConfigSchema = z.object({
   path: z.string(),
-  value: z.string(),
+  value: z.string().optional(),
+  valueTemplate: z.string().optional(),
 });
 
 export type MutatorConfigDto = z.infer<typeof mutatorConfigSchema>;
 export type MutatorConfig = MutatorConfigDto;
 
+export const stringMutatorOperationSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('trim'), mode: z.enum(['both', 'left', 'right']).optional() }),
+  z.object({
+    type: z.literal('replace'),
+    search: z.string(),
+    replace: z.string(),
+    matchMode: z.enum(['first', 'all']).optional(),
+    useRegex: z.boolean().optional(),
+    flags: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('remove'),
+    search: z.string(),
+    matchMode: z.enum(['first', 'all']).optional(),
+    useRegex: z.boolean().optional(),
+    flags: z.string().optional(),
+  }),
+  z.object({ type: z.literal('case'), mode: z.enum(['lower', 'upper']).optional() }),
+  z.object({
+    type: z.literal('append'),
+    value: z.string().optional(),
+    position: z.enum(['prefix', 'suffix']).optional(),
+  }),
+  z.object({ type: z.literal('slice'), start: z.number().optional(), end: z.number().optional() }),
+]);
+
+export type StringMutatorOperation = z.infer<typeof stringMutatorOperationSchema>;
+
 export const stringMutatorConfigSchema = z.object({
-  operation: z.enum(['append', 'prepend', 'replace', 'trim', 'lowercase', 'uppercase']),
+  operations: z.array(stringMutatorOperationSchema).optional(),
+  operation: z.string().optional(),
   value: z.string().optional(),
 });
 
@@ -128,29 +194,47 @@ export type StringMutatorConfigDto = z.infer<typeof stringMutatorConfigSchema>;
 export type StringMutatorConfig = StringMutatorConfigDto;
 
 export const validatorConfigSchema = z.object({
-  rule: z.string(),
+  rule: z.string().optional(),
+  requiredPaths: z.array(z.string()).optional(),
+  mode: z.enum(['all', 'any']).optional(),
 });
 
 export type ValidatorConfigDto = z.infer<typeof validatorConfigSchema>;
 export type ValidatorConfig = ValidatorConfigDto;
 
 export const validationPatternConfigSchema = z.object({
-  pattern: z.string(),
+  pattern: z.string().optional(),
+  source: z.string().optional(),
+  stackId: z.string().optional(),
+  scope: z.string().optional(),
+  includeLearnedRules: z.boolean().optional(),
+  runtimeMode: z.string().optional(),
+  failPolicy: z.string().optional(),
+  inputPort: z.string().optional(),
+  outputPort: z.string().optional(),
+  maxAutofixPasses: z.number().optional(),
+  includeRuleIds: z.array(z.string()).optional(),
+  localListName: z.string().optional(),
+  localListDescription: z.string().optional(),
+  rules: z.array(z.unknown()).optional(),
+  learnedRules: z.array(z.unknown()).optional(),
 });
 
 export type ValidationPatternConfigDto = z.infer<typeof validationPatternConfigSchema>;
 export type ValidationPatternConfig = ValidationPatternConfigDto;
 
 export const constantConfigSchema = z.object({
-  value: z.string(),
+  value: z.string().optional(),
+  valueType: z.string().optional(),
 });
 
 export type ConstantConfigDto = z.infer<typeof constantConfigSchema>;
 export type ConstantConfig = ConstantConfigDto;
 
 export const mathConfigSchema = z.object({
-  operation: z.enum(['add', 'subtract', 'multiply', 'divide']),
-  value: z.number(),
+  operation: z.enum(['add', 'subtract', 'multiply', 'divide']).optional(),
+  value: z.number().optional(),
+  operand: z.number().optional(),
 });
 
 export type MathConfigDto = z.infer<typeof mathConfigSchema>;
@@ -164,36 +248,78 @@ export type TemplateConfigDto = z.infer<typeof templateConfigSchema>;
 export type TemplateConfig = TemplateConfigDto;
 
 export const bundleConfigSchema = z.object({
-  keys: z.array(z.string()),
+  keys: z.array(z.string()).optional(),
+  includePorts: z.array(z.string()).optional(),
 });
 
 export type BundleConfigDto = z.infer<typeof bundleConfigSchema>;
 export type BundleConfig = BundleConfigDto;
 
 export const gateConfigSchema = z.object({
-  condition: z.string(),
+  condition: z.string().optional(),
+  mode: z.enum(['block', 'pass']).optional(),
+  failMessage: z.string().optional(),
 });
 
 export type GateConfigDto = z.infer<typeof gateConfigSchema>;
 export type GateConfig = GateConfigDto;
 
 export const compareConfigSchema = z.object({
-  operation: z.enum(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'contains', 'regex']),
-  value: z.string(),
+  operation: z.enum(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'contains', 'regex']).optional(),
+  operator: z.string().optional(),
+  value: z.string().optional(),
+  compareTo: z.string().optional(),
+  caseSensitive: z.boolean().optional(),
+  message: z.string().optional(),
 });
 
 export type CompareConfigDto = z.infer<typeof compareConfigSchema>;
 export type CompareConfig = CompareConfigDto;
 
+export const logicalConditionOperatorSchema = z.enum([
+  'truthy',
+  'falsy',
+  'equals',
+  'notEquals',
+  'contains',
+  'notContains',
+  'startsWith',
+  'endsWith',
+  'isEmpty',
+  'notEmpty',
+  'greaterThan',
+  'lessThan',
+  'greaterThanOrEqual',
+  'lessThanOrEqual',
+]);
+
+export type LogicalConditionOperator = z.infer<typeof logicalConditionOperatorSchema>;
+
+export const logicalConditionItemSchema = z.object({
+  id: z.string(),
+  inputPort: z.string(),
+  operator: logicalConditionOperatorSchema,
+  compareTo: z.string().optional(),
+  caseSensitive: z.boolean().optional(),
+  fieldPath: z.string().optional(),
+});
+
+export type LogicalConditionItem = z.infer<typeof logicalConditionItemSchema>;
+
 export const logicalConditionConfigSchema = z.object({
-  operation: z.enum(['and', 'or', 'not']),
+  combinator: z.enum(['and', 'or']).optional(),
+  conditions: z.array(logicalConditionItemSchema).optional(),
+  operation: z.enum(['and', 'or', 'not']).optional(),
 });
 
 export type LogicalConditionConfigDto = z.infer<typeof logicalConditionConfigSchema>;
 export type LogicalConditionConfig = LogicalConditionConfigDto;
 
 export const routerConfigSchema = z.object({
-  routes: z.record(z.string(), z.string()),
+  routes: z.record(z.string(), z.string()).optional(),
+  mode: z.string().optional(),
+  matchMode: z.string().optional(),
+  compareTo: z.string().optional(),
 });
 
 export type RouterConfigDto = z.infer<typeof routerConfigSchema>;
@@ -208,6 +334,8 @@ export type DelayConfig = DelayConfigDto;
 
 export const descriptionConfigSchema = z.object({
   prompt: z.string().optional(),
+  visionOutputEnabled: z.boolean().optional(),
+  generationOutputEnabled: z.boolean().optional(),
 });
 
 export type DescriptionConfigDto = z.infer<typeof descriptionConfigSchema>;

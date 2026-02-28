@@ -1,0 +1,909 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/users/[id]/handler.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment' or '@typescript-eslint/no-unsafe-member-access')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/brain/models/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/brain/models/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/chatbot/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/jobs/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/chatbot/jobs/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/slots/[slotId]/analysis/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/image-studio/slots/[slotId]/analysis/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/slots/[slotId]/autoscale/handler.ts
+   72:9   error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+   72:47  error  Unsafe call of a type that could not be resolved                                 @typescript-eslint/no-unsafe-call
+   73:9   error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+   73:26  error  Unsafe call of a type that could not be resolved                                 @typescript-eslint/no-unsafe-call
+  117:9   error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  117:34  error  Unsafe call of a type that could not be resolved                                 @typescript-eslint/no-unsafe-call
+  123:5   error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  142:15  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  142:35  error  Unsafe call of a type that could not be resolved                                 @typescript-eslint/no-unsafe-call
+  143:15  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  143:30  error  Unsafe call of a type that could not be resolved                                 @typescript-eslint/no-unsafe-call
+  148:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  148:46  error  Unsafe member access .effectiveMode on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  149:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  149:51  error  Unsafe member access .sourceObjectBounds on a type that cannot be resolved       @typescript-eslint/no-unsafe-member-access
+  150:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  150:51  error  Unsafe member access .targetObjectBounds on a type that cannot be resolved       @typescript-eslint/no-unsafe-member-access
+  151:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  151:39  error  Unsafe member access .layout on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  152:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  152:46  error  Unsafe member access .detectionUsed on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  153:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  153:49  error  Unsafe member access .confidenceBefore on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  154:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  154:49  error  Unsafe member access .detectionDetails on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  155:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  155:38  error  Unsafe member access .scale on a type that cannot be resolved                    @typescript-eslint/no-unsafe-member-access
+  156:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  156:49  error  Unsafe member access .whitespaceBefore on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  157:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  157:48  error  Unsafe member access .whitespaceAfter on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+  158:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  158:56  error  Unsafe member access .objectAreaPercentBefore on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  159:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  159:55  error  Unsafe member access .objectAreaPercentAfter on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
+  187:15  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  187:35  error  Unsafe call of a type that could not be resolved                                 @typescript-eslint/no-unsafe-call
+  188:15  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  188:30  error  Unsafe call of a type that could not be resolved                                 @typescript-eslint/no-unsafe-call
+  193:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  193:46  error  Unsafe member access .effectiveMode on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  194:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  194:51  error  Unsafe member access .sourceObjectBounds on a type that cannot be resolved       @typescript-eslint/no-unsafe-member-access
+  195:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  195:51  error  Unsafe member access .targetObjectBounds on a type that cannot be resolved       @typescript-eslint/no-unsafe-member-access
+  196:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  196:39  error  Unsafe member access .layout on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  197:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  197:46  error  Unsafe member access .detectionUsed on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  198:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  198:49  error  Unsafe member access .confidenceBefore on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  199:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  199:49  error  Unsafe member access .detectionDetails on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  200:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  200:38  error  Unsafe member access .scale on a type that cannot be resolved                    @typescript-eslint/no-unsafe-member-access
+  201:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  201:49  error  Unsafe member access .whitespaceBefore on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  202:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  202:48  error  Unsafe member access .whitespaceAfter on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+  203:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  203:56  error  Unsafe member access .objectAreaPercentBefore on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  204:13  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  204:55  error  Unsafe member access .objectAreaPercentAfter on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
+  227:7   error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  405:11  error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  405:26  error  Unsafe call of a type that could not be resolved                                 @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/slots/[slotId]/center/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/image-studio/slots/[slotId]/center/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/slots/[slotId]/center/handler.ts
+   63:7   error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+   63:58  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+   69:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+   69:47  error  Unsafe call of a type that could not be resolved                                                                   @typescript-eslint/no-unsafe-call
+   70:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+   70:26  error  Unsafe call of a type that could not be resolved                                                                   @typescript-eslint/no-unsafe-call
+   74:7   error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+   74:58  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+   95:24  error  Unsafe argument of type `any` assigned to a parameter of type `"client_auto_scaler_v1" | "server_auto_scaler_v1"`  @typescript-eslint/no-unsafe-argument
+   95:40  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  101:7   error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  101:64  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  114:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  114:34  error  Unsafe call of a type that could not be resolved                                                                   @typescript-eslint/no-unsafe-call
+  120:5   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  121:26  error  Unsafe argument of type `any` assigned to a parameter of type `"client_auto_scaler_v1" | "server_auto_scaler_v1"`  @typescript-eslint/no-unsafe-argument
+  121:42  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  137:15  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  137:32  error  Unsafe call of a type that could not be resolved                                                                   @typescript-eslint/no-unsafe-call
+  138:15  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  138:30  error  Unsafe call of a type that could not be resolved                                                                   @typescript-eslint/no-unsafe-call
+  143:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  143:43  error  Unsafe member access .effectiveMode on a type that cannot be resolved                                              @typescript-eslint/no-unsafe-member-access
+  144:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  144:48  error  Unsafe member access .sourceObjectBounds on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+  145:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  145:48  error  Unsafe member access .targetObjectBounds on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+  146:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  146:36  error  Unsafe member access .layout on a type that cannot be resolved                                                     @typescript-eslint/no-unsafe-member-access
+  147:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  147:43  error  Unsafe member access .detectionUsed on a type that cannot be resolved                                              @typescript-eslint/no-unsafe-member-access
+  148:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  148:46  error  Unsafe member access .confidenceBefore on a type that cannot be resolved                                           @typescript-eslint/no-unsafe-member-access
+  149:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  149:46  error  Unsafe member access .detectionDetails on a type that cannot be resolved                                           @typescript-eslint/no-unsafe-member-access
+  150:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  150:35  error  Unsafe member access .scale on a type that cannot be resolved                                                      @typescript-eslint/no-unsafe-member-access
+  178:15  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  178:32  error  Unsafe call of a type that could not be resolved                                                                   @typescript-eslint/no-unsafe-call
+  179:15  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  179:30  error  Unsafe call of a type that could not be resolved                                                                   @typescript-eslint/no-unsafe-call
+  184:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  184:43  error  Unsafe member access .effectiveMode on a type that cannot be resolved                                              @typescript-eslint/no-unsafe-member-access
+  185:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  185:48  error  Unsafe member access .sourceObjectBounds on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+  186:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  186:48  error  Unsafe member access .targetObjectBounds on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+  187:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  187:36  error  Unsafe member access .layout on a type that cannot be resolved                                                     @typescript-eslint/no-unsafe-member-access
+  188:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  188:43  error  Unsafe member access .detectionUsed on a type that cannot be resolved                                              @typescript-eslint/no-unsafe-member-access
+  189:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  189:46  error  Unsafe member access .confidenceBefore on a type that cannot be resolved                                           @typescript-eslint/no-unsafe-member-access
+  190:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  190:46  error  Unsafe member access .detectionDetails on a type that cannot be resolved                                           @typescript-eslint/no-unsafe-member-access
+  191:13  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  191:35  error  Unsafe member access .scale on a type that cannot be resolved                                                      @typescript-eslint/no-unsafe-member-access
+  214:7   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  296:9   error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  296:66  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  376:11  error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  376:26  error  Unsafe call of a type that could not be resolved                                                                   @typescript-eslint/no-unsafe-call
+  412:11  error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  412:61  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/slots/[slotId]/crop/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/image-studio/slots/[slotId]/crop/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/slots/[slotId]/upscale/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/image-studio/slots/[slotId]/upscale/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/integrations/[id]/connections/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/connections/[id]/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/integrations/connections/[id]/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/[id]/base/link-existing/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/integrations/products/[id]/base/link-existing/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/[id]/base/sku-check/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/integrations/products/[id]/base/sku-check/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/[id]/export-to-base/handler.ts
+   73:46  error  Unsafe argument of type error typed assigned to a parameter of type `ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>`                                                                                                                                                                                             @typescript-eslint/no-unsafe-argument
+   86:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+   92:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+   92:33  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-call
+   92:51  error  Unsafe member access .trim on a type that cannot be resolved                                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
+  132:41  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  150:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  166:13  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  167:13  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  168:13  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  176:7   error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-call
+  178:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  180:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  193:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  193:37  error  Unsafe member access .id on a type that cannot be resolved                                                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
+  194:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  199:39  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  204:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  218:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  218:44  error  Unsafe member access .mappings on a type that cannot be resolved                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  219:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  219:54  error  Unsafe member access .resolvedTemplateId on a type that cannot be resolved                                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
+  220:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  220:55  error  Unsafe member access .requestedTemplateId on a type that cannot be resolved                                                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-member-access
+  221:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  221:54  error  Unsafe member access .exportImagesAsBase64 on a type that cannot be resolved                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
+  222:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  222:49  error  Unsafe member access .imageBase64Mode on a type that cannot be resolved                                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-member-access
+  223:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  223:48  error  Unsafe member access .imageTransform on a type that cannot be resolved                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
+  224:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  224:52  error  Unsafe member access .producerNameById on a type that cannot be resolved                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
+  225:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  225:66  error  Unsafe member access .producerExternalIdByInternalId on a type that cannot be resolved                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
+  226:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  226:47  error  Unsafe member access .tagNameById on a type that cannot be resolved                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
+  227:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  227:61  error  Unsafe member access .tagExternalIdByInternalId on a type that cannot be resolved                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  228:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  228:49  error  Unsafe member access .exportProduct on a type that cannot be resolved                                                                                                                                                                                                                                                            @typescript-eslint/no-unsafe-member-access
+  261:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  273:76  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  283:15  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  307:11  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  313:13  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  315:13  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  333:76  error  Unsafe argument of type error typed assigned to a parameter of type `string | null`                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-argument
+  391:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  400:59  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  417:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  419:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  425:70  error  Unsafe argument of type error typed assigned to a parameter of type `string | null | undefined`                                                                                                                                                                                                                                  @typescript-eslint/no-unsafe-argument
+  426:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  426:39  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-call
+  427:7   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  429:7   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  431:7   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  434:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  434:39  error  Unsafe member access .warehouseId on a type that cannot be resolved                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
+  435:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  435:55  error  Unsafe member access .stockWarehouseAliases on a type that cannot be resolved                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
+  436:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  436:49  error  Unsafe member access .effectiveMappings on a type that cannot be resolved                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+  442:40  error  Unsafe member access .length on a type that cannot be resolved                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  445:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  446:9   error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-call
+  448:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  449:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  450:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  456:7   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  460:9   error  Unsafe argument of type error typed assigned to a parameter of type `{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name: Record<string, string | null>; ... 28 more ...; noteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  461:9   error  Unsafe argument of type error typed assigned to a parameter of type `{ sourceKey: string; targetField: string; }[]`                                                                                                                                                                                                              @typescript-eslint/no-unsafe-argument
+  466:41  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  467:36  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  468:50  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  469:31  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  470:45  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  471:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  472:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  473:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  474:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  513:9   error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  514:9   error  Unsafe argument of type error typed assigned to a parameter of type `{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name: Record<string, string | null>; ... 28 more ...; noteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  518:13  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  519:42  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  520:13  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  521:13  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  526:9   error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  527:9   error  Unsafe argument of type error typed assigned to a parameter of type `{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name: Record<string, string | null>; ... 28 more ...; noteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  528:9   error  Unsafe argument of type error typed assigned to a parameter of type `{ sourceKey: string; targetField: string; }[]`                                                                                                                                                                                                              @typescript-eslint/no-unsafe-argument
+  533:41  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  534:36  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  535:50  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  536:31  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  537:45  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  538:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  539:40  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  540:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  541:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  571:7   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  571:27  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-call
+  571:45  error  Unsafe member access .filter on a type that cannot be resolved                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  572:23  error  Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-call
+  572:23  error  Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-call
+  572:23  error  Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-call
+  572:31  error  Unsafe member access ['sourceKey'] on an `any` value                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-member-access
+  572:51  error  Unsafe member access .toLowerCase on an `any` value                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
+  572:65  error  Unsafe member access .startsWith on an `any` value                                                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-member-access
+  582:9   error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  583:9   error  Unsafe argument of type error typed assigned to a parameter of type `{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name: Record<string, string | null>; ... 28 more ...; noteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  584:9   error  Unsafe argument of type error typed assigned to a parameter of type `{ sourceKey: string; targetField: string; }[]`                                                                                                                                                                                                              @typescript-eslint/no-unsafe-argument
+  589:41  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  590:36  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  591:50  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  592:31  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  593:45  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  594:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  595:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  596:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  624:7   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  624:27  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-call
+  624:45  error  Unsafe member access .filter on a type that cannot be resolved                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  625:23  error  Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-call
+  625:23  error  Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-call
+  625:23  error  Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-call
+  625:31  error  Unsafe member access ['sourceKey'] on an `any` value                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-member-access
+  625:51  error  Unsafe member access .toLowerCase on an `any` value                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
+  625:65  error  Unsafe member access .startsWith on an `any` value                                                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-member-access
+  635:9   error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  636:9   error  Unsafe argument of type error typed assigned to a parameter of type `{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name: Record<string, string | null>; ... 28 more ...; noteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  637:9   error  Unsafe argument of type error typed assigned to a parameter of type `{ sourceKey: string; targetField: string; }[]`                                                                                                                                                                                                              @typescript-eslint/no-unsafe-argument
+  642:41  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  643:36  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  644:50  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  645:31  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  646:45  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  647:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  648:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  649:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  655:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  655:24  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-call
+  658:13  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-call
+  661:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  662:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  663:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  666:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  667:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  686:15  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  686:34  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-call
+  688:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  689:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  690:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  703:15  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  704:15  error  Unsafe argument of type error typed assigned to a parameter of type `{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name: Record<string, string | null>; ... 28 more ...; noteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  708:19  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  709:19  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  710:19  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  711:19  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  716:15  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  717:15  error  Unsafe argument of type error typed assigned to a parameter of type `{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name: Record<string, string | null>; ... 28 more ...; noteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  718:15  error  Unsafe argument of type error typed assigned to a parameter of type `{ sourceKey: string; targetField: string; }[]`                                                                                                                                                                                                              @typescript-eslint/no-unsafe-argument
+  723:47  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  724:42  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  725:56  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  726:37  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  727:51  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  728:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  729:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  730:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  731:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  738:62  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  746:15  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  747:15  error  Unsafe argument of type error typed assigned to a parameter of type `{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name: Record<string, string | null>; ... 28 more ...; noteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  751:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  752:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  753:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  754:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  760:15  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  761:15  error  Unsafe argument of type error typed assigned to a parameter of type `{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name: Record<string, string | null>; ... 28 more ...; noteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  762:15  error  Unsafe argument of type error typed assigned to a parameter of type `{ sourceKey: string; targetField: string; }[]`                                                                                                                                                                                                              @typescript-eslint/no-unsafe-argument
+  767:47  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  768:42  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  769:56  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  770:37  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  771:51  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  772:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  773:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  774:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  775:17  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  785:67  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
+  810:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  811:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  837:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  838:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/\[id\]/export-to-base/helpers.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/integrations/products/\[id\]/export-to-base/helpers.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/\[id\]/export-to-base/segments/common.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/integrations/products/\[id\]/export-to-base/segments/common.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/\[id\]/export-to-base/segments/images.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/integrations/products/\[id\]/export-to-base/segments/images.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/\[id\]/export-to-base/segments/index.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/integrations/products/\[id\]/export-to-base/segments/index.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/\[id\]/export-to-base/segments/preparation.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/integrations/products/\[id\]/export-to-base/segments/preparation.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/\[id\]/export-to-base/segments/stock.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/integrations/products/\[id\]/export-to-base/segments/stock.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/duplicate/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/products/[id]/duplicate/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/products/[id]/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/bulk/handler.ts
+  10:31  warning  'ProductAiJobType' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/enqueue/handler.ts
+  9:31  warning  'ProductAiJobType' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-paths/description-context/handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/products/ai-paths/description-context/handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/public/products/metadata-routes.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/app/api/public/products/metadata-routes.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/agent-runtime/audit/gate.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/features/ai/agent-runtime/audit/gate.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/agent-runtime/tools/llm/index.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/features/ai/agent-runtime/tools/llm/index.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/runtime/segments/useLocalExecutionTriggers.ts
+   34:85  error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+   35:49  error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+   35:60  error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  456:15  warning  'timestamp' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts
+   65:48  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  129:34  error  Unsafe argument of type `any` assigned to a parameter of type `{ schemaVersion?: number | undefined; enabled?: boolean | undefined; policy?: "report_only" | "warn_below_threshold" | "block_below_threshold" | undefined; warnThreshold?: number | undefined; ... 7 more ...; docsSyncState?: { ...; } | undefined; }`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts
+  851:5  error  Promise-returning function provided to property where a void return was expected  @typescript-eslint/no-misused-promises
+  852:5  error  Promise-returning function provided to property where a void return was expected  @typescript-eslint/no-misused-promises
+  853:5  error  Promise-returning function provided to property where a void return was expected  @typescript-eslint/no-misused-promises
+  991:5  error  Promise-returning function provided to property where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/GateNodeConfigSection.tsx
+  24:18  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  29:17  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  45:18  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/LogicalConditionNodeConfigSection.tsx
+  140:34  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/StringMutatorNodeConfigSection.tsx
+  88:40  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor/index.ts
+    5:3   warning  'migrateTriggerToFetcherGraph' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   23:3   warning  'AiNode' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   38:3   warning  'TERMINAL_RUN_STATUSES' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   68:13  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
+   84:5   error    Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-assignment
+   93:13  error    Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-assignment
+   93:29  error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+   93:34  error    Unsafe member access .updateRunIfStatus on an `any` value                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-member-access
+   97:7   error    Unsafe return of a value of type `any`                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-return
+  113:32  error    Unsafe argument of type error typed assigned to a parameter of type `{ id: string; type: "template" | "document" | "math" | "context" | "model" | "prompt" | "regex" | "compare" | "trigger" | "fetcher" | "simulation" | "audio_oscillator" | "audio_speaker" | ... 27 more ... | "canvas_output"; ... 12 more ...; outputContracts?: Record<...> | undefined; }[]`  @typescript-eslint/no-unsafe-argument
+  114:31  error    Unsafe argument of type error typed assigned to a parameter of type `{ id: string; type: "template" | "document" | "math" | "context" | "model" | "prompt" | "regex" | "compare" | "trigger" | "fetcher" | "simulation" | "audio_oscillator" | "audio_speaker" | ... 27 more ... | "canvas_output"; ... 12 more ...; outputContracts?: Record<...> | undefined; }[]`  @typescript-eslint/no-unsafe-argument
+  132:7   error    Unsafe return of a value of type `any`                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-return
+  132:20  error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+  132:25  error    Unsafe member access .listRunNodes on an `any` value                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  185:9   error    Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-assignment
+  185:29  error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+  185:34  error    Unsafe member access .listRunNodes on an `any` value                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  187:5   error    Unsafe argument of type `any` assigned to a parameter of type `Iterable<readonly [string, string]> | null | undefined`                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-argument
+  187:5   error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+  187:17  error    Unsafe member access .map on an `any` value                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
+  190:5   error    Unsafe argument of type `any` assigned to a parameter of type `Iterable<readonly [string, number]> | null | undefined`                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-argument
+  190:5   error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+  190:17  error    Unsafe member access .map on an `any` value                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
+  204:11  error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+  204:16  error    Unsafe member access .createRunEvent on an `any` value                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  232:7   error    Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-assignment
+  237:47  warning  'nodeValidationEnabled' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  264:34  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
+  264:40  error    Unsafe member access .historyRetentionPasses on an `any` value                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+  311:17  error    Unsafe assignment of type `any[]` to a variable of type `Promise<unknown>[]`                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-assignment
+  312:13  error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+  312:18  error    Unsafe member access .upsertRunNode on an `any` value                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  326:15  error    Unsafe argument of type `any` assigned to a parameter of type `Promise<unknown>`                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-argument
+  326:15  error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+  326:20  error    Unsafe member access .createRunEvent on an `any` value                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  381:17  error    Unsafe assignment of type `any[]` to a variable of type `Promise<unknown>[]`                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-assignment
+  382:13  error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+  382:18  error    Unsafe member access .upsertRunNode on an `any` value                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  388:13  error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+  388:18  error    Unsafe member access .createRunEvent on an `any` value                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  448:17  error    Unsafe assignment of type `any[]` to a variable of type `Promise<unknown>[]`                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-assignment
+  449:13  error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+  449:18  error    Unsafe member access .upsertRunNode on an `any` value                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  455:13  error    Unsafe call of an `any` typed value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-call
+  455:18  error    Unsafe member access .createRunEvent on an `any` value                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  483:11  error    Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-assignment
+  483:36  error    Unsafe member access .reason on an `any` value                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+  499:63  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
+  499:69  error    Unsafe member access .blockedRunPolicy on an `any` value                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor/preflight.ts
+   21:9   error  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+   25:59  error  Unsafe object destructuring of a property with an `any` value  @typescript-eslint/no-unsafe-assignment
+   57:11  error  Unsafe call of an `any` typed value                            @typescript-eslint/no-unsafe-call
+   57:16  error  Unsafe member access .createRunEvent on an `any` value         @typescript-eslint/no-unsafe-member-access
+   86:11  error  Unsafe call of an `any` typed value                            @typescript-eslint/no-unsafe-call
+   86:16  error  Unsafe member access .createRunEvent on an `any` value         @typescript-eslint/no-unsafe-member-access
+  104:11  error  Unsafe call of an `any` typed value                            @typescript-eslint/no-unsafe-call
+  104:16  error  Unsafe member access .createRunEvent on an `any` value         @typescript-eslint/no-unsafe-member-access
+  119:11  error  Unsafe call of an `any` typed value                            @typescript-eslint/no-unsafe-call
+  119:16  error  Unsafe member access .createRunEvent on an `any` value         @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor/profiling.ts
+   3:3   warning  'RuntimeProfileSummaryDto' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  21:26  error    Unsafe argument of type error typed assigned to a parameter of type `string`                @typescript-eslint/no-unsafe-argument
+  21:31  error    Unsafe member access .spanId on a type that cannot be resolved                              @typescript-eslint/no-unsafe-member-access
+  22:40  error    Unsafe argument of type error typed assigned to a parameter of type `string`                @typescript-eslint/no-unsafe-argument
+  22:45  error    Unsafe member access .spanId on a type that cannot be resolved                              @typescript-eslint/no-unsafe-member-access
+  23:33  error    Unsafe argument of type error typed assigned to a parameter of type `string`                @typescript-eslint/no-unsafe-argument
+  23:38  error    Unsafe member access .spanId on a type that cannot be resolved                              @typescript-eslint/no-unsafe-member-access
+  61:11  error    Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+  62:11  error    Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+  62:33  error    Unsafe member access .startedAt on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+  65:34  error    Unsafe argument of type error typed assigned to a parameter of type `string`                @typescript-eslint/no-unsafe-argument
+  74:9   error    Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+  83:20  error    Unsafe return of a value of type error                                                      @typescript-eslint/no-unsafe-return
+  91:9   error    Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+  92:9   error    Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+  93:9   error    Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+  94:9   error    Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/analysis/segments/autoscale-planning.ts
+    2:8  warning  'ImageStudioCenterDetectionMode' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+    3:8  warning  'ImageStudioCenterLayoutConfig' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+    5:8  warning  'ImageStudioCenterShadowPolicy' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   64:1  error    Expected indentation of 8 spaces but found 10                                                     indent
+   65:1  error    Expected indentation of 8 spaces but found 10                                                     indent
+   66:1  error    Expected indentation of 8 spaces but found 10                                                     indent
+   67:1  error    Expected indentation of 6 spaces but found 8                                                      indent
+   71:1  error    Expected indentation of 8 spaces but found 10                                                     indent
+   72:1  error    Expected indentation of 8 spaces but found 10                                                     indent
+   73:1  error    Expected indentation of 8 spaces but found 10                                                     indent
+   74:1  error    Expected indentation of 6 spaces but found 8                                                      indent
+   78:1  error    Expected indentation of 8 spaces but found 10                                                     indent
+   79:1  error    Expected indentation of 8 spaces but found 10                                                     indent
+   80:1  error    Expected indentation of 8 spaces but found 10                                                     indent
+   81:1  error    Expected indentation of 6 spaces but found 8                                                      indent
+  105:7  error    Unsafe assignment of an error typed value                                                         @typescript-eslint/no-unsafe-assignment
+  108:7  error    Unsafe assignment of an error typed value                                                         @typescript-eslint/no-unsafe-assignment
+  110:5  error    Unsafe assignment of an error typed value                                                         @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/analysis/segments/white-bg-detection.ts
+    3:8  warning  'ImageStudioCenterDetectionMode' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  187:7  warning  'resolveLineBounds' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarImageUtils.centering.ts
+  426:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  427:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  434:3   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  435:3   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  442:32  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  442:45  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  466:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  493:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  496:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  497:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  498:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  499:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  500:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  503:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  530:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  532:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  533:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  536:3   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  537:3   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  544:32  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  544:45  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  547:5   error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  547:24  error  Unsafe member access .left on a type that cannot be resolved                  @typescript-eslint/no-unsafe-member-access
+  548:5   error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  548:24  error  Unsafe member access .top on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  549:5   error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  549:24  error  Unsafe member access .width on a type that cannot be resolved                 @typescript-eslint/no-unsafe-member-access
+  550:5   error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  550:24  error  Unsafe member access .height on a type that cannot be resolved                @typescript-eslint/no-unsafe-member-access
+  562:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  566:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  568:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  569:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  570:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  572:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/server/auto-scaler-utils.ts
+  187:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  188:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  189:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  190:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  191:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  192:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  193:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  194:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  195:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  196:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  197:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  226:9   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  228:9   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  229:9   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  234:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  234:32  error  Unsafe member access .left on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
+  235:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  235:31  error  Unsafe member access .top on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
+  236:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  236:33  error  Unsafe member access .width on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
+  237:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  237:34  error  Unsafe member access .height on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  248:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  249:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  269:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  270:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  273:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  277:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  278:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  279:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  280:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  284:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/server/autoscale-service.ts
+  203:7  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  204:7  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/server/center-service.ts
+   79:56  error  Unsafe argument of type `any` assigned to a parameter of type `"client_auto_scaler_v1" | "server_auto_scaler_v1"`  @typescript-eslint/no-unsafe-argument
+   79:72  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+   86:55  error  Unsafe argument of type `any` assigned to a parameter of type `"client_auto_scaler_v1" | "server_auto_scaler_v1"`  @typescript-eslint/no-unsafe-argument
+   86:71  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+   93:13  error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+   93:69  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+   98:13  error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+   98:69  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  103:13  error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  103:69  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  113:11  error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  113:72  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  120:11  error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  120:69  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  163:11  error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  163:70  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  169:11  error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  169:72  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  174:9   error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  174:59  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  181:9   error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  181:59  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  201:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  201:41  error  Unsafe member access .paddingPercent on a type that cannot be resolved                                             @typescript-eslint/no-unsafe-member-access
+  202:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  202:42  error  Unsafe member access .paddingXPercent on a type that cannot be resolved                                            @typescript-eslint/no-unsafe-member-access
+  203:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  203:42  error  Unsafe member access .paddingYPercent on a type that cannot be resolved                                            @typescript-eslint/no-unsafe-member-access
+  204:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  204:49  error  Unsafe member access .fillMissingCanvasWhite on a type that cannot be resolved                                     @typescript-eslint/no-unsafe-member-access
+  205:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  205:44  error  Unsafe member access .targetCanvasWidth on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
+  206:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  206:45  error  Unsafe member access .targetCanvasHeight on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+  207:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  207:41  error  Unsafe member access .whiteThreshold on a type that cannot be resolved                                             @typescript-eslint/no-unsafe-member-access
+  208:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  208:42  error  Unsafe member access .chromaThreshold on a type that cannot be resolved                                            @typescript-eslint/no-unsafe-member-access
+  209:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  209:39  error  Unsafe member access .shadowPolicy on a type that cannot be resolved                                               @typescript-eslint/no-unsafe-member-access
+  210:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  211:9   error  Unsafe assignment of an error typed value                                                                          @typescript-eslint/no-unsafe-assignment
+  218:27  error  Unsafe argument of type `any` assigned to a parameter of type `"client_auto_scaler_v1" | "server_auto_scaler_v1"`  @typescript-eslint/no-unsafe-argument
+  218:43  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  222:9   error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  222:65  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  235:9   error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  235:59  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  275:7   error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  275:66  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  287:7   error  Unsafe argument of type `any` assigned to a parameter of type `ImageStudioAutoScalerErrorCode`                     @typescript-eslint/no-unsafe-argument
+  287:57  error  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/server/center-utils.ts
+  241:9   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  243:9   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  244:9   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  249:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  249:32  error  Unsafe member access .left on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
+  250:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  250:31  error  Unsafe member access .top on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
+  251:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  251:33  error  Unsafe member access .width on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
+  252:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  252:34  error  Unsafe member access .height on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  263:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  264:7   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  275:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  276:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  277:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  282:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  283:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+  284:5   error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/server/image-handler-utils.ts
+  2:10  warning  'z' is defined but never used. Allowed unused vars must match /^_/u                                    @typescript-eslint/no-unused-vars
+  3:10  warning  'ObjectId' is defined but never used. Allowed unused vars must match /^_/u                             @typescript-eslint/no-unused-vars
+  5:3   warning  'IMAGE_STUDIO_AUTOSCALER_ERROR_CODES' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/context/AuthContext.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment' or '@typescript-eslint/no-unsafe-return')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/context/UsersContext.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/hooks/useUsersState.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment', '@typescript-eslint/no-unsafe-member-access', or '@typescript-eslint/no-unsafe-return')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/pages/admin/DashboardPage.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment' or '@typescript-eslint/no-unsafe-member-access')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/pages/admin/UsersPage.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment' or '@typescript-eslint/no-unsafe-member-access')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/services/auth-access.ts
+  105:5  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment')
+  120:5  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment' or '@typescript-eslint/no-unsafe-member-access')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ThemeSettingsPanel.tsx
+  172:1  error  Expected indentation of 2 spaces but found 4  indent
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeBrandSection.tsx
+  14:63  error  Unexpected any. Specify a different type                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  15:17  error  Unsafe argument of type `any` assigned to a parameter of type `string | number | boolean | { id: string; name: string; colors: { background: string; surface: string; text: string; accent: string; border: string; }; }[] | undefined`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeLogoSection.tsx
+  14:15  warning  'ThemeSettings' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  17:11  warning  'theme' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  17:18  warning  'update' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/context/IntegrationsContext.tsx
+  501:27  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/services/integration-repository/common.ts
+  147:11  error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  152:22  error  Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+  153:21  error  Unsafe member access .connectionId on an `any` value                     @typescript-eslint/no-unsafe-member-access
+  156:11  error  Unsafe return of a value of type `any`                                   @typescript-eslint/no-unsafe-return
+  158:9   error  Unsafe return of a value of type `any`                                   @typescript-eslint/no-unsafe-return
+  186:8   error  Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+  188:3   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  188:25  error  Unsafe member access .id on an `any` value                               @typescript-eslint/no-unsafe-member-access
+  188:30  error  Unsafe call of an `any` typed value                                      @typescript-eslint/no-unsafe-call
+  188:34  error  Unsafe member access ._id on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  189:3   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  189:13  error  Unsafe member access .name on an `any` value                             @typescript-eslint/no-unsafe-member-access
+  190:3   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  190:13  error  Unsafe member access .slug on an `any` value                             @typescript-eslint/no-unsafe-member-access
+  191:38  error  Unsafe member access .createdAt on an `any` value                        @typescript-eslint/no-unsafe-member-access
+  192:36  error  Unsafe member access .updatedAt on an `any` value                        @typescript-eslint/no-unsafe-member-access
+  196:8   error  Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+  200:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  200:24  error  Unsafe member access .id on an `any` value                               @typescript-eslint/no-unsafe-member-access
+  200:29  error  Unsafe call of an `any` typed value                                      @typescript-eslint/no-unsafe-call
+  200:33  error  Unsafe member access ._id on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  201:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  201:24  error  Unsafe member access .integrationId on an `any` value                    @typescript-eslint/no-unsafe-member-access
+  202:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  202:15  error  Unsafe member access .name on an `any` value                             @typescript-eslint/no-unsafe-member-access
+  203:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  203:19  error  Unsafe member access .username on an `any` value                         @typescript-eslint/no-unsafe-member-access
+  204:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  204:19  error  Unsafe member access .password on an `any` value                         @typescript-eslint/no-unsafe-member-access
+  205:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  205:33  error  Unsafe member access .playwrightStorageState on an `any` value           @typescript-eslint/no-unsafe-member-access
+  206:60  error  Unsafe member access .playwrightStorageStateUpdatedAt on an `any` value  @typescript-eslint/no-unsafe-member-access
+  207:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  207:29  error  Unsafe member access .playwrightHeadless on an `any` value               @typescript-eslint/no-unsafe-member-access
+  208:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  208:27  error  Unsafe member access .playwrightSlowMo on an `any` value                 @typescript-eslint/no-unsafe-member-access
+  209:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  209:28  error  Unsafe member access .playwrightTimeout on an `any` value                @typescript-eslint/no-unsafe-member-access
+  210:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  211:11  error  Unsafe member access .playwrightNavigationTimeout on an `any` value      @typescript-eslint/no-unsafe-member-access
+  212:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  213:11  error  Unsafe member access .playwrightHumanizeMouse on an `any` value          @typescript-eslint/no-unsafe-member-access
+  214:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  214:32  error  Unsafe member access .playwrightMouseJitter on an `any` value            @typescript-eslint/no-unsafe-member-access
+  215:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  216:11  error  Unsafe member access .playwrightClickDelayMin on an `any` value          @typescript-eslint/no-unsafe-member-access
+  217:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  218:11  error  Unsafe member access .playwrightClickDelayMax on an `any` value          @typescript-eslint/no-unsafe-member-access
+  219:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  220:11  error  Unsafe member access .playwrightInputDelayMin on an `any` value          @typescript-eslint/no-unsafe-member-access
+  221:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  222:11  error  Unsafe member access .playwrightInputDelayMax on an `any` value          @typescript-eslint/no-unsafe-member-access
+  223:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  224:11  error  Unsafe member access .playwrightActionDelayMin on an `any` value         @typescript-eslint/no-unsafe-member-access
+  225:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  226:11  error  Unsafe member access .playwrightActionDelayMax on an `any` value         @typescript-eslint/no-unsafe-member-access
+  227:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  228:11  error  Unsafe member access .playwrightProxyEnabled on an `any` value           @typescript-eslint/no-unsafe-member-access
+  229:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  229:32  error  Unsafe member access .playwrightProxyServer on an `any` value            @typescript-eslint/no-unsafe-member-access
+  230:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  231:11  error  Unsafe member access .playwrightProxyUsername on an `any` value          @typescript-eslint/no-unsafe-member-access
+  232:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  232:34  error  Unsafe member access .playwrightProxyPassword on an `any` value          @typescript-eslint/no-unsafe-member-access
+  233:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  234:11  error  Unsafe member access .playwrightEmulateDevice on an `any` value          @typescript-eslint/no-unsafe-member-access
+  235:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  235:31  error  Unsafe member access .playwrightDeviceName on an `any` value             @typescript-eslint/no-unsafe-member-access
+  236:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  236:30  error  Unsafe member access .playwrightPersonaId on an `any` value              @typescript-eslint/no-unsafe-member-access
+  237:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  237:29  error  Unsafe member access .allegroAccessToken on an `any` value               @typescript-eslint/no-unsafe-member-access
+  238:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  238:30  error  Unsafe member access .allegroRefreshToken on an `any` value              @typescript-eslint/no-unsafe-member-access
+  239:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  239:27  error  Unsafe member access .allegroTokenType on an `any` value                 @typescript-eslint/no-unsafe-member-access
+  240:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  240:23  error  Unsafe member access .allegroScope on an `any` value                     @typescript-eslint/no-unsafe-member-access
+  241:45  error  Unsafe member access .allegroExpiresAt on an `any` value                 @typescript-eslint/no-unsafe-member-access
+  242:50  error  Unsafe member access .allegroTokenUpdatedAt on an `any` value            @typescript-eslint/no-unsafe-member-access
+  243:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  243:28  error  Unsafe member access .allegroUseSandbox on an `any` value                @typescript-eslint/no-unsafe-member-access
+  244:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  244:23  error  Unsafe member access .baseApiToken on an `any` value                     @typescript-eslint/no-unsafe-member-access
+  245:47  error  Unsafe member access .baseTokenUpdatedAt on an `any` value               @typescript-eslint/no-unsafe-member-access
+  246:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  246:30  error  Unsafe member access .baseLastInventoryId on an `any` value              @typescript-eslint/no-unsafe-member-access
+  247:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  248:11  error  Unsafe member access .traderaDefaultTemplateId on an `any` value         @typescript-eslint/no-unsafe-member-access
+  249:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  250:11  error  Unsafe member access .traderaDefaultDurationHours on an `any` value      @typescript-eslint/no-unsafe-member-access
+  251:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  252:11  error  Unsafe member access .traderaAutoRelistEnabled on an `any` value         @typescript-eslint/no-unsafe-member-access
+  253:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  254:11  error  Unsafe member access .traderaAutoRelistLeadMinutes on an `any` value     @typescript-eslint/no-unsafe-member-access
+  255:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  255:26  error  Unsafe member access .traderaApiAppId on an `any` value                  @typescript-eslint/no-unsafe-member-access
+  256:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  256:27  error  Unsafe member access .traderaApiAppKey on an `any` value                 @typescript-eslint/no-unsafe-member-access
+  257:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  257:30  error  Unsafe member access .traderaApiPublicKey on an `any` value              @typescript-eslint/no-unsafe-member-access
+  258:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  258:27  error  Unsafe member access .traderaApiUserId on an `any` value                 @typescript-eslint/no-unsafe-member-access
+  259:5   error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  259:26  error  Unsafe member access .traderaApiToken on an `any` value                  @typescript-eslint/no-unsafe-member-access
+  260:53  error  Unsafe member access .traderaApiTokenUpdatedAt on an `any` value         @typescript-eslint/no-unsafe-member-access
+  261:40  error  Unsafe member access .createdAt on an `any` value                        @typescript-eslint/no-unsafe-member-access
+  262:38  error  Unsafe member access .updatedAt on an `any` value                        @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/note-file-service.ts
+  15:3  warning  'getPublicPathFromStoredPath' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/contracts/integrations/index.ts
+  477:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  478:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  479:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  480:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  481:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  482:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  483:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  484:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  485:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/vector-canvas/index.tsx
+    3:17  warning  'useCallback' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+   14:3   warning  'DEFAULT_VECTOR_VIEWBOX' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+   15:3   warning  'resolveRectDragPoints' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+   16:3   warning  'resolveRectResizePoints' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   93:5   warning  'maskPreviewEnabled' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   94:5   warning  'maskPreviewShapes' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   95:5   warning  'maskPreviewInvert' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   96:5   warning  'maskPreviewOpacity' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   97:5   warning  'maskPreviewFeather' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  199:16  error    Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  237:19  error    Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  251:24  error    Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  252:24  error    Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  253:22  error    Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  254:25  error    Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  268:19  error    Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  269:20  error    Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  270:16  error    Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+
+✖ 756 problems (719 errors, 37 warnings)
+  15 errors and 8 warnings potentially fixable with the `--fix` option.
+

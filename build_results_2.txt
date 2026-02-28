@@ -1,0 +1,640 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+┌─────────────────────────────────────────────────────────┐
+│  Update available 7.3.0 -> 7.4.2                        │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 256ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+Turbopack build encountered 7 warnings:
+./src/app/api/databases/schema/handler.ts:77:9
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10958 files in [project]/
+[0m [90m 75 |[39m     [33m?[39m path[33m.[39misAbsolute([33mPRISMA_SCHEMA_ENV_PATH[39m)
+ [90m 76 |[39m       [33m?[39m [33mPRISMA_SCHEMA_ENV_PATH[39m
+[31m[1m>[22m[39m[90m 77 |[39m       [33m:[39m path[33m.[39mjoin(process[33m.[39mcwd()[33m,[39m [33mPRISMA_SCHEMA_ENV_PATH[39m)
+ [90m    |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 78 |[39m     [33m:[39m [33mPRISMA_SCHEMA_DEFAULT_PATH[39m[33m;[39m
+ [90m 79 |[39m   [36mtry[39m {
+ [90m 80 |[39m     [36mreturn[39m readFileSync(schemaPath[33m,[39m [32m'utf8'[39m)[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import trace:
+  App Route:
+    ./src/app/api/databases/schema/handler.ts
+    ./src/app/api/databases/schema/route.ts
+
+
+./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts:325:24
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10958 files in [project]/
+[0m [90m 323 |[39m
+ [90m 324 |[39m [36mexport[39m [36mconst[39m readAiPathsDocsManifest [33m=[39m [36masync[39m (warnings[33m:[39m string[])[33m:[39m [33mPromise[39m[33m<[39m[33mAiPathsDocsManifest[39m[33m>[39m [33m=>[39m {
+[31m[1m>[22m[39m[90m 325 |[39m   [36mconst[39m absolutePath [33m=[39m path[33m.[39mresolve(process[33m.[39mcwd()[33m,[39m [33mDOCS_MANIFEST_PATH[39m)[33m;[39m
+ [90m     |[39m                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 326 |[39m   [36mtry[39m {
+ [90m 327 |[39m     [36mconst[39m manifestText [33m=[39m [36mawait[39m readFile(absolutePath[33m,[39m [32m'utf8'[39m)[33m;[39m
+ [90m 328 |[39m     [36mlet[39m parsed[33m:[39m unknown [33m=[39m [36mnull[39m[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  #2 [App Route]:
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.ts
+    ./src/app/api/ai-paths/validation/docs-snapshot/handler.ts
+    ./src/app/api/ai-paths/validation/docs-snapshot/route.ts
+
+
+./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts:363:24
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10958 files in [project]/
+[0m [90m 361 |[39m })[33m:[39m [33mPromise[39m[33m<[39m{ hash[33m:[39m string[33m;[39m assertions[33m:[39m [33mAiPathsDocAssertion[39m[] }[33m>[39m [33m=>[39m {
+ [90m 362 |[39m   [36mconst[39m { source[33m,[39m warnings } [33m=[39m args[33m;[39m
+[31m[1m>[22m[39m[90m 363 |[39m   [36mconst[39m absolutePath [33m=[39m path[33m.[39mresolve(process[33m.[39mcwd()[33m,[39m source[33m.[39mpath)[33m;[39m
+ [90m     |[39m                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 364 |[39m   [36mtry[39m {
+ [90m 365 |[39m     [36mconst[39m content [33m=[39m [36mawait[39m readFile(absolutePath[33m,[39m [32m'utf8'[39m)[33m;[39m
+ [90m 366 |[39m     [36mconst[39m hash [33m=[39m hashText(content)[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  #2 [App Route]:
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.ts
+    ./src/app/api/ai-paths/validation/docs-snapshot/handler.ts
+    ./src/app/api/ai-paths/validation/docs-snapshot/route.ts
+
+
+./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts:443:24
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10958 files in [project]/
+[0m [90m 441 |[39m })[33m:[39m [33mPromise[39m[33m<[39m{ hash[33m:[39m string[33m;[39m assertions[33m:[39m [33mAiPathsDocAssertion[39m[] }[33m>[39m [33m=>[39m {
+ [90m 442 |[39m   [36mconst[39m { source[33m,[39m warnings } [33m=[39m args[33m;[39m
+[31m[1m>[22m[39m[90m 443 |[39m   [36mconst[39m absolutePath [33m=[39m path[33m.[39mresolve(process[33m.[39mcwd()[33m,[39m source[33m.[39mpath)[33m;[39m
+ [90m     |[39m                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 444 |[39m   [36mtry[39m {
+ [90m 445 |[39m     [36mconst[39m content [33m=[39m [36mawait[39m readFile(absolutePath[33m,[39m [32m'utf8'[39m)[33m;[39m
+ [90m 446 |[39m     [36mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39mparse(content) [36mas[39m unknown[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  #2 [App Route]:
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.ts
+    ./src/app/api/ai-paths/validation/docs-snapshot/handler.ts
+    ./src/app/api/ai-paths/validation/docs-snapshot/route.ts
+
+
+./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts:584:24
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10958 files in [project]/
+[0m [90m 582 |[39m })[33m:[39m [33mPromise[39m[33m<[39m{ hash[33m:[39m string[33m;[39m assertions[33m:[39m [33mAiPathsDocAssertion[39m[] }[33m>[39m [33m=>[39m {
+ [90m 583 |[39m   [36mconst[39m { source[33m,[39m warnings } [33m=[39m args[33m;[39m
+[31m[1m>[22m[39m[90m 584 |[39m   [36mconst[39m absolutePath [33m=[39m path[33m.[39mresolve(process[33m.[39mcwd()[33m,[39m source[33m.[39mpath)[33m;[39m
+ [90m     |[39m                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 585 |[39m   [36mtry[39m {
+ [90m 586 |[39m     [36mconst[39m content [33m=[39m [36mawait[39m readFile(absolutePath[33m,[39m [32m'utf8'[39m)[33m;[39m
+ [90m 587 |[39m     [36mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39mparse(content) [36mas[39m unknown[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  #2 [App Route]:
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.ts
+    ./src/app/api/ai-paths/validation/docs-snapshot/handler.ts
+    ./src/app/api/ai-paths/validation/docs-snapshot/route.ts
+
+
+./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts:660:24
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10958 files in [project]/
+[0m [90m 658 |[39m })[33m:[39m [33mPromise[39m[33m<[39m{ hash[33m:[39m string[33m;[39m assertions[33m:[39m [33mAiPathsDocAssertion[39m[] }[33m>[39m [33m=>[39m {
+ [90m 659 |[39m   [36mconst[39m { source[33m,[39m warnings } [33m=[39m args[33m;[39m
+[31m[1m>[22m[39m[90m 660 |[39m   [36mconst[39m absolutePath [33m=[39m path[33m.[39mresolve(process[33m.[39mcwd()[33m,[39m source[33m.[39mpath)[33m;[39m
+ [90m     |[39m                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 661 |[39m   [36mtry[39m {
+ [90m 662 |[39m     [36mconst[39m content [33m=[39m [36mawait[39m readFile(absolutePath[33m,[39m [32m'utf8'[39m)[33m;[39m
+ [90m 663 |[39m     [36mconst[39m parsedRows [33m=[39m parseCsvRecords(content)[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  #2 [App Route]:
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts
+    ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.ts
+    ./src/app/api/ai-paths/validation/docs-snapshot/handler.ts
+    ./src/app/api/ai-paths/validation/docs-snapshot/route.ts
+
+
+./src/shared/lib/db/services/database-engine-status.ts:38:55
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10958 files in [project]/
+[0m [90m 36 |[39m   [36mconst[39m schemaPath [33m=[39m process[33m.[39menv[[32m'PRISMA_SCHEMA_PATH'[39m][33m;[39m
+ [90m 37 |[39m   [36mif[39m (schemaPath) {
+[31m[1m>[22m[39m[90m 38 |[39m     [36mreturn[39m path[33m.[39misAbsolute(schemaPath) [33m?[39m schemaPath [33m:[39m path[33m.[39mjoin(process[33m.[39mcwd()[33m,[39m schemaPath)[33m;[39m
+ [90m    |[39m                                                       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 39 |[39m   }
+ [90m 40 |[39m   [36mreturn[39m path[33m.[39mjoin(process[33m.[39mcwd()[33m,[39m [32m'prisma'[39m[33m,[39m [32m'schema.prisma'[39m)[33m;[39m
+ [90m 41 |[39m }[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/shared/lib/db/services/database-engine-status.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  #2 [App Route]:
+    ./src/shared/lib/db/services/database-engine-status.ts
+    ./src/app/api/databases/engine/status/handler.ts
+    ./src/app/api/databases/engine/status/route.ts
+
+
+
+> Build error occurred
+Error: Turbopack build failed with 9 errors:
+./src/features/viewer3d/index.ts:6:25
+Ecmascript file had an error
+[0m [90m  4 |[39m
+ [90m  5 |[39m [90m// Public client-safe API for the Viewer3D feature[39m
+[31m[1m>[22m[39m[90m  6 |[39m [36mexport[39m [36mconst[39m [33mViewer3D[39m [33m=[39m dynamic(() [33m=>[39m [36mimport[39m([32m'./components/Viewer3D'[39m)[33m.[39mthen((m) [33m=>[39m m[33m.[39m[33mViewer3D[39m)[33m,[39m {
+ [90m    |[39m                         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  7 |[39m   ssr[33m:[39m [36mfalse[39m[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  8 |[39m })[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m
+ [90m 10 |[39m [36mexport[39m { preloadModel } [36mfrom[39m [32m'./components/Viewer3D'[39m[33m;[39m
+ [90m 11 |[39m [36mexport[39m type { [33mViewer3DProps[39m[33m,[39m [33mLightingPreset[39m[33m,[39m [33mEnvironmentPreset[39m } [36mfrom[39m [32m'./components/Viewer3D'[39m[33m;[39m[0m
+
+`ssr: false` is not allowed with `next/dynamic` in Server Components. Please move it into a Client Component.
+
+Import traces:
+  Server Component:
+    ./src/features/viewer3d/index.ts
+    ./src/app/(admin)/admin/3d-assets/page.tsx
+
+  App Route:
+    ./src/features/viewer3d/index.ts
+    ./src/app/api/databases/schema/handler.ts
+    ./src/app/api/databases/schema/route.ts
+
+  Client Component Browser:
+    ./src/features/viewer3d/index.ts [Client Component Browser]
+    ./src/features/cms/components/page-builder/shared-fields.tsx [Client Component Browser]
+    ./src/features/cms/components/page-builder/theme/ThemeColorsSection.tsx [Client Component Browser]
+    ./src/features/cms/components/page-builder/ThemeSettingsPanel.tsx [Client Component Browser]
+    ./src/features/cms/components/page-builder/PageBuilderLeftPanel.tsx [Client Component Browser]
+    ./src/features/cms/components/page-builder/PageBuilderLayout.tsx [Client Component Browser]
+    ./src/features/cms/pages/builder/PageBuilderPage.tsx [Client Component Browser]
+    ./src/features/cms/pages/builder/PageBuilderPage.tsx [Server Component]
+    ./src/features/cms/index.ts [Server Component]
+    ./src/app/(admin)/admin/cms/zones/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/features/viewer3d/index.ts [Client Component SSR]
+    ./src/features/cms/components/page-builder/shared-fields.tsx [Client Component SSR]
+    ./src/features/cms/components/page-builder/theme/ThemeColorsSection.tsx [Client Component SSR]
+    ./src/features/cms/components/page-builder/ThemeSettingsPanel.tsx [Client Component SSR]
+    ./src/features/cms/components/page-builder/PageBuilderLeftPanel.tsx [Client Component SSR]
+    ./src/features/cms/components/page-builder/PageBuilderLayout.tsx [Client Component SSR]
+    ./src/features/cms/pages/builder/PageBuilderPage.tsx [Client Component SSR]
+    ./src/features/cms/pages/builder/PageBuilderPage.tsx [Server Component]
+    ./src/features/cms/index.ts [Server Component]
+    ./src/app/(admin)/admin/cms/zones/page.tsx [Server Component]
+
+
+./src/shared/ui/templates/panels/usePanelState.ts:1:10
+Ecmascript file had an error
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m { useState[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m   |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m { [33mPanelState[39m[33m,[39m [33mUsePanelStateOptions[39m[33m,[39m [33mUsePanelStateReturn[39m } [36mfrom[39m [32m'@/shared/contracts/ui'[39m[33m;[39m
+ [90m 4 |[39m[0m
+
+You're importing a component that needs `useState`. This React Hook only works in a Client Component. To fix, mark the file (or its parent) with the `"use client"` directive.
+
+ Learn more: https://nextjs.org/docs/app/api-reference/directives/use-client
+
+
+
+Import traces:
+  #1 [App Route]:
+    ./src/shared/ui/templates/panels/usePanelState.ts
+    ./src/app/api/databases/schema/handler.ts
+    ./src/app/api/databases/schema/route.ts
+
+  #2 [Server Component]:
+    ./src/shared/ui/templates/panels/usePanelState.ts
+    ./src/shared/ui/templates/panels/index.ts
+    ./src/shared/ui/index.ts
+    ./src/features/products/pages/ProductPublicPage.tsx
+    ./src/app/(frontend)/products/[id]/page.tsx
+
+  #3 [App Route]:
+    ./src/shared/ui/templates/panels/usePanelState.ts
+    ./src/shared/ui/templates/panels/index.ts
+    ./src/shared/ui/index.ts
+    ./src/features/products/pages/ProductPublicPage.tsx
+    ./src/features/products/server.ts
+    ./src/app/api/ai-paths/db-update/handler.ts
+    ./src/app/api/ai-paths/db-update/route.ts
+
+  #4 [Client Component Browser]:
+    ./src/shared/ui/templates/panels/usePanelState.ts [Client Component Browser]
+    ./src/shared/ui/templates/panels/index.ts [Client Component Browser]
+    ./src/shared/ui/index.ts [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesSettingsPage.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesSettingsPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/features/notesapp/public.ts [App Route]
+    ./src/app/api/notes/themes/[id]/handler.ts [App Route]
+    ./src/app/api/notes/themes/[id]/route.ts [App Route]
+
+  #5 [Client Component SSR]:
+    ./src/shared/ui/templates/panels/usePanelState.ts [Client Component SSR]
+    ./src/shared/ui/templates/panels/index.ts [Client Component SSR]
+    ./src/shared/ui/index.ts [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesSettingsPage.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesSettingsPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/features/notesapp/public.ts [App Route]
+    ./src/app/api/notes/themes/[id]/handler.ts [App Route]
+    ./src/app/api/notes/themes/[id]/route.ts [App Route]
+
+  #6 [Instrumentation]:
+    ./src/shared/ui/templates/panels/usePanelState.ts
+    ./src/shared/ui/templates/panels/index.ts
+    ./src/shared/ui/index.ts
+    ./src/features/products/pages/ProductPublicPage.tsx
+    ./src/features/products/server.ts
+    ./src/features/integrations/services/tradera-listing-service.ts
+    ./src/features/integrations/workers/traderaRelistSchedulerQueue.ts
+    ./src/features/jobs/queue-init.ts
+    ./src/instrumentation-node.ts
+    ./src/instrumentation.ts
+
+
+./src/features/ai/ai-paths/hooks/database-node/useDatabaseQueryExecution.ts:2:1
+Export buildPresetQueryTemplate doesn't exist in target module
+[0m [90m  1 |[39m [36mimport[39m { useCallback[33m,[39m useState } [36mfrom[39m [32m'react'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  2 |[39m [36mimport[39m { 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  3 |[39m   renderTemplate[33m,[39m 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  4 |[39m   safeParseJson[33m,[39m 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  5 |[39m   dbApi[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  6 |[39m   buildPresetQueryTemplate[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  7 |[39m } [36mfrom[39m [32m'@/shared/lib/ai-paths'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m [36mimport[39m type { 
+ [90m  9 |[39m   [33mDatabaseAction[39m[33m,[39m 
+ [90m 10 |[39m   [33mDatabaseConfig[39m[33m,[39m [0m
+
+The export buildPresetQueryTemplate was not found in module [project]/src/shared/lib/ai-paths/index.ts [app-client] (ecmascript).
+Did you mean to import buildRegexTemplatesStore?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  App Route:
+    ./src/features/ai/ai-paths/hooks/database-node/useDatabaseQueryExecution.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  Client Component Browser:
+    ./src/features/ai/ai-paths/hooks/database-node/useDatabaseQueryExecution.ts [Client Component Browser]
+    ./src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts [Client Component Browser]
+    ./src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/components/NodeConfigurationSections.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/components/node-config-dialog.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsDialogs.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/components/AiPathsSettings.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx [Server Component]
+    ./src/app/(admin)/admin/ai-paths/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/features/ai/ai-paths/hooks/database-node/useDatabaseQueryExecution.ts [Client Component SSR]
+    ./src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts [Client Component SSR]
+    ./src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/components/NodeConfigurationSections.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/components/node-config-dialog.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsDialogs.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/components/AiPathsSettings.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx [Server Component]
+    ./src/app/(admin)/admin/ai-paths/page.tsx [Server Component]
+
+
+./src/features/ai/ai-paths/hooks/database-node/useDatabaseQueryExecution.ts:2:1
+Export buildPresetQueryTemplate doesn't exist in target module
+[0m [90m  1 |[39m [36mimport[39m { useCallback[33m,[39m useState } [36mfrom[39m [32m'react'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  2 |[39m [36mimport[39m { 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  3 |[39m   renderTemplate[33m,[39m 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  4 |[39m   safeParseJson[33m,[39m 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  5 |[39m   dbApi[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  6 |[39m   buildPresetQueryTemplate[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  7 |[39m } [36mfrom[39m [32m'@/shared/lib/ai-paths'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m [36mimport[39m type { 
+ [90m  9 |[39m   [33mDatabaseAction[39m[33m,[39m 
+ [90m 10 |[39m   [33mDatabaseConfig[39m[33m,[39m [0m
+
+The export buildPresetQueryTemplate was not found in module [project]/src/shared/lib/ai-paths/index.ts [app-ssr] (ecmascript).
+Did you mean to import buildRegexTemplatesStore?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  App Route:
+    ./src/features/ai/ai-paths/hooks/database-node/useDatabaseQueryExecution.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  Client Component Browser:
+    ./src/features/ai/ai-paths/hooks/database-node/useDatabaseQueryExecution.ts [Client Component Browser]
+    ./src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts [Client Component Browser]
+    ./src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/components/NodeConfigurationSections.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/components/node-config-dialog.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsDialogs.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/components/AiPathsSettings.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx [Client Component Browser]
+    ./src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx [Server Component]
+    ./src/app/(admin)/admin/ai-paths/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/features/ai/ai-paths/hooks/database-node/useDatabaseQueryExecution.ts [Client Component SSR]
+    ./src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts [Client Component SSR]
+    ./src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/components/NodeConfigurationSections.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/components/node-config-dialog.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsDialogs.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/components/AiPathsSettings.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx [Client Component SSR]
+    ./src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx [Server Component]
+    ./src/app/(admin)/admin/ai-paths/page.tsx [Server Component]
+
+
+./src/features/ai/agent-runtime/tools/segments/tool-context.ts:12:1
+Export resolveIgnoreRobotsTxt doesn't exist in target module
+[0m [90m 10 |[39m   createBrowserContext[33m,[39m
+ [90m 11 |[39m } [36mfrom[39m [32m'../playwright/browser'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 12 |[39m [36mimport[39m { 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 13 |[39m   extractTargetUrl[33m,[39m 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 14 |[39m   getTargetHostname[33m,[39m 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 15 |[39m   resolveIgnoreRobotsTxt 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 16 |[39m } [36mfrom[39m [32m'../utils'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 17 |[39m [36mimport[39m { type [33mAgentToolRequest[39m } [36mfrom[39m [32m'./types'[39m[33m;[39m
+ [90m 18 |[39m
+ [90m 19 |[39m [36mexport[39m [36masync[39m [36mfunction[39m resolveToolContext(input[33m:[39m {[0m
+
+The export resolveIgnoreRobotsTxt was not found in module [project]/src/features/ai/agent-runtime/tools/utils.ts [app-route] (ecmascript).
+Did you mean to import loadRobotsTxt?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  #1 [App Route]:
+    ./src/features/ai/agent-runtime/tools/segments/tool-context.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  #2 [App Route]:
+    ./src/features/ai/agent-runtime/tools/segments/tool-context.ts
+    ./src/features/ai/agent-runtime/tools/segments/tool-execution.ts
+    ./src/features/ai/agent-runtime/core/engine.ts
+    ./src/features/ai/agent-runtime/server.ts
+    ./src/features/ai/agentcreator/api/agent/[runId]/controls/route.ts
+    ./src/features/ai/agentcreator/server.ts
+    ./src/app/api/chatbot/agent/[runId]/[action]/route.ts
+
+  #3 [Instrumentation]:
+    ./src/features/ai/agent-runtime/tools/segments/tool-context.ts
+    ./src/features/ai/agent-runtime/tools/segments/tool-execution.ts
+    ./src/features/ai/agent-runtime/core/engine.ts
+    ./src/features/ai/agent-runtime/workers/agent-processor.ts
+    ./src/features/ai/agent-runtime/workers/agentQueue.ts
+    ./src/features/jobs/queue-init.ts
+    ./src/instrumentation-node.ts
+    ./src/instrumentation.ts
+
+
+./src/features/ai/agent-runtime/tools/segments/tool-context.ts:12:1
+Export resolveIgnoreRobotsTxt doesn't exist in target module
+[0m [90m 10 |[39m   createBrowserContext[33m,[39m
+ [90m 11 |[39m } [36mfrom[39m [32m'../playwright/browser'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 12 |[39m [36mimport[39m { 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 13 |[39m   extractTargetUrl[33m,[39m 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 14 |[39m   getTargetHostname[33m,[39m 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 15 |[39m   resolveIgnoreRobotsTxt 
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 16 |[39m } [36mfrom[39m [32m'../utils'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 17 |[39m [36mimport[39m { type [33mAgentToolRequest[39m } [36mfrom[39m [32m'./types'[39m[33m;[39m
+ [90m 18 |[39m
+ [90m 19 |[39m [36mexport[39m [36masync[39m [36mfunction[39m resolveToolContext(input[33m:[39m {[0m
+
+The export resolveIgnoreRobotsTxt was not found in module [project]/src/features/ai/agent-runtime/tools/utils.ts [instrumentation] (ecmascript).
+Did you mean to import loadRobotsTxt?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  #1 [App Route]:
+    ./src/features/ai/agent-runtime/tools/segments/tool-context.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  #2 [App Route]:
+    ./src/features/ai/agent-runtime/tools/segments/tool-context.ts
+    ./src/features/ai/agent-runtime/tools/segments/tool-execution.ts
+    ./src/features/ai/agent-runtime/core/engine.ts
+    ./src/features/ai/agent-runtime/server.ts
+    ./src/features/ai/agentcreator/api/agent/[runId]/controls/route.ts
+    ./src/features/ai/agentcreator/server.ts
+    ./src/app/api/chatbot/agent/[runId]/[action]/route.ts
+
+  #3 [Instrumentation]:
+    ./src/features/ai/agent-runtime/tools/segments/tool-context.ts
+    ./src/features/ai/agent-runtime/tools/segments/tool-execution.ts
+    ./src/features/ai/agent-runtime/core/engine.ts
+    ./src/features/ai/agent-runtime/workers/agent-processor.ts
+    ./src/features/ai/agent-runtime/workers/agentQueue.ts
+    ./src/features/jobs/queue-init.ts
+    ./src/instrumentation-node.ts
+    ./src/instrumentation.ts
+
+
+./src/features/ai/agent-runtime/execution/step-runner.ts:31:1
+Export runAgentBrowserControl doesn't exist in target module
+[0m [90m 29 |[39m   isExtractionStep[33m,[39m
+ [90m 30 |[39m } [36mfrom[39m [32m'@/features/ai/agent-runtime/planning/utils'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 31 |[39m [36mimport[39m { runAgentBrowserControl[33m,[39m runAgentTool } [36mfrom[39m [32m'@/features/ai/agent-runtime/tools'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 32 |[39m [36mimport[39m type {
+ [90m 33 |[39m   [33mAgentExecutionContext[39m[33m,[39m
+ [90m 34 |[39m   [33mPlanStep[39m[33m,[39m[0m
+
+The export runAgentBrowserControl was not found in module [project]/src/features/ai/agent-runtime/tools/index.ts [app-route] (ecmascript).
+Did you mean to import runAgentTool?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  #1 [App Route]:
+    ./src/features/ai/agent-runtime/execution/step-runner.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  #2 [App Route]:
+    ./src/features/ai/agent-runtime/execution/step-runner.ts
+    ./src/features/ai/agent-runtime/core/engine.ts
+    ./src/features/ai/agent-runtime/server.ts
+    ./src/features/ai/agentcreator/api/agent/route.ts
+    ./src/app/api/chatbot/agent/route.ts
+
+  #3 [Instrumentation]:
+    ./src/features/ai/agent-runtime/execution/step-runner.ts
+    ./src/features/ai/agent-runtime/core/engine.ts
+    ./src/features/ai/agent-runtime/workers/agent-processor.ts
+    ./src/features/ai/agent-runtime/workers/agentQueue.ts
+    ./src/features/jobs/queue-init.ts
+    ./src/instrumentation-node.ts
+    ./src/instrumentation.ts
+
+
+./src/features/ai/agent-runtime/execution/step-runner.ts:31:1
+Export runAgentBrowserControl doesn't exist in target module
+[0m [90m 29 |[39m   isExtractionStep[33m,[39m
+ [90m 30 |[39m } [36mfrom[39m [32m'@/features/ai/agent-runtime/planning/utils'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 31 |[39m [36mimport[39m { runAgentBrowserControl[33m,[39m runAgentTool } [36mfrom[39m [32m'@/features/ai/agent-runtime/tools'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 32 |[39m [36mimport[39m type {
+ [90m 33 |[39m   [33mAgentExecutionContext[39m[33m,[39m
+ [90m 34 |[39m   [33mPlanStep[39m[33m,[39m[0m
+
+The export runAgentBrowserControl was not found in module [project]/src/features/ai/agent-runtime/tools/index.ts [instrumentation] (ecmascript).
+Did you mean to import runAgentTool?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  #1 [App Route]:
+    ./src/features/ai/agent-runtime/execution/step-runner.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts
+    ./src/app/api/image-studio/projects/[projectId]/assets/import/route.ts
+
+  #2 [App Route]:
+    ./src/features/ai/agent-runtime/execution/step-runner.ts
+    ./src/features/ai/agent-runtime/core/engine.ts
+    ./src/features/ai/agent-runtime/server.ts
+    ./src/features/ai/agentcreator/api/agent/route.ts
+    ./src/app/api/chatbot/agent/route.ts
+
+  #3 [Instrumentation]:
+    ./src/features/ai/agent-runtime/execution/step-runner.ts
+    ./src/features/ai/agent-runtime/core/engine.ts
+    ./src/features/ai/agent-runtime/workers/agent-processor.ts
+    ./src/features/ai/agent-runtime/workers/agentQueue.ts
+    ./src/features/jobs/queue-init.ts
+    ./src/instrumentation-node.ts
+    ./src/instrumentation.ts
+
+
+./src/features/ai/agentcreator/api/agent/[runId]/controls/route.ts:3:1
+Export runAgentBrowserControl doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNextResponse[39m } [36mfrom[39m [32m'next/server'[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { runAgentBrowserControl } [36mfrom[39m [32m'@/features/ai/agent-runtime/server'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m [36mimport[39m { [33mErrorSystem[39m } [36mfrom[39m [32m'@/shared/utils/observability/error-system'[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { badRequestError[33m,[39m internalError } [36mfrom[39m [32m'@/shared/errors/app-error'[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m {[0m
+
+The export runAgentBrowserControl was not found in module [project]/src/features/ai/agent-runtime/server.ts [app-route] (ecmascript).
+Did you mean to import runAgentTool?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  #1 [App Route]:
+    ./src/features/ai/agentcreator/api/agent/[runId]/controls/route.ts
+    ./src/app/api/agentcreator/agent/[runId]/controls/route.ts
+
+  #2 [App Route]:
+    ./src/features/ai/agentcreator/api/agent/[runId]/controls/route.ts
+    ./src/app/api/databases/schema/handler.ts
+    ./src/app/api/databases/schema/route.ts
+
+  #3 [App Route]:
+    ./src/features/ai/agentcreator/api/agent/[runId]/controls/route.ts
+    ./src/features/ai/agentcreator/server.ts
+    ./src/app/api/chatbot/agent/[runId]/[action]/route.ts
+
+
+    at <unknown> (./src/features/viewer3d/index.ts:6:25)
+    at <unknown> (./src/shared/ui/templates/panels/usePanelState.ts:1:10)
+    at <unknown> (./src/features/ai/ai-paths/hooks/database-node/useDatabaseQueryExecution.ts:2:1)
+    at <unknown> (./src/features/ai/ai-paths/hooks/database-node/useDatabaseQueryExecution.ts:2:1)
+    at <unknown> (./src/features/ai/agent-runtime/tools/segments/tool-context.ts:12:1)
+    at <unknown> (./src/features/ai/agent-runtime/tools/segments/tool-context.ts:12:1)
+    at <unknown> (./src/features/ai/agent-runtime/execution/step-runner.ts:31:1)
+    at <unknown> (./src/features/ai/agent-runtime/execution/step-runner.ts:31:1)
+    at <unknown> (./src/features/ai/agentcreator/api/agent/[runId]/controls/route.ts:3:1)

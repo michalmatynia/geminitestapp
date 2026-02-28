@@ -9,8 +9,9 @@ import {
   type ImageStudioAutoScalePlan,
   type ImageStudioDetectionCandidateSummary,
   type ImageStudioDetectionDetails,
-  type ImageStudioObjectAnalysisResult,
+  type ImageStudioAnalysisResult,
   type NormalizedImageStudioAnalysisLayoutConfig,
+  type ImageStudioAutoScaleAnalysis,
 } from '@/features/ai/image-studio/analysis/shared';
 import type { ImageStudioAutoScalerMode } from '@/shared/contracts/image-studio';
 import {
@@ -40,8 +41,8 @@ export type ImageStudioAutoScalerResult = {
   fallbackApplied: boolean;
   scale: number;
   layout: NormalizedImageStudioAnalysisLayoutConfig;
-  whitespaceBefore: ImageStudioObjectAnalysisResult['whitespace'];
-  whitespaceAfter: ImageStudioObjectAnalysisResult['whitespace'];
+  whitespaceBefore: ImageStudioAnalysisResult['whitespace'];
+  whitespaceAfter: ImageStudioAnalysisResult['whitespace'];
   objectAreaPercentBefore: number;
   objectAreaPercentAfter: number;
 };
@@ -57,7 +58,7 @@ export type ImageStudioAnalysisSummary = {
   policyReason: string;
   fallbackApplied: boolean;
   candidateDetections: ImageStudioDetectionCandidateSummary;
-  whitespace: ImageStudioObjectAnalysisResult['whitespace'];
+  whitespace: ImageStudioAnalysisResult['whitespace'];
   objectAreaPercent: number;
   layout: NormalizedImageStudioAnalysisLayoutConfig;
   suggestedPlan: ImageStudioAutoScalePlan;
@@ -158,7 +159,7 @@ export async function analyzeImageByAutoScalerLayout(
   const height = info.height ?? 0;
   ensureValidDimensions(width, height);
 
-  const analysis = analyzeImageObjectFromRgba({
+  const analysis: ImageStudioAnalysisResult | null = analyzeImageObjectFromRgba({
     pixelData: data,
     width,
     height,
@@ -169,7 +170,7 @@ export async function analyzeImageByAutoScalerLayout(
     throw new Error('No visible object pixels were detected to auto scale.');
   }
 
-  const planned = analyzeAndPlanAutoScaleFromRgba({
+  const planned: ImageStudioAutoScaleAnalysis | null = analyzeAndPlanAutoScaleFromRgba({
     pixelData: data,
     width,
     height,
@@ -211,7 +212,7 @@ export async function autoScaleObjectByAnalysis(
   const sourceHeight = info.height ?? 0;
   ensureValidDimensions(sourceWidth, sourceHeight);
 
-  const planned = analyzeAndPlanAutoScaleFromRgba({
+  const planned: ImageStudioAutoScaleAnalysis | null = analyzeAndPlanAutoScaleFromRgba({
     pixelData: data,
     width: sourceWidth,
     height: sourceHeight,

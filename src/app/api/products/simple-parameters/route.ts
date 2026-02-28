@@ -1,16 +1,15 @@
 export const runtime = 'nodejs';
-export const revalidate = 300;
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { GET_handler, POST_handler, productSimpleParameterCreateSchema } from './handler';
+import { GET_products_metadata_handler, POST_products_metadata_handler } from '../../v2/products/metadata/handler';
 
-export const GET = apiHandler(GET_handler, {
-  source: 'products.simple-parameters.GET',
-});
+export const GET = apiHandler(
+  (req, ctx) => GET_products_metadata_handler(req, ctx, { type: 'simple-parameters' }), 
+  { source: 'products.simple-parameters.GET' }
+);
 
-export const POST = apiHandler(POST_handler, {
-  source: 'products.simple-parameters.POST',
-  parseJsonBody: true,
-  bodySchema: productSimpleParameterCreateSchema,
-});
+export const POST = apiHandler(
+  (req, ctx) => POST_products_metadata_handler(req, ctx, { type: 'simple-parameters' }), 
+  { source: 'products.simple-parameters.POST' }
+);

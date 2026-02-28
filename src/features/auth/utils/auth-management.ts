@@ -1,8 +1,8 @@
 import { AUTH_SETTINGS_KEYS } from '@/shared/lib/auth/constants';
-import type { AuthPermission, AuthRole } from '@/shared/contracts/auth';
+import type { AuthPermission, AuthRole, AuthUserRoleMap } from '@/shared/contracts/auth';
 
 export { AUTH_SETTINGS_KEYS };
-export type { AuthPermission, AuthRole };
+export type { AuthPermission, AuthRole, AuthUserRoleMap };
 
 export const DEFAULT_AUTH_PERMISSIONS: AuthPermission[] = [
   {

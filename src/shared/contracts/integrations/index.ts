@@ -8,10 +8,22 @@ export type { ImportTemplateParameterImport as BaseImportParameterImportSettings
 
 import { z } from 'zod';
 import { namedDtoSchema } from '../base';
-import { productListingSchema, productListingExportEventSchema, type ProductListing, type ProductListingExportEvent, type CreateProductListing, type ProductListingWithDetails } from './listings';
-import { integrationSchema, type Integration } from './base';
-import { integrationConnectionSchema, type IntegrationConnection } from './connections';
-import { baseImportPreflightIssueSchema } from './base-com';
+import { productListingSchema, type ProductListing, type ProductListingExportEvent, type CreateProductListing, type ProductListingWithDetails, type ListingAttempt } from './listings';
+import { type Integration, type ImageTransformOptions, type ImageRetryPreset } from './base';
+import { type IntegrationConnection } from './connections';
+import { type TemplateMapping, type Template } from './templates';
+import {
+  baseImportPreflightIssueSchema,
+  type BaseImportItemStatus,
+  type BaseImportItemAction,
+  type BaseImportErrorCode,
+  type BaseImportErrorClass,
+  type BaseImportParameterImportSummary,
+  type BaseImportRunRecord,
+  type BaseImportRunStatus,
+  type BaseImportPreflight,
+} from './base-com';
+import type { ImportTemplateParameterImport } from '../data-import-export';
 
 /**
  * Session DTOs
@@ -72,6 +84,68 @@ export const capturedLogSchema = z.object({
 });
 
 export type CapturedLog = z.infer<typeof capturedLogSchema>;
+
+/**
+ * Connection Testing DTOs
+ */
+
+export type TestStatus = 'pending' | 'ok' | 'failed';
+
+export type TestLogEntry = {
+  step: string;
+  status: TestStatus;
+  timestamp: string;
+  detail?: string;
+};
+
+export type TestConnectionResponse = {
+  ok: boolean;
+  steps: TestLogEntry[];
+  inventoryCount?: number;
+  profile?: Record<string, unknown>;
+  [key: string]: unknown;
+};
+
+/**
+ * Parameter Import DTOs
+ */
+
+export type ExtractedBaseParameter = {
+  baseParameterId: string | null;
+  namesByLanguage: Record<string, string>;
+  valuesByLanguage: Record<string, string>;
+};
+
+export type BaseParameterImportSummary = {
+  extracted: number;
+  resolved: number;
+  created: number;
+  written: number;
+};
+
+export type ApplyBaseParameterImportInput = {
+  settings: ImportTemplateParameterImport;
+  record: Record<string, unknown>;
+  templateMappings: Array<{ sourceKey: string; targetField: string }>;
+  existingValues: any[];
+  catalogId: string;
+  catalogLanguageCodes: string[];
+  defaultLanguageCode?: string | null;
+  connectionId?: string | null;
+  inventoryId?: string | null;
+  prefetchedParameters?: any[] | null;
+  prefetchedLinks?: Record<string, string> | null;
+  parameterRepository: {
+    listParameters: (input: { catalogId: string }) => Promise<any[]>;
+    createParameter: (input: any) => Promise<any>;
+  };
+};
+
+export type ApplyBaseParameterImportResult = {
+  applied: boolean;
+  parameters: any[];
+  summary: any;
+};
 
 /**
  * Integration Domain DTOs
@@ -459,8 +533,6 @@ export type BaseImportStartResponse = {
   queueJobId: string | null;
   summaryMessage: string | null;
 };
-
-import type { ImportTemplateParameterImport } from '../data-import-export';
 
 export const defaultBaseImportParameterImportSettings: ImportTemplateParameterImport = {
   enabled: false,

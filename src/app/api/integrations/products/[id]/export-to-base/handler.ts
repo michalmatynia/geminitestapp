@@ -32,15 +32,18 @@ import {
   BASE_EXPORT_RUN_PATH_ID,
   BASE_EXPORT_RUN_PATH_NAME,
   BASE_EXPORT_SOURCE,
-  buildImageDiagnosticsLogger,
   clearExpiredExportRequestLocks,
-  exportSchema,
   inFlightExportRequests,
-  isBaseImageError,
-  logImageDiagnostics,
-  prepareBaseExportMappingsAndProduct,
-  resolveWarehouseAndStockMappings,
+  exportSchema,
+  type BaseExportRequestData,
 } from './helpers';
+import {
+  isBaseImageError,
+  buildImageDiagnosticsLogger,
+  logImageDiagnostics,
+} from './segments/images';
+import { prepareBaseExportMappingsAndProduct } from './segments/preparation';
+import { resolveWarehouseAndStockMappings } from './segments/stock';
 
 /**
  * POST /api/integrations/products/[id]/export-to-base
@@ -77,7 +80,7 @@ export async function postExportToBaseHandler(
       logCapture.stop();
       return parsed.response;
     }
-    const data = parsed.data;
+    const data: BaseExportRequestData = parsed.data;
     const requestId =
       _req.headers.get('idempotency-key') ??
       _req.headers.get('x-idempotency-key') ??
@@ -525,7 +528,7 @@ export async function postExportToBaseHandler(
         token,
         targetInventoryId,
         exportProduct,
-        effectiveMappings,
+        effectiveMappings as any,
         warehouseId,
         {
           imageBaseUrl,
@@ -569,7 +572,7 @@ export async function postExportToBaseHandler(
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
-        (mapping) => !mapping['sourceKey'].trim().toLowerCase().startsWith('stock')
+        (mapping: Record<string, any>) => !String(mapping['sourceKey'] ?? '').trim().toLowerCase().startsWith('stock')
       );
       includeStockWithoutWarehouse = false;
       ({ exportFields } = await buildExportSnapshot(
@@ -581,7 +584,7 @@ export async function postExportToBaseHandler(
         token,
         targetInventoryId,
         exportProduct,
-        effectiveMappings,
+        effectiveMappings as any,
         warehouseId,
         {
           imageBaseUrl,
@@ -622,7 +625,7 @@ export async function postExportToBaseHandler(
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
-        (mapping) => !mapping['sourceKey'].trim().toLowerCase().startsWith('stock')
+        (mapping: Record<string, any>) => !String(mapping['sourceKey'] ?? '').trim().toLowerCase().startsWith('stock')
       );
       includeStockWithoutWarehouse = false;
       ({ exportFields } = await buildExportSnapshot(
@@ -634,7 +637,7 @@ export async function postExportToBaseHandler(
         token,
         targetInventoryId,
         exportProduct,
-        effectiveMappings,
+        effectiveMappings as any,
         warehouseId,
         {
           imageBaseUrl,
@@ -715,7 +718,7 @@ export async function postExportToBaseHandler(
               token,
               targetInventoryId,
               exportProduct,
-              effectiveMappings,
+              effectiveMappings as any,
               warehouseId,
               {
                 imageBaseUrl,
@@ -759,7 +762,7 @@ export async function postExportToBaseHandler(
               token,
               targetInventoryId,
               exportProduct,
-              effectiveMappings,
+              effectiveMappings as any,
               warehouseId,
               {
                 imageBaseUrl,

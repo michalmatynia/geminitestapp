@@ -1,10 +1,15 @@
 export const runtime = 'nodejs';
-export const revalidate = 600;
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { getPriceGroupsHandler, postPriceGroupsHandler } from './handler';
+import { GET_products_metadata_handler, POST_products_metadata_handler } from '../v2/products/metadata/handler';
 
-export const GET = apiHandler(getPriceGroupsHandler, { source: 'price-groups.GET' });
+export const GET = apiHandler(
+  (req, ctx) => GET_products_metadata_handler(req, ctx, { type: 'price-groups' }), 
+  { source: 'price-groups.GET' }
+);
 
-export const POST = apiHandler(postPriceGroupsHandler, { source: 'price-groups.POST' });
+export const POST = apiHandler(
+  (req, ctx) => POST_products_metadata_handler(req, ctx, { type: 'price-groups' }), 
+  { source: 'price-groups.POST' }
+);

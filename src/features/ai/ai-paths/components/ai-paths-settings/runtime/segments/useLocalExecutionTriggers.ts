@@ -461,7 +461,7 @@ export function useLocalExecutionTriggers(
           source: 'local',
           kind: 'run_warning',
           level: 'warn',
-          timestamp: new Date().toISOString(),
+          timestamp,
           message: warningMessage,
           nodeId: triggerNode.id,
           nodeType: triggerNode.type,
@@ -839,6 +839,7 @@ export function useLocalExecutionTriggers(
   );
 
   return {
+    runGraphForTrigger,
     handleLocalRun,
     handleLocalStep,
     handleCancelLocalRun,

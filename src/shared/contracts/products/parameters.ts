@@ -44,11 +44,26 @@ export type ProductParameterUpdateInput = UpdateProductParameterDto;
  */
 export const productSimpleParameterSchema = z.object({
   id: z.string(),
-  label: z.string(),
-  type: productParameterSelectorTypeSchema,
+  label: z.string().optional(),
+  type: productParameterSelectorTypeSchema.optional(),
   options: z.array(z.string()).optional(),
   defaultValue: z.string().optional(),
+  catalogId: z.string().optional(),
+  name: z.string().optional(),
+  name_en: z.string().nullable().optional(),
+  name_pl: z.string().nullable().optional(),
+  name_de: z.string().nullable().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type ProductSimpleParameterDto = z.infer<typeof productSimpleParameterSchema>;
 export type ProductSimpleParameter = ProductSimpleParameterDto;
+
+export const productSimpleParameterValueSchema = z.object({
+  parameterId: z.string(),
+  value: z.string(),
+});
+
+export type ProductSimpleParameterValueDto = z.infer<typeof productSimpleParameterValueSchema>;
+export type ProductSimpleParameterValue = ProductSimpleParameterValueDto;

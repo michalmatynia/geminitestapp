@@ -1,4 +1,4 @@
-'use client';
+
 
 export { PanelHeader } from './PanelHeader';
 export { PanelFilters } from './PanelFilters';

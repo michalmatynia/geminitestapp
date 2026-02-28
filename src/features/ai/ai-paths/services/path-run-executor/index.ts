@@ -2,11 +2,11 @@ import 'server-only';
 
 import {
   cloneJsonSafe,
-  migrateTriggerToFetcherGraph,
   normalizeNodes,
   sanitizeEdges,
 } from '@/shared/lib/ai-paths';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
+import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
 import {
@@ -20,7 +20,6 @@ import {
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
-  AiNode,
   AiPathRunNodeRecord,
   AiPathRunRecord,
   AiPathRunStatus,
@@ -35,7 +34,6 @@ import {
   EMPTY_RUNTIME_STATE,
   INTERMEDIATE_SAVE_INTERVAL_MS,
   LOG_NODE_START_EVENTS,
-  TERMINAL_RUN_STATUSES,
   UPDATE_ELIGIBLE_RUN_STATUSES,
   extractNodeErrorOutputs,
   isMissingRunUpdateError,
@@ -79,20 +77,24 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const runAbortController = new AbortController();
   const cancellationPollIntervalMs = resolveCancellationPollIntervalMs();
 
+  let dbRunMissing = false;
   const monitor = createCancellationMonitor({
     runId: run.id,
     repo,
     abortController: runAbortController,
     pollIntervalMs: cancellationPollIntervalMs,
+    onMissingRun: () => {
+      dbRunMissing = true;
+    },
   });
 
   const updateRunSnapshot = async (
-    data: Partial<Pick<AiPathRunRecord, 'status' | 'runtimeState' | 'meta' | 'error' | 'errorCode'>>
+    data: Partial<Pick<AiPathRunRecord, 'status' | 'runtimeState' | 'meta' | 'error'>>
   ): Promise<boolean> => {
     try {
       const updated = await repo.updateRunIfStatus(run.id, UPDATE_ELIGIBLE_RUN_STATUSES, data);
       if (updated) {
-        publishRunUpdate(run.id, data);
+        publishRunUpdate(run.id, 'run', data);
       }
       return updated;
     } catch (error) {
@@ -110,9 +112,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const profiling = createPathRunProfiling();
   let runtimeProfileSummary: RuntimeProfileSummaryDto | null = null;
 
-  const nodes = normalizeNodes(run.nodes ?? []);
-  const edges = sanitizeEdges(run.edges ?? []);
-  const triggerNodeId = resolveTriggerNodeId(run, nodes);
+  const nodes = normalizeNodes(run.graph?.nodes ?? []);
+  const edges = sanitizeEdges(nodes, run.graph?.edges ?? []);
+  const triggerNodeId = resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
   const runtimeState = parseRuntimeState(run.runtimeState);
 
   const accInputs: Record<string, RuntimePortValues> = mergeRuntimePortMaps(
@@ -234,7 +236,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       traceId,
     });
 
-    const { validationConfig, strictFlowMode, nodeValidationEnabled } = preflight;
+    const { strictFlowMode, nodeValidationEnabled } = preflight;
 
     const cancelledBeforeExecution = await monitor.start();
     if (cancelledBeforeExecution) {
@@ -242,7 +244,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     }
 
     let runtimeHaltReason: 'step_limit' | 'completed' | 'cancelled' | 'blocked' | null = null;
-    const resultState = await evaluateGraphWithIteratorAutoContinue({
+    await evaluateGraphWithIteratorAutoContinue({
       nodes,
       edges,
       activePathId: run.pathId ?? null,
@@ -357,8 +359,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           const attempt = nodeAttemptMap.get(node.id) ?? 1;
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
           const finishedAt = new Date().toISOString();
-          const rawStatus = nextOutputs['status'] as string | undefined;
-          const status = (cached ? 'cached' : toRuntimeLifecycleStatus(rawStatus)) ?? 'completed';
+          const rawStatus = nextOutputs['status'] as AiPathRunStatus | undefined;
+          const status = (cached ? 'cached' : (rawStatus != null ? toRuntimeLifecycleStatus(rawStatus) : null)) ?? 'completed';
 
           profiling.finalizeRuntimeNodeSpan({
             spanId: nodeSpanId,
@@ -406,10 +408,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             throttledSaveIntermediateState(),
           ];
           await Promise.all(tasks);
-          void recordRuntimeNodeStatus(run.id, node.id, status, {
-            cached,
-            durationMs: computeDurationMs(finishedAt, finishedAt), // placeholder
-          }).catch(() => {});
+          void recordRuntimeNodeStatus({ runId: run.id, nodeId: node.id, status }).catch(() => {});
         } catch (error) {
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeFinish' });
         }
@@ -417,7 +416,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       onNodeError: async ({
         node,
         nodeInputs,
-        prevOutputs,
         error,
         iteration,
         runStartedAt: cbRunStartedAt,
@@ -437,7 +435,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           });
 
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
-          const errorOutputs = extractNodeErrorOutputs(error, prevOutputs);
+          const errorOutputs = extractNodeErrorOutputs(error);
           accInputs[node.id] = safeInputs;
           accOutputs[node.id] = {
             ...(accOutputs[node.id] ?? {}),
@@ -469,9 +467,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             throttledSaveIntermediateState(),
           ];
           await Promise.all(tasks);
-          void recordRuntimeNodeStatus(run.id, node.id, 'failed', {
-            error: message,
-          }).catch(() => {});
+          void recordRuntimeNodeStatus({ runId: run.id, nodeId: node.id, status: 'failed' }).catch(() => {});
         } catch (error) {
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeError' });
         }
@@ -479,7 +475,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       control: {
         mode: 'run',
         signal: runAbortController.signal,
-        onHalt: (halt) => {
+        onHalt: (halt: { reason: 'step_limit' | 'completed' | 'cancelled' | 'blocked' }) => {
           runtimeHaltReason = halt.reason;
         },
       },
@@ -496,18 +492,24 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     if (runtimeHaltReason === 'cancelled') {
       finalStatus = 'canceled';
     } else if (runtimeHaltReason === 'blocked') {
-      if (shouldFailBlockedRun(validationConfig, (run.meta as any)?.blockedRunPolicy)) {
+      if (shouldFailBlockedRun({
+        runBlocked: true,
+        blockedRunPolicy: ((run.meta as any)?.blockedRunPolicy as 'fail_run' | 'complete_with_warning') ?? 'complete_with_warning',
+        nodeValidationEnabled,
+      })) {
         finalStatus = 'failed';
         finalError = buildBlockedRunFailureMessage(
-          collectBlockedNodeDiagnostics(resultState, nodes)
+          collectBlockedNodeDiagnostics(nodes, accOutputs)
         );
       }
     }
 
     const profileSnapshot = buildRuntimeProfileSnapshot({
+      traceId,
+      eventCount: profiling.runtimeProfileHighlights.length,
+      sampledHighlights: profiling.runtimeProfileHighlights.map(toRuntimeProfileHighlight),
       summary: runtimeProfileSummary,
-      highlights: profiling.runtimeProfileHighlights.map(toRuntimeProfileHighlight),
-      spans: profiling.getRuntimeNodeSpansSnapshot(),
+      nodeSpans: profiling.getRuntimeNodeSpansSnapshot(),
     });
 
     const finalRuntimeState = await buildCurrentRuntimeStateSnapshot();
@@ -524,8 +526,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       },
     });
 
-    void recordRuntimeRunFinished(run.id, finalStatus, {
-      durationMs: computeDurationMs(runStartedAt, finishedAt),
+    void recordRuntimeRunFinished({
+      runId: run.id,
+      status: finalStatus as 'completed' | 'failed' | 'canceled' | 'dead_lettered',
+      durationMs: computeDurationMs(runStartedAt, finishedAt) ?? undefined,
     }).catch(() => {});
   } catch (error) {
     if (dbRunMissing) return;

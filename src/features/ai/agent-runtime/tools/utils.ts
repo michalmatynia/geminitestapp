@@ -221,3 +221,13 @@ export const buildEvidenceSnippets = (
   }
   return evidence;
 };
+
+export const resolveIgnoreRobotsTxt = (planState?: unknown): boolean => {
+  if (!planState) return false;
+  try {
+    const parsed = typeof planState === 'string' ? JSON.parse(planState) : planState;
+    return Boolean(parsed?.config?.ignoreRobotsTxt || parsed?.ignoreRobotsTxt);
+  } catch {
+    return false;
+  }
+};

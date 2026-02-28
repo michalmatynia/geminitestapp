@@ -68,5 +68,15 @@
     ".next-dev-perf5/types/**/*.ts",
     ".next-dev-perf5/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next", ".next-dev", "tmp"]
+  "exclude": [
+    "node_modules",
+    ".next",
+    ".next-dev",
+    "tmp",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
+  ]
 }

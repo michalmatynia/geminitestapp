@@ -1,22 +1,19 @@
 import { useCallback, useRef } from 'react';
 import {
   AI_PATHS_UI_STATE_KEY,
-  PATH_INDEX_KEY,
-  stableStringify,
 } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { 
+import {
   USER_PREFERENCES_STALE_MS,
   type AiPathsUiState,
   type AiPathsUserPreferences,
   type UseAiPathsPersistenceArgs,
 } from '../../useAiPathsPersistence.types';
-import type { PathMeta } from '@/shared/lib/ai-paths';
 
-import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
+import { fetchAiPathsSettingsCached, updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
 
 export function usePreferencePersistence(
-  args: UseAiPathsPersistenceArgs,
+  _args: UseAiPathsPersistenceArgs,
   core: { 
     enqueueSettingsWrite: <T>(operation: () => Promise<T>) => Promise<T>;
     stringifyForStorage: (value: unknown, label: string) => string;
@@ -28,12 +25,12 @@ export function usePreferencePersistence(
   const persistUiState = useCallback(
     async (uiState: AiPathsUiState): Promise<void> => {
       await core.enqueueSettingsWrite(async (): Promise<void> => {
-        await args.updateAiPathsSettingsMutation.mutateAsync([
+        await updateAiPathsSettingsBulk([
           { key: AI_PATHS_UI_STATE_KEY, value: JSON.stringify(uiState) },
         ]);
       });
     },
-    [args.updateAiPathsSettingsMutation, core.enqueueSettingsWrite]
+    [core.enqueueSettingsWrite]
   );
 
   const persistUserPreferences = useCallback(
@@ -43,12 +40,12 @@ export function usePreferencePersistence(
         updatedAt: new Date().toISOString(),
       };
       await core.enqueueSettingsWrite(async (): Promise<void> => {
-        await args.updateAiPathsSettingsMutation.mutateAsync([
+        await updateAiPathsSettingsBulk([
           { key: 'user_preferences', value: JSON.stringify(prefs) },
         ]);
       });
     },
-    [args.updateAiPathsSettingsMutation, core.enqueueSettingsWrite]
+    [core.enqueueSettingsWrite]
   );
 
   const persistActivePathPreference = useCallback(

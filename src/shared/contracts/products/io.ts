@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { localizedSchema } from '../base';
-import { productCurrencySchema, productParameterValueSchema, productSchema } from './product';
+import { productParameterValueSchema, productSchema } from './product';
 /**
  * Product Input Contracts (Modular/API)
  */

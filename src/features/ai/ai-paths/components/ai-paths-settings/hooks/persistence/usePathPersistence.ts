@@ -16,6 +16,7 @@ import {
   sanitizeEdges,
 } from '@/shared/lib/ai-paths';
 import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
+import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
 import {
   buildPersistedRuntimeState,
   sanitizePathConfig,
@@ -73,7 +74,7 @@ export function usePathPersistence(
       if (payloadKey === lastSettingsPayloadRef.current) return sanitizedConfig;
       const responses = await core.enqueueSettingsWrite(
         async (): Promise<Array<{ key: string; value: string }>> =>
-          await args.updateAiPathsSettingsMutation.mutateAsync([
+          await updateAiPathsSettingsBulk([
             { key: PATH_INDEX_KEY, value: core.stringifyForStorage(nextPaths, 'path index') },
             {
               key: `${PATH_CONFIG_PREFIX}${configId}`,
@@ -102,7 +103,7 @@ export function usePathPersistence(
       }
       return sanitizedConfig;
     },
-    [args.updateAiPathsSettingsMutation, core]
+    [core]
   );
 
   const persistRuntimePathState = useCallback(
@@ -112,12 +113,12 @@ export function usePathPersistence(
         `runtime path config (${configId})`
       );
       await core.enqueueSettingsWrite(async (): Promise<void> => {
-        await args.updateAiPathsSettingsMutation.mutateAsync([
+        await updateAiPathsSettingsBulk([
           { key: `${PATH_CONFIG_PREFIX}${configId}`, value: payload },
         ]);
       });
     },
-    [args.updateAiPathsSettingsMutation, core]
+    [core]
   );
 
   const buildNodesForAutoSave = useCallback(

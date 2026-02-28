@@ -1,4 +1,4 @@
-'use client';
+
 
 export { GenericPickerDropdown } from './GenericPickerDropdown';
 export { GenericGridPicker } from './GenericGridPicker';

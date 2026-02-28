@@ -498,7 +498,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
         if (type === 'base/test' && payload['inventoryCount'] !== undefined) {
           extraInfo = `\nInventories found: ${String(payload['inventoryCount'])}`;
         } else if (type === 'allegro/test' && payload.profile) {
-          const profile = payload.profile as Record<string, unknown>;
+          const profile = payload.profile;
           const login = (profile['login'] as string) ?? '';
           const name = (profile['name'] as string) ?? '';
           const identifier = name || login;
@@ -603,7 +603,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
           playwrightPersonaId,
           ...playwrightSettings,
           proxyPassword: playwrightSettings.proxyPassword,
-        } as Record<string, unknown>,
+        },
       });
       toast('Playwright settings saved.', { variant: 'success' });
     } catch (error: unknown) {

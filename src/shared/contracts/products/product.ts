@@ -5,7 +5,6 @@ import { catalogSchema } from './catalogs';
 import { productTagSchema } from './tags';
 import { producerSchema } from './producers';
 import { priceGroupSchema } from './catalogs';
-import { commonListQuerySchema } from '../../validations/api-schemas';
 
 export const productCurrencySchema = namedDtoSchema.extend({
   code: z.string(),

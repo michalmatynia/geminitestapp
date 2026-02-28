@@ -65,6 +65,7 @@ export type ImageStudioDetectionCandidate<TDetails> = {
   bounds: ImageStudioCenterObjectBounds;
   confidence: number;
   detectionDetails: TDetails | null;
+  details: TDetails | null;
 };
 
 export type ImageStudioDetectionCandidateScoreSummary = {

@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { dtoBaseSchema, namedDtoSchema, type DtoBase } from '../base';
 
 /**
  * Case Resolver Node Roles

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { dtoBaseSchema, namedDtoSchema } from '../base';
+import { namedDtoSchema } from '../base';
 
 /**
  * Image Processing Contracts

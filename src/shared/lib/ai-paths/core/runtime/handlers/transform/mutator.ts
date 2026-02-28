@@ -1,4 +1,4 @@
-import type { StringMutatorOperation } from '@/shared/contracts/ai-paths';
+import type { StringMutatorOperation } from '@/shared/contracts/ai-paths-core/nodes';
 import type {
   NodeHandler,
   NodeHandlerContext,
@@ -102,9 +102,9 @@ export const handleStringMutator: NodeHandler = ({
     switch (operation.type) {
       case 'trim': {
         const mode = operation.mode ?? 'both';
-        if (mode === 'start') {
+        if ((mode as any) === 'start' || (mode as any) === 'left') {
           current = current.trimStart();
-        } else if (mode === 'end') {
+        } else if ((mode as any) === 'end' || (mode as any) === 'right') {
           current = current.trimEnd();
         } else {
           current = current.trim();
@@ -118,9 +118,9 @@ export const handleStringMutator: NodeHandler = ({
       }
       case 'case': {
         const mode = operation.mode ?? 'lower';
-        if (mode === 'upper') {
+        if ((mode as any) === 'upper') {
           current = current.toUpperCase();
-        } else if (mode === 'title') {
+        } else if ((mode as any) === 'title') {
           current = current.replace(
             /\w\S*/g,
             (token: string) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase()

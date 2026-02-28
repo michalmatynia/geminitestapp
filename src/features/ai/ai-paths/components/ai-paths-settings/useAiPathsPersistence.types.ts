@@ -117,7 +117,8 @@ export type AiPathsUiState = {
 };
 
 export type AiPathsUserPreferences = {
-  aiPathsActivePathId?: string | null;
+  activePathId?: string | null;
+  updatedAt?: string;
 };
 
 export const USER_PREFERENCES_STALE_MS = 5 * 60_000;
@@ -125,7 +126,7 @@ export const USER_PREFERENCES_STALE_MS = 5 * 60_000;
 export const resolvePreferredActivePathId = (
   preferences: AiPathsUserPreferences | null | undefined
 ): string | null => {
-  const value = preferences?.aiPathsActivePathId;
+  const value = preferences?.activePathId;
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 };
 

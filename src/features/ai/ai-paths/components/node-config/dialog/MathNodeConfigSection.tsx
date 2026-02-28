@@ -56,7 +56,7 @@ export function MathNodeConfigSection(): React.JSX.Element | null {
             updateSelectedNodeConfig({
               math: {
                 ...mathConfig,
-                operand: toNumber(event.target.value, mathConfig.operand),
+                operand: toNumber(event.target.value, mathConfig.operand ?? 0),
               },
             })
           }

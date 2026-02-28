@@ -268,7 +268,7 @@ export const createImportExportRuntimeActions = ({
       } else if (res.status === 'completed' || res.status === 'partial_success') {
         toast(res.summaryMessage || 'Import completed.', { variant: 'success' });
       } else if (res.status === 'failed') {
-        const preflightErrors = res.preflight.issues
+        const preflightErrors = (res.preflight?.issues ?? [])
           .filter((issue) => issue.severity === 'error')
           .map((issue) => issue.message);
         toast(preflightErrors[0] || res.summaryMessage || 'Import failed.', { variant: 'error' });

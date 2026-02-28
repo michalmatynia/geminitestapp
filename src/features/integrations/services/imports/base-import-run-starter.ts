@@ -15,7 +15,7 @@ export const startBaseImportRun = async (
 ): Promise<BaseImportRunRecord> => {
   const run = await prepareBaseImportRun(input);
 
-  if (!(run.status === 'queued' && run.stats.total > 0)) {
+  if (!(run.status === 'queued' && (run.stats?.total ?? 0) > 0)) {
     return run;
   }
 
@@ -31,5 +31,5 @@ export const startBaseImportRunResponse = async (
   input: StartBaseImportRunInput
 ): Promise<BaseImportStartResponse> => {
   const run = await startBaseImportRun(input);
-  return toStartResponse(run);
+  return toStartResponse(run) as BaseImportStartResponse;
 };

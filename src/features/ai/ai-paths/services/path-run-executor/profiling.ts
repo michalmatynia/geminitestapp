@@ -1,19 +1,17 @@
-import type { 
-  AiPathRuntimeProfileEventDto, 
-  RuntimeProfileSummaryDto 
+import type {
+  AiPathRuntimeProfileEventDto,
 } from '@/shared/contracts/ai-paths-runtime';
-import { 
-  RUNTIME_PROFILE_SAMPLE_LIMIT, 
-  RUNTIME_TRACE_SPAN_LIMIT 
+import {
+  RUNTIME_PROFILE_SAMPLE_LIMIT,
+  RUNTIME_TRACE_SPAN_LIMIT
 } from '../path-run-executor.helpers';
-import type { 
-  RuntimeProfileHighlight, 
-  RuntimeProfileNodeSpan, 
-  RuntimeProfileNodeSpanStatus 
-} from './path-run-executor.types';
+import type {
+  RuntimeProfileNodeSpan,
+  RuntimeProfileNodeSpanStatus
+} from '../path-run-executor.types';
 
 export function createPathRunProfiling() {
-  const runtimeProfileHighlights: RuntimeProfileHighlight[] = [];
+  const runtimeProfileHighlights: AiPathRuntimeProfileEventDto[] = [];
   const runtimeNodeSpans = new Map<string, RuntimeProfileNodeSpan>();
   const runtimeNodeSpanOrder: string[] = [];
 
@@ -50,6 +48,8 @@ export function createPathRunProfiling() {
       startedAt: input.startedAt,
       finishedAt: null,
       durationMs: null,
+      error: null,
+      cached: false,
     });
   };
 
@@ -85,14 +85,8 @@ export function createPathRunProfiling() {
 
   const captureRuntimeProfileEvent = (event: AiPathRuntimeProfileEventDto): void => {
     if (runtimeProfileHighlights.length >= RUNTIME_PROFILE_SAMPLE_LIMIT) return;
-    // We only capture specific highlights for now
-    if (event.kind === 'node_finished' || event.kind === 'node_failed') {
-      runtimeProfileHighlights.push({
-        timestamp: event.timestamp,
-        kind: event.kind,
-        nodeId: event.nodeId ?? 'unknown',
-        message: event.message,
-      });
+    if (event.type === 'node' && (event.status === 'error' || event.status === 'skipped')) {
+      runtimeProfileHighlights.push(event);
     }
   };
 

@@ -32,10 +32,6 @@ import type {
   CreateNotebookDto as NotebookCreateInput,
   UpdateNotebookDto as NotebookUpdateInput,
   NoteFileDto as NoteFileRecord,
-  CreateNoteFileDto as NoteFileCreateInput,
-  NoteThemeDto as ThemeRecord,
-  CreateNoteThemeDto as ThemeCreateInput,
-  UpdateNoteThemeDto as ThemeUpdateInput,
 } from '@/shared/contracts/notes';
 import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -50,7 +46,6 @@ import {
   toNotebookResponse,
   toNoteResponse,
   toTagResponse,
-  toThemeResponse,
 } from './mongo-note-repository-utils';
 
 import type { Filter, WithId, UpdateFilter } from 'mongodb';

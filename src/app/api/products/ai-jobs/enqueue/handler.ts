@@ -6,7 +6,6 @@ import { startProductAiJobQueue, processProductAiJob } from '@/features/jobs/ser
 import { parseJsonBody } from '@/features/products/server';
 import {
   productAiJobTypeSchema,
-  type ProductAiJobTypeDto as ProductAiJobType,
 } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

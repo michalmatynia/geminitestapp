@@ -1,9 +1,8 @@
-import { Prisma } from '@prisma/client';
-import { ObjectId, type WithId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import {
   IntegrationRecord,
   IntegrationConnectionRecord,
-} from '../types/integrations';
+} from '@/shared/contracts/integrations';
 
 export const INTEGRATION_COLLECTION = 'integrations';
 export const INTEGRATION_CONNECTION_COLLECTION = 'integration_connections';
@@ -145,16 +144,21 @@ export const remapProductSyncProfilesSetting = (
 ): string | null => {
   if (!rawValue) return rawValue ?? null;
   try {
-    const profiles = JSON.parse(rawValue);
+    const profiles = JSON.parse(rawValue) as unknown;
     if (!Array.isArray(profiles)) return rawValue;
 
     let changed = false;
     const nextProfiles = profiles
-      .map((profile: any) => {
-        if (profile.connectionId === sourceConnectionId) {
+      .map((profile: unknown) => {
+        if (
+          profile &&
+          typeof profile === 'object' &&
+          !Array.isArray(profile) &&
+          (profile as Record<string, unknown>)['connectionId'] === sourceConnectionId
+        ) {
           changed = true;
           if (!replacementConnectionId) return null;
-          return { ...profile, connectionId: replacementConnectionId };
+          return { ...(profile as Record<string, unknown>), connectionId: replacementConnectionId };
         }
         return profile;
       })
@@ -183,83 +187,92 @@ export const toIsoStringOrNull = (value: unknown): string | null => {
 export const toRequiredIsoString = (value: unknown): string =>
   toIsoStringOrNull(value) ?? new Date(0).toISOString();
 
-export const toIntegrationRecord = (
-  doc: any
-): IntegrationRecord => ({
-  id: 'id' in doc ? doc.id : doc._id.toString(),
-  name: doc.name,
-  slug: doc.slug,
-  createdAt: toRequiredIsoString(doc.createdAt),
-  updatedAt: toIsoStringOrNull(doc.updatedAt),
-});
+export const toIntegrationRecord = (doc: unknown): IntegrationRecord => {
+  if (!doc || typeof doc !== 'object' || Array.isArray(doc)) {
+    throw new Error('Invalid integration document');
+  }
+  const d = doc as Record<string, unknown>;
+  const rawId = d['id'] ?? d['_id'];
+  const id = rawId && typeof rawId === 'object' && 'toString' in rawId ? rawId.toString() : String(rawId ?? '');
 
-export const toConnectionRecord = (
-  doc: any
-): IntegrationConnectionRecord => {
-  const isPrisma = 'id' in doc;
   return {
-    id: isPrisma ? doc.id : doc._id.toString(),
-    integrationId: doc.integrationId,
-    name: doc.name,
-    username: doc.username,
-    password: doc.password,
-    playwrightStorageState: doc.playwrightStorageState ?? null,
-    playwrightStorageStateUpdatedAt: toIsoStringOrNull(doc.playwrightStorageStateUpdatedAt),
-    playwrightHeadless: doc.playwrightHeadless ?? CONNECTION_DEFAULTS.playwrightHeadless,
-    playwrightSlowMo: doc.playwrightSlowMo ?? CONNECTION_DEFAULTS.playwrightSlowMo,
-    playwrightTimeout: doc.playwrightTimeout ?? CONNECTION_DEFAULTS.playwrightTimeout,
+    id,
+    name: String(d['name'] ?? ''),
+    slug: String(d['slug'] ?? ''),
+    createdAt: toRequiredIsoString(d['createdAt']),
+    updatedAt: toIsoStringOrNull(d['updatedAt']),
+  };
+};
+
+export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord => {
+  if (!doc || typeof doc !== 'object' || Array.isArray(doc)) {
+    throw new Error('Invalid connection document');
+  }
+  const d = doc as Record<string, unknown>;
+  const _isPrisma = 'id' in d;
+  const rawId = d['id'] ?? d['_id'];
+  const id = rawId && typeof rawId === 'object' && 'toString' in rawId ? rawId.toString() : String(rawId ?? '');
+
+  return {
+    id,
+    integrationId: String(d['integrationId'] ?? ''),
+    name: String(d['name'] ?? ''),
+    username: d['username'] ? String(d['username']) : undefined,
+    password: d['password'] ? String(d['password']) : undefined,
+    playwrightStorageState: (d['playwrightStorageState'] as string) ?? null,
+    playwrightStorageStateUpdatedAt: toIsoStringOrNull(d['playwrightStorageStateUpdatedAt']),
+    playwrightHeadless: (d['playwrightHeadless'] as boolean) ?? CONNECTION_DEFAULTS.playwrightHeadless,
+    playwrightSlowMo: (d['playwrightSlowMo'] as number) ?? CONNECTION_DEFAULTS.playwrightSlowMo,
+    playwrightTimeout: (d['playwrightTimeout'] as number) ?? CONNECTION_DEFAULTS.playwrightTimeout,
     playwrightNavigationTimeout:
-      doc.playwrightNavigationTimeout ?? CONNECTION_DEFAULTS.playwrightNavigationTimeout,
+      (d['playwrightNavigationTimeout'] as number) ?? CONNECTION_DEFAULTS.playwrightNavigationTimeout,
     playwrightHumanizeMouse:
-      doc.playwrightHumanizeMouse ?? CONNECTION_DEFAULTS.playwrightHumanizeMouse,
-    playwrightMouseJitter: doc.playwrightMouseJitter ?? CONNECTION_DEFAULTS.playwrightMouseJitter,
+      (d['playwrightHumanizeMouse'] as boolean) ?? CONNECTION_DEFAULTS.playwrightHumanizeMouse,
+    playwrightMouseJitter: (d['playwrightMouseJitter'] as number) ?? CONNECTION_DEFAULTS.playwrightMouseJitter,
     playwrightClickDelayMin:
-      doc.playwrightClickDelayMin ?? CONNECTION_DEFAULTS.playwrightClickDelayMin,
+      (d['playwrightClickDelayMin'] as number) ?? CONNECTION_DEFAULTS.playwrightClickDelayMin,
     playwrightClickDelayMax:
-      doc.playwrightClickDelayMax ?? CONNECTION_DEFAULTS.playwrightClickDelayMax,
+      (d['playwrightClickDelayMax'] as number) ?? CONNECTION_DEFAULTS.playwrightClickDelayMax,
     playwrightInputDelayMin:
-      doc.playwrightInputDelayMin ?? CONNECTION_DEFAULTS.playwrightInputDelayMin,
+      (d['playwrightInputDelayMin'] as number) ?? CONNECTION_DEFAULTS.playwrightInputDelayMin,
     playwrightInputDelayMax:
-      doc.playwrightInputDelayMax ?? CONNECTION_DEFAULTS.playwrightInputDelayMax,
+      (d['playwrightInputDelayMax'] as number) ?? CONNECTION_DEFAULTS.playwrightInputDelayMax,
     playwrightActionDelayMin:
-      doc.playwrightActionDelayMin ?? CONNECTION_DEFAULTS.playwrightActionDelayMin,
+      (d['playwrightActionDelayMin'] as number) ?? CONNECTION_DEFAULTS.playwrightActionDelayMin,
     playwrightActionDelayMax:
-      doc.playwrightActionDelayMax ?? CONNECTION_DEFAULTS.playwrightActionDelayMax,
-    playwrightProxyEnabled:
-      doc.playwrightProxyEnabled ?? CONNECTION_DEFAULTS.playwrightProxyEnabled,
-    playwrightProxyServer: doc.playwrightProxyServer ?? CONNECTION_DEFAULTS.playwrightProxyServer,
-    playwrightProxyUsername:
-      doc.playwrightProxyUsername ?? CONNECTION_DEFAULTS.playwrightProxyUsername,
-    playwrightProxyPassword: doc.playwrightProxyPassword ?? null,
-    playwrightEmulateDevice:
-      doc.playwrightEmulateDevice ?? CONNECTION_DEFAULTS.playwrightEmulateDevice,
-    playwrightDeviceName: doc.playwrightDeviceName ?? CONNECTION_DEFAULTS.playwrightDeviceName,
-    playwrightPersonaId: doc.playwrightPersonaId ?? CONNECTION_DEFAULTS.playwrightPersonaId,
-    allegroAccessToken: doc.allegroAccessToken ?? null,
-    allegroRefreshToken: doc.allegroRefreshToken ?? null,
-    allegroTokenType: doc.allegroTokenType ?? null,
-    allegroScope: doc.allegroScope ?? null,
-    allegroExpiresAt: toIsoStringOrNull(doc.allegroExpiresAt),
-    allegroTokenUpdatedAt: toIsoStringOrNull(doc.allegroTokenUpdatedAt),
-    allegroUseSandbox: doc.allegroUseSandbox ?? false,
-    baseApiToken: doc.baseApiToken ?? null,
-    baseTokenUpdatedAt: toIsoStringOrNull(doc.baseTokenUpdatedAt),
-    baseLastInventoryId: doc.baseLastInventoryId ?? null,
+      (d['playwrightActionDelayMax'] as number) ?? CONNECTION_DEFAULTS.playwrightActionDelayMax,
+    playwrightProxyEnabled: (d['playwrightProxyEnabled'] as boolean) ?? CONNECTION_DEFAULTS.playwrightProxyEnabled,
+    playwrightProxyServer: (d['playwrightProxyServer'] as string) ?? CONNECTION_DEFAULTS.playwrightProxyServer,
+    playwrightProxyUsername: (d['playwrightProxyUsername'] as string) ?? CONNECTION_DEFAULTS.playwrightProxyUsername,
+    playwrightProxyPassword: (d['playwrightProxyPassword'] as string) ?? null,
+    playwrightEmulateDevice: (d['playwrightEmulateDevice'] as boolean) ?? CONNECTION_DEFAULTS.playwrightEmulateDevice,
+    playwrightDeviceName: (d['playwrightDeviceName'] as string) ?? CONNECTION_DEFAULTS.playwrightDeviceName,
+    playwrightPersonaId: (d['playwrightPersonaId'] as string) ?? CONNECTION_DEFAULTS.playwrightPersonaId,
+    allegroAccessToken: (d['allegroAccessToken'] as string) ?? null,
+    allegroRefreshToken: (d['allegroRefreshToken'] as string) ?? null,
+    allegroTokenType: (d['allegroTokenType'] as string) ?? null,
+    allegroScope: (d['allegroScope'] as string) ?? null,
+    allegroExpiresAt: toIsoStringOrNull(d['allegroExpiresAt']),
+    allegroTokenUpdatedAt: toIsoStringOrNull(d['allegroTokenUpdatedAt']),
+    allegroUseSandbox: (d['allegroUseSandbox'] as boolean) ?? false,
+    baseApiToken: (d['baseApiToken'] as string) ?? null,
+    baseTokenUpdatedAt: toIsoStringOrNull(d['baseTokenUpdatedAt']),
+    baseLastInventoryId: (d['baseLastInventoryId'] as string) ?? null,
     traderaDefaultTemplateId:
-      doc.traderaDefaultTemplateId ?? CONNECTION_DEFAULTS.traderaDefaultTemplateId,
+      (d['traderaDefaultTemplateId'] as string) ?? CONNECTION_DEFAULTS.traderaDefaultTemplateId,
     traderaDefaultDurationHours:
-      doc.traderaDefaultDurationHours ?? CONNECTION_DEFAULTS.traderaDefaultDurationHours,
+      (d['traderaDefaultDurationHours'] as number) ?? CONNECTION_DEFAULTS.traderaDefaultDurationHours,
     traderaAutoRelistEnabled:
-      doc.traderaAutoRelistEnabled ?? CONNECTION_DEFAULTS.traderaAutoRelistEnabled,
+      (d['traderaAutoRelistEnabled'] as boolean) ?? CONNECTION_DEFAULTS.traderaAutoRelistEnabled,
     traderaAutoRelistLeadMinutes:
-      doc.traderaAutoRelistLeadMinutes ?? CONNECTION_DEFAULTS.traderaAutoRelistLeadMinutes,
-    traderaApiAppId: doc.traderaApiAppId ?? CONNECTION_DEFAULTS.traderaApiAppId,
-    traderaApiAppKey: doc.traderaApiAppKey ?? CONNECTION_DEFAULTS.traderaApiAppKey,
-    traderaApiPublicKey: doc.traderaApiPublicKey ?? CONNECTION_DEFAULTS.traderaApiPublicKey,
-    traderaApiUserId: doc.traderaApiUserId ?? CONNECTION_DEFAULTS.traderaApiUserId,
-    traderaApiToken: doc.traderaApiToken ?? CONNECTION_DEFAULTS.traderaApiToken,
-    traderaApiTokenUpdatedAt: toIsoStringOrNull(doc.traderaApiTokenUpdatedAt),
-    createdAt: toRequiredIsoString(doc.createdAt),
-    updatedAt: toIsoStringOrNull(doc.updatedAt),
+      (d['traderaAutoRelistLeadMinutes'] as number) ?? CONNECTION_DEFAULTS.traderaAutoRelistLeadMinutes,
+    traderaApiAppId: (d['traderaApiAppId'] as number) ?? CONNECTION_DEFAULTS.traderaApiAppId,
+    traderaApiAppKey: (d['traderaApiAppKey'] as string) ?? CONNECTION_DEFAULTS.traderaApiAppKey,
+    traderaApiPublicKey: (d['traderaApiPublicKey'] as string) ?? CONNECTION_DEFAULTS.traderaApiPublicKey,
+    traderaApiUserId: (d['traderaApiUserId'] as number) ?? CONNECTION_DEFAULTS.traderaApiUserId,
+    traderaApiToken: (d['traderaApiToken'] as string) ?? CONNECTION_DEFAULTS.traderaApiToken,
+    traderaApiTokenUpdatedAt: toIsoStringOrNull(d['traderaApiTokenUpdatedAt']),
+    createdAt: toRequiredIsoString(d['createdAt']),
+    updatedAt: toIsoStringOrNull(d['updatedAt']),
   };
 };

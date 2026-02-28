@@ -49,3 +49,14 @@ export const aiNodeTypeSchema = z.enum([
 
 export type AiNodeTypeDto = z.infer<typeof aiNodeTypeSchema>;
 export type NodeType = AiNodeTypeDto;
+
+/**
+ * Canvas UI Types
+ */
+export type SvgDetailLevel = 'full' | 'compact' | 'skeleton';
+
+/**
+ * Audio Node Types
+ */
+export type AudioWaveform = 'sine' | 'square' | 'triangle' | 'sawtooth';
+

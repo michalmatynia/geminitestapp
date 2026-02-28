@@ -1,17 +1,17 @@
-import { 
-  type RuntimeState, 
+import { type RuntimeState } from '@/shared/contracts/ai-paths';
+import {
   type NodeType,
   type DbQueryConfig,
-} from '../../../contracts/ai-paths-core';
+} from '@/shared/contracts/ai-paths-core';
 
 export const EMPTY_RUNTIME_STATE: RuntimeState = {
   status: 'idle',
-  resultsByNode: {},
-  errorsByNode: {},
-  inflightNodes: new Set(),
-  completedNodes: new Set(),
-  startTime: null,
-  finishTime: null,
+  nodeStatuses: {},
+  nodeOutputs: {},
+  variables: {},
+  events: [],
+  inputs: {},
+  outputs: {},
 };
 
 export const NODE_WIDTH = 260;

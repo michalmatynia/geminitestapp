@@ -1,4 +1,4 @@
-'use client';
+
 
 export * from '@/shared/contracts/product-sync';
 export * from './hooks/useProductSyncSettings';

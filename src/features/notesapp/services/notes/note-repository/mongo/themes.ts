@@ -9,9 +9,7 @@ import type {
   CreateNoteThemeDto as ThemeCreateInput,
   UpdateNoteThemeDto as ThemeUpdateInput,
 } from '@/shared/contracts/notes';
-import {
-  toThemeResponse,
-} from '../mongo-note-repository-utils';
+import { toThemeResponse } from '../mongo-note-repository-utils';
 import { themeCollectionName } from './common';
 
 export const mongoThemeImpl = {
@@ -42,9 +40,19 @@ export const mongoThemeImpl = {
       id,
       name: data.name,
       description: data.description ?? null,
-      config: data.config ?? {},
-      isPublic: data.isPublic ?? false,
+      isDefault: data.isDefault,
       notebookId: data.notebookId ?? null,
+      textColor: data.textColor,
+      backgroundColor: data.backgroundColor,
+      markdownHeadingColor: data.markdownHeadingColor,
+      markdownLinkColor: data.markdownLinkColor,
+      markdownCodeBackground: data.markdownCodeBackground,
+      markdownCodeText: data.markdownCodeText,
+      relatedNoteBorderWidth: data.relatedNoteBorderWidth,
+      relatedNoteBorderColor: data.relatedNoteBorderColor,
+      relatedNoteBackgroundColor: data.relatedNoteBackgroundColor,
+      relatedNoteTextColor: data.relatedNoteTextColor,
+      themeData: data.themeData ?? null,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
     };

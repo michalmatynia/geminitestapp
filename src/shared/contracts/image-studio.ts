@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
-import { imageFileSchema } from './files';
+import { imageFileSchema, type ImageFileRecord } from './files';
 import { asset3DRecordSchema } from './viewer3d';
 
 export type ImageStudioProjectListItem = {

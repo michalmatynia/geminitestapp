@@ -13,7 +13,6 @@ import {
   PATH_INDEX_KEY,
   createDefaultPathConfig,
   normalizeNodes,
-  migrateDatabaseConfigCollections,
   migratePathConfigCollections,
   repairPathNodeIdentities,
   stableStringify,
@@ -25,12 +24,8 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
-  parseRuntimeState,
-} from '../AiPathsSettingsUtils';
-import {
   normalizeHistoryRetentionOptionsMax,
   normalizeHistoryRetentionPasses,
-  normalizeLoadedPathName,
   normalizeLoadedPathMetas,
   resolvePathSaveBlockedMessage,
 } from './useAiPathsPersistence.helpers';
@@ -113,7 +108,11 @@ export function useAiPathsPersistence(args: UseAiPathsPersistenceArgs): UseAiPat
         const userPrefs = await prefs.resolveUserPreferences();
         
         const pathIndexItem = settings.find((s) => s.key === PATH_INDEX_KEY);
-        const loadedPaths = normalizeLoadedPathMetas(pathIndexItem?.value ?? null);
+        let rawPaths: PathMeta[] = [];
+        try {
+          if (pathIndexItem?.value) rawPaths = JSON.parse(pathIndexItem.value) as PathMeta[];
+        } catch { /* ignore */ }
+        const loadedPaths = normalizeLoadedPathMetas(rawPaths);
         setPaths(loadedPaths);
 
         const historyPassesItem = settings.find((s) => s.key === AI_PATHS_HISTORY_RETENTION_KEY);
@@ -139,9 +138,8 @@ export function useAiPathsPersistence(args: UseAiPathsPersistenceArgs): UseAiPat
           if (configItem?.value) {
             try {
               let config = JSON.parse(configItem.value) as PathConfig;
-              config = migratePathConfigCollections(config);
-              config = migrateDatabaseConfigCollections(config);
-              config = repairPathNodeIdentities(config);
+              config = migratePathConfigCollections(config).config;
+              config = repairPathNodeIdentities(config).config;
               config.nodes = normalizeNodes(config.nodes);
               setPathConfigs((prev) => ({ ...prev, [configId]: config }));
             } catch (error) {

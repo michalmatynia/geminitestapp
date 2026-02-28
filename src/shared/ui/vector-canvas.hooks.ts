@@ -8,6 +8,17 @@ import {
 import { type VectorViewTransform } from './vector-canvas.geometry';
 
 export interface UseVectorCanvasInteractionsProps {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  viewportRef: React.RefObject<HTMLDivElement | null>;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  imgRef: React.RefObject<HTMLImageElement | null>;
+  viewTransform: VectorViewTransform;
+  setViewTransform: React.Dispatch<React.SetStateAction<VectorViewTransform>>;
+  canvasRenderSize: { width: number; height: number };
+  setCanvasRenderSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>;
+  resolvedImageOffset: { x: number; y: number };
+  setResolvedImageOffset: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
+  src?: string | null;
   tool: VectorToolMode;
   selectionEnabled: boolean;
   shapes: VectorShape[];
@@ -17,17 +28,32 @@ export interface UseVectorCanvasInteractionsProps {
   onSelectShape: (id: string | null) => void;
   onSelectPoint?: (index: number | null) => void;
   brushRadius: number;
-  src?: string | null;
   allowWithoutImage: boolean;
   enableTwoFingerRotate: boolean;
+  baseCanvasWidthPx?: number | null;
+  baseCanvasHeightPx?: number | null;
+  onViewCropRectChange?: (cropRect: any | null) => void;
+  onImageContentFrameChange?: (frame: any | null) => void;
   imageMoveEnabled: boolean;
-  imageOffset: { x: number; y: number };
   onImageOffsetChange?: (offset: { x: number; y: number }) => void;
-  canvasRenderSize: { width: number; height: number };
+  minViewScale: number;
+  maxViewScale: number;
+  viewboxSize: number;
   syncCanvasSize: () => void;
 }
 
 export function useVectorCanvasInteractions({
+  containerRef,
+  viewportRef: _viewportRef,
+  canvasRef,
+  imgRef: _imgRef,
+  viewTransform,
+  setViewTransform,
+  canvasRenderSize: _canvasRenderSize,
+  setCanvasRenderSize: _setCanvasRenderSize,
+  resolvedImageOffset: _resolvedImageOffset,
+  setResolvedImageOffset: _setResolvedImageOffset,
+  src: _src,
   tool: _tool,
   selectionEnabled: _selectionEnabled,
   shapes,
@@ -37,26 +63,19 @@ export function useVectorCanvasInteractions({
   onSelectShape: _onSelectShape,
   onSelectPoint: _onSelectPoint,
   brushRadius: _brushRadius,
-  src: _src,
   allowWithoutImage: _allowWithoutImage,
   enableTwoFingerRotate: _enableTwoFingerRotate,
+  baseCanvasWidthPx: _baseCanvasWidthPx,
+  baseCanvasHeightPx: _baseCanvasHeightPx,
+  onViewCropRectChange: _onViewCropRectChange,
+  onImageContentFrameChange: _onImageContentFrameChange,
   imageMoveEnabled: _imageMoveEnabled,
-  imageOffset: _imageOffset,
   onImageOffsetChange: _onImageOffsetChange,
-  canvasRenderSize: _canvasRenderSize,
+  minViewScale: _minViewScale,
+  maxViewScale: _maxViewScale,
+  viewboxSize: _viewboxSize,
   syncCanvasSize: _syncCanvasSize,
 }: UseVectorCanvasInteractionsProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const viewportRef = useRef<HTMLDivElement | null>(null);
-
-  const [viewTransform, setViewTransform] = useState<VectorViewTransform>({
-    scale: 1,
-    panX: 0,
-    panY: 0,
-    rotateDeg: 0,
-  });
   const viewTransformRef = useRef(viewTransform);
   viewTransformRef.current = viewTransform;
 
@@ -139,7 +158,7 @@ export function useVectorCanvasInteractions({
     const containerRect = containerRef.current?.getBoundingClientRect() ?? null;
     if (!containerRect) return canvasRect;
     return containerRect;
-  }, []);
+  }, [canvasRef, containerRef]);
 
   const toPoint = useCallback(
     (clientX: number, clientY: number): VectorPoint | null => {
@@ -364,13 +383,63 @@ export function useVectorCanvasInteractions({
     [getInteractionRect, shapes]
   );
 
+  const handleWheel = useCallback(
+    (event: React.WheelEvent): void => {
+      event.preventDefault();
+      const zoomFactor = 1 - event.deltaY * 0.001;
+      const nextScale = Math.min(8, Math.max(0.25, viewTransform.scale * zoomFactor));
+      if (nextScale !== viewTransform.scale) {
+        setViewTransform((prev) => ({ ...prev, scale: nextScale }));
+      }
+    },
+    [viewTransform.scale]
+  );
+
+  const handleMouseDown = useCallback(
+    (event: React.MouseEvent): void => {
+      const point = toPoint(event.clientX, event.clientY);
+      if (!point) return;
+
+      if (event.button === 1 || (event.button === 0 && spaceDownRef.current)) {
+        beginPan(event.clientX, event.clientY);
+        return;
+      }
+
+      // Handle hit testing and other interactions here...
+    },
+    [beginPan, toPoint]
+  );
+
+  const handleMouseMove = useCallback(
+    (event: React.MouseEvent): void => {
+      if (panningRef.current) {
+        updatePanFromPointer(event.clientX, event.clientY);
+        return;
+      }
+      // Handle hover state updates here...
+    },
+    [updatePanFromPointer]
+  );
+
+  const handleMouseUp = useCallback((): void => {
+    stopPan();
+    // Finish drag/draw operations here...
+  }, [stopPan]);
+
+  const handleZoomIn = useCallback((): void => {
+    setViewTransform((prev) => ({ ...prev, scale: Math.min(8, prev.scale * 1.2) }));
+  }, []);
+
+  const handleZoomOut = useCallback((): void => {
+    setViewTransform((prev) => ({ ...prev, scale: Math.max(0.25, prev.scale / 1.2) }));
+  }, []);
+
+  const handleFitToScreen = useCallback((): void => {
+    setViewTransform({ scale: 1, panX: 0, panY: 0, rotateDeg: 0 });
+  }, []);
+
   return {
-    containerRef,
-    imgRef,
-    canvasRef,
-    viewportRef,
     viewTransform,
-    setViewTransform,
     isPanning,
     setIsPanning,
     isDraggingImage,
@@ -396,5 +465,12 @@ export function useVectorCanvasInteractions({
     hitTestSegment,
     hitTestShape,
     getInteractionRect,
+    handleWheel,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    handleZoomIn,
+    handleZoomOut,
+    handleFitToScreen,
   };
 }

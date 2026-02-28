@@ -1,4 +1,4 @@
-import { type NodeType } from '../../../../contracts/ai-paths-core';
+import { type NodeType } from '@/shared/contracts/ai-paths-core';
 
 export const allowedConnections: Record<NodeType, NodeType[]> = {
   trigger: ['fetcher', 'simulation', 'context', 'constant', 'database', 'ai_description'],

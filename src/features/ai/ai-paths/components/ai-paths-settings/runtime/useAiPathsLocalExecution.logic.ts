@@ -9,8 +9,12 @@ export function useAiPathsLocalExecutionLogic(args: LocalExecutionArgs) {
   const loop = useLocalExecutionLoop(args);
   const triggers = useLocalExecutionTriggers(args, loop, outcome);
 
-  return useMemo(() => ({
-    ...outcome,
-    ...triggers,
-  }), [outcome, triggers]);
+  return useMemo(
+    () => ({
+      ...outcome,
+      ...loop,
+      ...triggers,
+    }),
+    [loop, outcome, triggers]
+  );
 }

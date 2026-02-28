@@ -12,7 +12,6 @@ import {
 import { createFileUploadEvent } from '@/shared/lib/files/services/file-upload-events';
 import {
   uploadToConfiguredStorage,
-  getPublicPathFromStoredPath,
 } from '@/shared/lib/files/services/storage/file-storage-service';
 import { deleteFileFromStorage } from '@/shared/lib/files/file-uploader';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

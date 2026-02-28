@@ -3,7 +3,7 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { LogicalConditionConfig, LogicalConditionOperator } from '@/shared/contracts/ai-paths';
+import type { LogicalConditionConfig, LogicalConditionOperator } from '@/shared/contracts/ai-paths-core/nodes';
 
 import { DELAY_OUTPUT_PORTS, ROUTER_OUTPUT_PORTS } from '../../constants';
 import { coerceInput, coerceInputArray, safeStringify } from '../../utils';
@@ -41,7 +41,7 @@ export const handleMath: NodeHandler = ({
     return { value: inputValue };
   }
   let result: number;
-  switch (mathConfig.operation) {
+  switch (mathConfig.operation as any) {
     case 'add':
       result = numeric + operand;
       break;
@@ -200,12 +200,13 @@ export const handleLogicalCondition: NodeHandler = ({
     combinator: 'and',
     conditions: [],
   };
-  const { combinator, conditions } = config;
+  const { combinator, conditions: rawConditions } = config;
+  const conditions = rawConditions ?? [];
 
   const primaryPort = conditions[0]?.inputPort ?? 'value';
   const primaryValue = coerceInput(nodeInputs[primaryPort]);
 
-  if (!conditions || conditions.length === 0) {
+  if (!conditions || (conditions as any[]).length === 0) {
     return { value: primaryValue, valid: true, errors: [] };
   }
 
@@ -216,7 +217,7 @@ export const handleLogicalCondition: NodeHandler = ({
     valid = true;
     for (const condition of conditions) {
       const val = resolveLogicalConditionInput(
-        condition.inputPort,
+        condition.inputPort as any,
         condition.fieldPath,
         nodeInputs
       );
@@ -236,7 +237,7 @@ export const handleLogicalCondition: NodeHandler = ({
     valid = false;
     for (const condition of conditions) {
       const val = resolveLogicalConditionInput(
-        condition.inputPort,
+        condition.inputPort as any,
         condition.fieldPath,
         nodeInputs
       );

@@ -1,4 +1,4 @@
-'use client';
+
 
 /**
  * Compatibility layer for product metadata queries.

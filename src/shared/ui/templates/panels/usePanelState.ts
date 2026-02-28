@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback } from 'react';
 
 import { PanelState, UsePanelStateOptions, UsePanelStateReturn } from '@/shared/contracts/ui';

@@ -2,12 +2,12 @@ export * from './base';
 
 import { z } from 'zod';
 import { edgeSchema, type Edge } from '../ai-paths';
-import { aiNodeSchema, type AiNode } from '../ai-paths-core';
+import { aiNodeSchema, type AiNode, type NodeDefinition } from '../ai-paths-core';
 import { dtoBaseSchema, namedDtoSchema, type NamedDto, type DtoBase } from '../base';
 import { documentEditorModeSchema } from '../document-editor';
-import { 
-  caseResolverNodeRoleSchema, 
-  caseResolverQuoteModeSchema, 
+import {
+  caseResolverNodeRoleSchema,
+  caseResolverQuoteModeSchema,
   caseResolverJoinModeSchema,
   caseResolverFileTypeSchema,
   caseResolverDocumentVersionSchema,
@@ -21,10 +21,11 @@ import {
   type CaseResolverDocumentVersion,
   type CaseResolverEditorType,
   type CaseResolverPdfExtractionPresetId,
-  type CaseResolverAssetKind
+  type CaseResolverAssetKind,
+  type CaseResolverDocumentNodePort,
 } from './base';
 
-export type { AiNode, Edge };
+export type { AiNode, Edge, NodeDefinition };
 export type AiEdge = Edge;
 
 /**

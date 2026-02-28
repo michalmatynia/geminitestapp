@@ -24,7 +24,7 @@ const createTestQueryClient = () =>
 
 // Mock useToast
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<any>();
+  const actual = (await importOriginal()) as typeof import('@/shared/ui');
   return {
     ...actual,
     useToast: vi.fn(() => ({ toast: vi.fn() })),
@@ -42,12 +42,12 @@ describe('AdminFrontManagePage', () => {
     vi.mocked(useUpdateSetting).mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false,
-    } as any);
-    vi.mocked(useToast).mockReturnValue({ toast: mockToast } as any);
+    } as unknown as ReturnType<typeof useUpdateSetting>);
+    vi.mocked(useToast).mockReturnValue({ toast: mockToast } as unknown as ReturnType<typeof useToast>);
     vi.mocked(useLiteSettingsMap).mockReturnValue({
       isPending: false,
       data: new Map(),
-    } as any);
+    } as unknown as ReturnType<typeof useLiteSettingsMap>);
   });
 
   const renderPage = () =>
@@ -60,16 +60,16 @@ describe('AdminFrontManagePage', () => {
     );
 
   it('renders loading state', () => {
-    (useSettingsMap as any).mockReturnValue({ isPending: true });
+    vi.mocked(useSettingsMap).mockReturnValue({ isPending: true } as unknown as ReturnType<typeof useSettingsMap>);
     renderPage();
     expect(screen.getByText(/Loading front page settings/i)).toBeInTheDocument();
   });
 
   it('renders initial selected option from settings', () => {
-    (useSettingsMap as any).mockReturnValue({
+    vi.mocked(useSettingsMap).mockReturnValue({
       isPending: false,
       data: new Map([['front_page_app', 'chatbot']]),
-    });
+    } as unknown as ReturnType<typeof useSettingsMap>);
 
     renderPage();
 
@@ -81,10 +81,10 @@ describe('AdminFrontManagePage', () => {
   });
 
   it('allows changing selection and saving', async () => {
-    (useSettingsMap as any).mockReturnValue({
+    vi.mocked(useSettingsMap).mockReturnValue({
       isPending: false,
       data: new Map([['front_page_app', 'products']]),
-    });
+    } as unknown as ReturnType<typeof useSettingsMap>);
 
     renderPage();
 

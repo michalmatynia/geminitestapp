@@ -1052,10 +1052,10 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
         style={
           showViewTransformHud
             ? {
-                transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale}) rotate(${viewTransform.rotateDeg}deg)`,
-                transformOrigin: '0 0',
-                transition: isPanning ? 'none' : 'transform 120ms cubic-bezier(0.22, 1, 0.36, 1)',
-              }
+              transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale}) rotate(${viewTransform.rotateDeg}deg)`,
+              transformOrigin: '0 0',
+              transition: isPanning ? 'none' : 'transform 120ms cubic-bezier(0.22, 1, 0.36, 1)',
+            }
             : undefined
         }
       >

@@ -243,15 +243,15 @@ export function useAdminCaseResolverCasesActions({
         files: workspace.files.map((file) =>
           file.id === editingCaseId
             ? {
-                ...file,
-                name: editingCaseName.trim(),
-                parentCaseId: editingCaseParentId,
-                referenceCaseIds: editingCaseReferenceCaseIds,
-                tagId: editingCaseTagId,
-                caseIdentifierId: editingCaseCaseIdentifierId,
-                categoryId: editingCaseCategoryId,
-                updatedAt: new Date().toISOString(),
-              }
+              ...file,
+              name: editingCaseName.trim(),
+              parentCaseId: editingCaseParentId,
+              referenceCaseIds: editingCaseReferenceCaseIds,
+              tagId: editingCaseTagId,
+              caseIdentifierId: editingCaseCaseIdentifierId,
+              categoryId: editingCaseCategoryId,
+              updatedAt: new Date().toISOString(),
+            }
             : file
         ),
       };
@@ -783,10 +783,10 @@ export function useAdminCaseResolverCasesActions({
             (file: CaseResolverFile): CaseResolverFile =>
               file.id === caseId
                 ? {
-                    ...file,
-                    name: normalizedName,
-                    updatedAt: now,
-                  }
+                  ...file,
+                  name: normalizedName,
+                  updatedAt: now,
+                }
                 : file
           ),
         };
@@ -840,10 +840,10 @@ export function useAdminCaseResolverCasesActions({
             (file: CaseResolverFile): CaseResolverFile =>
               file.id === caseId && file.fileType === 'case'
                 ? {
-                    ...file,
-                    caseStatus: nextStatus,
-                    updatedAt: now,
-                  }
+                  ...file,
+                  caseStatus: nextStatus,
+                  updatedAt: now,
+                }
                 : file
           ),
         };

@@ -14,7 +14,7 @@ const decryptSecretMock = vi.hoisted(() => vi.fn());
 const callBaseApiMock = vi.hoisted(() => vi.fn());
 const setImportParameterCacheMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/shared/lib/integrations/server', () => ({
   getIntegrationRepository: vi.fn(async () => ({
     listIntegrations: listIntegrationsMock,
     listConnections: listConnectionsMock,

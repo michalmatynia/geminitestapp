@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
+import { getCategoryMappingRepository } from '@/shared/lib/integrations/services/category-mapping-repository';
 import prisma from '@/shared/lib/db/prisma';
 
 describe('CategoryMappingRepository', () => {

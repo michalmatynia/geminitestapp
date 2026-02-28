@@ -10,7 +10,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 export function useCsvImportMutation(): CreateMutation<
   unknown,
   { file: File; onProgress?: (loaded: number, total?: number) => void }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.products.all;
   return createCreateMutationV2({

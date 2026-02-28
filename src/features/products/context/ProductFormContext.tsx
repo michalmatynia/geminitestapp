@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { useFormState } from 'react-hook-form';
 
 import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
-import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
+import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import { ProductParameterValue } from '@/shared/contracts/products';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
@@ -83,15 +83,15 @@ const normalizeComparableParameterValues = (
         typeof entry.valuesByLanguage === 'object' &&
         !Array.isArray(entry.valuesByLanguage)
           ? Object.entries(entry.valuesByLanguage).reduce(
-              (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
-                const normalizedLang = normalizeComparableString(lang).toLowerCase();
-                const normalizedValue = normalizeComparableString(value);
-                if (!normalizedLang || !normalizedValue) return acc;
-                acc[normalizedLang] = normalizedValue;
-                return acc;
-              },
+            (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
+              const normalizedLang = normalizeComparableString(lang).toLowerCase();
+              const normalizedValue = normalizeComparableString(value);
+              if (!normalizedLang || !normalizedValue) return acc;
+              acc[normalizedLang] = normalizedValue;
+              return acc;
+            },
               {} as Record<string, string>
-            )
+          )
           : {};
       const directValue = normalizeComparableString(entry.value);
       const fallbackLocalizedValue =

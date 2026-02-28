@@ -35,8 +35,8 @@ export function CaseResolverPageMainContent(): React.JSX.Element {
     activeCaseFile ??
     (activeCaseId
       ? (workspace.files.find(
-          (file): boolean => file.id === activeCaseId && file.fileType === 'case'
-        ) ?? null)
+        (file): boolean => file.id === activeCaseId && file.fileType === 'case'
+      ) ?? null)
       : null);
   const showCaseOverviewWorkspace = Boolean(
     resolvedCaseContextFile &&

@@ -4,8 +4,8 @@ import fs from 'fs/promises';
 
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
-import { getProductRepository } from '@/features/products/services/product-repository';
-import { pruneProductStudioSourceSlotsForProject } from '@/features/products/services/product-studio-config';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { pruneProductStudioSourceSlotsForProject } from '@/shared/lib/products/services/product-studio-config';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

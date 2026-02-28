@@ -175,11 +175,11 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                         const nodeContext: CaseResolverEditorNodeContext | null =
                           selectedNode && selectedCanvasFileId && selectedWorkspaceId
                             ? {
-                                nodeId: selectedNode.id,
-                                fileId: selectedCanvasFileId,
-                                workspaceId: selectedWorkspaceId,
-                                mode: 'wysiwyg',
-                              }
+                              nodeId: selectedNode.id,
+                              fileId: selectedCanvasFileId,
+                              workspaceId: selectedWorkspaceId,
+                              mode: 'wysiwyg',
+                            }
                             : null;
                         onEditFile(
                           selectedPromptSourceFile.id,

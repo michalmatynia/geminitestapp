@@ -3,7 +3,7 @@ import { describe, it, expect, beforeAll, beforeEach, vi, afterAll } from 'vites
 vi.unmock('@/shared/lib/db/prisma');
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { AiNode, AiPathRunNodeRecord } from '@/shared/contracts/ai-paths';
 import prisma from '@/shared/lib/db/prisma';
 
 describe('AiPathRunRepository', () => {
@@ -183,8 +183,8 @@ describe('AiPathRunRepository', () => {
 
     const nodes = await repo.listRunNodes(run.id);
     expect(nodes.length).toBe(2);
-    expect(nodes.map((n: any) => n.nodeId)).toContain('node-1');
-    expect(nodes.map((n: any) => n.nodeId)).toContain('node-2');
+    expect(nodes.map((n: AiPathRunNodeRecord) => n.nodeId)).toContain('node-1');
+    expect(nodes.map((n: AiPathRunNodeRecord) => n.nodeId)).toContain('node-2');
     expect(nodes[0]!.status).toBe('pending');
   });
 
@@ -208,7 +208,7 @@ describe('AiPathRunRepository', () => {
       },
       { limit: 50 }
     );
-    expect(changed.some((node: any) => node.nodeId === 'node-1')).toBe(true);
+    expect(changed.some((node: AiPathRunNodeRecord) => node.nodeId === 'node-1')).toBe(true);
   });
 
   it('should upsert run node', async () => {

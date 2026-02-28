@@ -1,4 +1,4 @@
-import { prismaProductRepository } from '../src/features/products/services/product-repository/prisma-product-repository';
+import { prismaProductRepository } from '../src/shared/lib/products/services/product-repository/prisma-product-repository';
 
 async function debug() {
   try {

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyBaseParameterImport,
   extractBaseParameters,
-} from '@/features/integrations/services/imports/parameter-import';
+} from '@/shared/lib/integrations/services/imports/parameter-import';
 import type { ParameterRepository } from '@/shared/contracts/products';
 
 const createInMemoryParameterRepository = (): ParameterRepository => {

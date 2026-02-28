@@ -3,8 +3,14 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ProductFormParameters from '@/features/products/components/form/ProductFormParameters';
-import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
-import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
+import {
+  useProductFormParameters,
+  type ProductFormParameterContextType,
+} from '@/features/products/context/ProductFormParameterContext';
+import {
+  useProductFormMetadata,
+  type ProductFormMetadataContextType,
+} from '@/features/products/context/ProductFormMetadataContext';
 
 vi.mock('@/features/products/context/ProductFormParameterContext', () => ({
   useProductFormParameters: vi.fn(),
@@ -74,7 +80,7 @@ vi.mock('@/shared/ui', () => ({
         if (!React.isValidElement(child)) return child;
         const childType = child.type as { displayName?: string };
         if (childType.displayName === 'TabsList') {
-          return React.cloneElement(child as any, {
+          return React.cloneElement(child as React.ReactElement, {
             ...(value !== undefined ? { activeValue: value } : {}),
             ...(onValueChange !== undefined ? { onValueChange } : {}),
           });
@@ -96,10 +102,10 @@ vi.mock('@/shared/ui', () => ({
       <div>
         {React.Children.map(children, (child: React.ReactNode) =>
           React.isValidElement(child)
-            ? React.cloneElement(child as any, {
-                ...(activeValue !== undefined ? { activeValue } : {}),
-                ...(onValueChange !== undefined ? { onValueChange } : {}),
-              })
+            ? React.cloneElement(child as React.ReactElement, {
+              ...(activeValue !== undefined ? { activeValue } : {}),
+              ...(onValueChange !== undefined ? { onValueChange } : {}),
+            })
             : child
         )}
       </div>
@@ -161,10 +167,26 @@ describe('ProductFormParameters multilingual values', () => {
       updateParameterValue,
       updateParameterValueByLanguage,
       removeParameterValue: vi.fn(),
-    } as any);
+    } as unknown as ProductFormParameterContextType);
 
     vi.mocked(useProductFormMetadata).mockReturnValue({
+      catalogs: [],
+      catalogsLoading: false,
+      catalogsError: null,
       selectedCatalogIds: ['catalog-1'],
+      toggleCatalog: vi.fn(),
+      categories: [],
+      categoriesLoading: false,
+      selectedCategoryId: null,
+      setCategoryId: vi.fn(),
+      tags: [],
+      tagsLoading: false,
+      selectedTagIds: [],
+      toggleTag: vi.fn(),
+      producers: [],
+      producersLoading: false,
+      selectedProducerIds: [],
+      toggleProducer: vi.fn(),
       filteredLanguages: [
         {
           id: 'lang-en',
@@ -183,7 +205,8 @@ describe('ProductFormParameters multilingual values', () => {
           enabled: true,
         },
       ],
-    } as any);
+      filteredPriceGroups: [],
+    } as unknown as ProductFormMetadataContextType);
   });
 
   it('switches parameter input by language tab and syncs primary language to base value', () => {

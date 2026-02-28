@@ -4,7 +4,7 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getDefaultImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
-import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
+import { useImageRetryPresets } from '@/shared/lib/integrations/components/listings/useImageRetryPresets';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import { api } from '@/shared/lib/api-client';
 

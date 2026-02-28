@@ -1,4 +1,5 @@
-import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from '@/features/ai/agent-runtime/core/config';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
+import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
 import {
   buildBranchStepsFromAlternatives,
   buildPlanStepsFromSpecs,
@@ -36,6 +37,30 @@ const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]): PlanStepSpecInput[]
       ...(dependsOn != null && { dependsOn }),
     };
   });
+
+const runLoopGuardTask = async (input: {
+  model: string;
+  systemPrompt: string;
+  userContent: string;
+  temperature?: number;
+}): Promise<string> => {
+  const response = await runBrainChatCompletion({
+    modelId: input.model,
+    temperature: input.temperature ?? 0.2,
+    jsonMode: true,
+    messages: [
+      {
+        role: 'system',
+        content: input.systemPrompt,
+      },
+      {
+        role: 'user',
+        content: input.userContent,
+      },
+    ],
+  });
+  return response.text.trim();
+};
 
 export const detectLoopPattern = (
   recent: Array<{
@@ -130,48 +155,27 @@ export async function buildLoopGuardReview({
   meta?: PlannerMeta | null;
 }> {
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              "You are a loop-guard. Output only JSON with keys: action, reason, questions, evidence, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is 'continue', 'replan', or 'wait_human'. Provide 2-4 questions that test whether the agent is looping. If action is 'replan', include goals (planner schema) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.",
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              browserContext,
-              lastError,
-              loopSignal,
-              completedStepIndex: completedIndex,
-              currentPlan: currentPlan.map((step: PlanStep) => ({
-                title: step.title,
-                status: step.status,
-                tool: step.tool,
-                expectedObservation: step.expectedObservation,
-                successCriteria: step.successCriteria,
-              })),
-              maxSteps,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runLoopGuardTask({
+      model,
+      systemPrompt:
+        'You are a loop-guard. Output only JSON with keys: action, reason, questions, evidence, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is \'continue\', \'replan\', or \'wait_human\'. Provide 2-4 questions that test whether the agent is looping. If action is \'replan\', include goals (planner schema) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        browserContext,
+        lastError,
+        loopSignal,
+        completedStepIndex: completedIndex,
+        currentPlan: currentPlan.map((step: PlanStep) => ({
+          title: step.title,
+          status: step.status,
+          tool: step.tool,
+          expectedObservation: step.expectedObservation,
+          successCriteria: step.successCriteria,
+        })),
+        maxSteps,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Loop guard failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       action?: string;
       reason?: string;
@@ -215,11 +219,11 @@ export async function buildLoopGuardReview({
     let steps =
       action === 'replan'
         ? buildPlanStepsFromSpecs(
-            normalizePlanStepSpecs(stepSpecs),
-            meta,
-            true,
-            maxStepAttempts
-          ).slice(0, maxSteps)
+          normalizePlanStepSpecs(stepSpecs),
+          meta,
+          true,
+          maxStepAttempts
+        ).slice(0, maxSteps)
         : [];
     if (action === 'replan' && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(

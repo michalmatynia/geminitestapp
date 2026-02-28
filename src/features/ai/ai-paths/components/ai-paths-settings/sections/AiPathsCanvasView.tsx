@@ -107,377 +107,377 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     <div className={isFocusMode ? 'h-full space-y-0' : 'space-y-6'}>
       {!isFocusMode && typeof document !== 'undefined' && renderActions
         ? createPortal(
-            renderActions(
-              <div className='flex w-full items-start'>
-                <div className='flex flex-col items-start gap-2'>
-                  <div className='flex flex-wrap items-center gap-3'>
-                    <Button
-                      data-doc-id='canvas_save_path'
-                      className='rounded-md border text-sm text-white hover:bg-muted/60'
-                      onClick={() => {
-                        if (nodeConfigDirty) {
-                          notify(
-                            'Unsaved node-config dialog changes are not included. Click "Update Node" first, then "Save Path".',
-                            { variant: 'info' }
-                          );
-                        }
-                        void savePath();
-                      }}
-                      disabled={saving}
-                    >
-                      {saving ? 'Saving...' : 'Save Path'}
-                    </Button>
-                    <Button
-                      data-doc-id='canvas_paths_settings'
-                      type='button'
-                      className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
-                      onClick={() => {
-                        openPathSettings(true);
-                      }}
-                      disabled={!activePath}
-                    >
-                      Paths Settings
-                    </Button>
-                    <Button
-                      data-doc-id='canvas_enable_node_validation'
-                      type='button'
-                      variant={!nodeValidationEnabled ? 'warning' : 'success'}
-                      className='rounded-md text-sm'
-                      onClick={() => {
-                        const nextEnabled = !nodeValidationEnabled;
-                        patchAiPathsValidation({ enabled: nextEnabled });
+          renderActions(
+            <div className='flex w-full items-start'>
+              <div className='flex flex-col items-start gap-2'>
+                <div className='flex flex-wrap items-center gap-3'>
+                  <Button
+                    data-doc-id='canvas_save_path'
+                    className='rounded-md border text-sm text-white hover:bg-muted/60'
+                    onClick={() => {
+                      if (nodeConfigDirty) {
                         notify(
-                          nextEnabled
-                            ? 'AI Paths node validation enabled.'
-                            : 'AI Paths node validation disabled.',
-                          {
-                            variant: nextEnabled ? 'success' : 'info',
-                          }
+                          'Unsaved node-config dialog changes are not included. Click "Update Node" first, then "Save Path".',
+                          { variant: 'info' }
                         );
-                      }}
-                      disabled={!activePath || isPathLocked}
-                      title={
-                        !nodeValidationEnabled
-                          ? 'Enable AI Paths node validation'
-                          : 'Disable AI Paths node validation'
                       }
-                    >
-                      {!nodeValidationEnabled
-                        ? 'Enable Node Validation'
-                        : 'Disable Node Validation'}
-                    </Button>
-                    <Button
-                      data-doc-id='canvas_validate_nodes'
-                      type='button'
-                      variant='info'
-                      className='rounded-md text-sm'
-                      onClick={runNodeValidationCheck}
-                      disabled={!activePath || !nodeValidationEnabled}
-                      title='Run node validation check now'
-                    >
+                      void savePath();
+                    }}
+                    disabled={saving}
+                  >
+                    {saving ? 'Saving...' : 'Save Path'}
+                  </Button>
+                  <Button
+                    data-doc-id='canvas_paths_settings'
+                    type='button'
+                    className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
+                    onClick={() => {
+                      openPathSettings(true);
+                    }}
+                    disabled={!activePath}
+                  >
+                      Paths Settings
+                  </Button>
+                  <Button
+                    data-doc-id='canvas_enable_node_validation'
+                    type='button'
+                    variant={!nodeValidationEnabled ? 'warning' : 'success'}
+                    className='rounded-md text-sm'
+                    onClick={() => {
+                      const nextEnabled = !nodeValidationEnabled;
+                      patchAiPathsValidation({ enabled: nextEnabled });
+                      notify(
+                        nextEnabled
+                          ? 'AI Paths node validation enabled.'
+                          : 'AI Paths node validation disabled.',
+                        {
+                          variant: nextEnabled ? 'success' : 'info',
+                        }
+                      );
+                    }}
+                    disabled={!activePath || isPathLocked}
+                    title={
+                      !nodeValidationEnabled
+                        ? 'Enable AI Paths node validation'
+                        : 'Disable AI Paths node validation'
+                    }
+                  >
+                    {!nodeValidationEnabled
+                      ? 'Enable Node Validation'
+                      : 'Disable Node Validation'}
+                  </Button>
+                  <Button
+                    data-doc-id='canvas_validate_nodes'
+                    type='button'
+                    variant='info'
+                    className='rounded-md text-sm'
+                    onClick={runNodeValidationCheck}
+                    disabled={!activePath || !nodeValidationEnabled}
+                    title='Run node validation check now'
+                  >
                       Validate Nodes
-                    </Button>
-                    <Button
-                      data-doc-id='canvas_open_node_validator'
-                      type='button'
-                      variant='secondary'
-                      className='rounded-md text-sm border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/10'
-                      onClick={openNodeValidator}
-                      disabled={!activePath}
-                      title='Open AI-Paths Node Validator patterns and sequences'
-                    >
+                  </Button>
+                  <Button
+                    data-doc-id='canvas_open_node_validator'
+                    type='button'
+                    variant='secondary'
+                    className='rounded-md text-sm border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/10'
+                    onClick={openNodeValidator}
+                    disabled={!activePath}
+                    title='Open AI-Paths Node Validator patterns and sequences'
+                  >
                       Node Validator
-                    </Button>
-                    <StatusBadge
-                      status={
-                        !nodeValidationEnabled
-                          ? 'Validation: off'
-                          : validationBlocked
-                            ? 'Validation: blocked'
-                            : validationWarn
-                              ? 'Validation: warning'
-                              : 'Validation: ready'
-                      }
-                      variant={
-                        !nodeValidationEnabled
-                          ? 'neutral'
-                          : validationBlocked
-                            ? 'error'
-                            : validationWarn
-                              ? 'warning'
-                              : 'success'
-                      }
-                      size='sm'
-                      className='font-medium'
-                    />
-                    <StatusBadge
-                      status={`Validation score: ${validationScore}`}
-                      variant='neutral'
-                      size='sm'
-                      className='font-medium'
-                    />
-                    <StatusBadge
-                      status={`Failed rules: ${validationFailedRules}`}
-                      variant={validationFailedRules > 0 ? 'warning' : 'success'}
-                      size='sm'
-                      className='font-medium'
-                    />
+                  </Button>
+                  <StatusBadge
+                    status={
+                      !nodeValidationEnabled
+                        ? 'Validation: off'
+                        : validationBlocked
+                          ? 'Validation: blocked'
+                          : validationWarn
+                            ? 'Validation: warning'
+                            : 'Validation: ready'
+                    }
+                    variant={
+                      !nodeValidationEnabled
+                        ? 'neutral'
+                        : validationBlocked
+                          ? 'error'
+                          : validationWarn
+                            ? 'warning'
+                            : 'success'
+                    }
+                    size='sm'
+                    className='font-medium'
+                  />
+                  <StatusBadge
+                    status={`Validation score: ${validationScore}`}
+                    variant='neutral'
+                    size='sm'
+                    className='font-medium'
+                  />
+                  <StatusBadge
+                    status={`Failed rules: ${validationFailedRules}`}
+                    variant={validationFailedRules > 0 ? 'warning' : 'success'}
+                    size='sm'
+                    className='font-medium'
+                  />
+                  <Button
+                    data-doc-id='docs_tooltips_toggle'
+                    type='button'
+                    className='rounded-md border border-violet-500/40 text-sm text-violet-200 hover:bg-violet-500/10'
+                    onClick={() => toggleDocsTooltips(!docsTooltipsOn)}
+                  >
+                    {docsTooltipsOn ? 'Docs Tooltips: On' : 'Docs Tooltips: Off'}
+                  </Button>
+                  <Button
+                    data-doc-id='canvas_toggle_path_lock'
+                    type='button'
+                    className='rounded-md border border-border text-sm text-gray-300 hover:bg-card/60'
+                    onClick={togglePathLock}
+                    disabled={!activePath}
+                    title={
+                      isPathLocked
+                        ? 'Unlock to edit nodes and connections'
+                        : 'Lock to prevent edits'
+                    }
+                  >
+                    {isPathLocked ? 'Unlock Path' : 'Lock Path'}
+                  </Button>
+                  <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>
                     <Button
-                      data-doc-id='docs_tooltips_toggle'
                       type='button'
-                      className='rounded-md border border-violet-500/40 text-sm text-violet-200 hover:bg-violet-500/10'
-                      onClick={() => toggleDocsTooltips(!docsTooltipsOn)}
+                      className={`h-8 rounded-md px-2 text-xs ${
+                        selectionToolMode === 'pan'
+                          ? 'bg-sky-500/20 text-sky-200'
+                          : 'text-gray-300 hover:bg-card/60'
+                      }`}
+                      onClick={() => setSelectionToolMode('pan')}
+                      title='Pan canvas'
                     >
-                      {docsTooltipsOn ? 'Docs Tooltips: On' : 'Docs Tooltips: Off'}
+                        Pan
                     </Button>
                     <Button
-                      data-doc-id='canvas_toggle_path_lock'
                       type='button'
-                      className='rounded-md border border-border text-sm text-gray-300 hover:bg-card/60'
-                      onClick={togglePathLock}
-                      disabled={!activePath}
-                      title={
-                        isPathLocked
-                          ? 'Unlock to edit nodes and connections'
-                          : 'Lock to prevent edits'
-                      }
+                      className={`h-8 rounded-md px-2 text-xs ${
+                        selectionToolMode === 'select'
+                          ? 'bg-sky-500/20 text-sky-200'
+                          : 'text-gray-300 hover:bg-card/60'
+                      }`}
+                      onClick={() => setSelectionToolMode('select')}
+                      title='Rectangle selection tool'
                     >
-                      {isPathLocked ? 'Unlock Path' : 'Lock Path'}
+                        Select
                     </Button>
+                  </div>
+                  {selectionToolMode === 'select' ? (
                     <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>
                       <Button
                         type='button'
                         className={`h-8 rounded-md px-2 text-xs ${
-                          selectionToolMode === 'pan'
+                          scopeMode === 'portion'
                             ? 'bg-sky-500/20 text-sky-200'
                             : 'text-gray-300 hover:bg-card/60'
                         }`}
-                        onClick={() => setSelectionToolMode('pan')}
-                        title='Pan canvas'
+                        onClick={() => setScopeMode('portion')}
+                        title='Select only nodes inside the rectangle'
                       >
-                        Pan
+                          Portion
                       </Button>
                       <Button
                         type='button'
                         className={`h-8 rounded-md px-2 text-xs ${
-                          selectionToolMode === 'select'
+                          scopeMode === 'wiring'
                             ? 'bg-sky-500/20 text-sky-200'
                             : 'text-gray-300 hover:bg-card/60'
                         }`}
-                        onClick={() => setSelectionToolMode('select')}
-                        title='Rectangle selection tool'
+                        onClick={() => setScopeMode('wiring')}
+                        title='Expand marquee selection to connected wiring'
                       >
-                        Select
+                          With Wiring
                       </Button>
                     </div>
-                    {selectionToolMode === 'select' ? (
-                      <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>
-                        <Button
-                          type='button'
-                          className={`h-8 rounded-md px-2 text-xs ${
-                            scopeMode === 'portion'
-                              ? 'bg-sky-500/20 text-sky-200'
-                              : 'text-gray-300 hover:bg-card/60'
-                          }`}
-                          onClick={() => setScopeMode('portion')}
-                          title='Select only nodes inside the rectangle'
-                        >
-                          Portion
-                        </Button>
-                        <Button
-                          type='button'
-                          className={`h-8 rounded-md px-2 text-xs ${
-                            scopeMode === 'wiring'
-                              ? 'bg-sky-500/20 text-sky-200'
-                              : 'text-gray-300 hover:bg-card/60'
-                          }`}
-                          onClick={() => setScopeMode('wiring')}
-                          title='Expand marquee selection to connected wiring'
-                        >
-                          With Wiring
-                        </Button>
-                      </div>
-                    ) : null}
-                    <StatusBadge
-                      status={`Selected: ${selectedCount}`}
-                      variant='neutral'
-                      size='sm'
-                      className='font-medium'
-                      title='Selected nodes count'
-                    />
-                    {selectionToolMode === 'select' ? (
-                      <div className='text-[11px] text-gray-400'>
-                        {scopeMode === 'wiring'
-                          ? 'Drag to select connected subgraphs. Shift add, Alt subtract.'
-                          : 'Drag to select node portions only. Shift add, Alt subtract.'}
-                      </div>
-                    ) : null}
-                    <Button
-                      data-doc-id='canvas_clear_connector_data'
-                      className='rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10'
-                      onClick={() => {
-                        void clearConnectorData();
-                      }}
-                      type='button'
-                      disabled={!activePath}
-                    >
+                  ) : null}
+                  <StatusBadge
+                    status={`Selected: ${selectedCount}`}
+                    variant='neutral'
+                    size='sm'
+                    className='font-medium'
+                    title='Selected nodes count'
+                  />
+                  {selectionToolMode === 'select' ? (
+                    <div className='text-[11px] text-gray-400'>
+                      {scopeMode === 'wiring'
+                        ? 'Drag to select connected subgraphs. Shift add, Alt subtract.'
+                        : 'Drag to select node portions only. Shift add, Alt subtract.'}
+                    </div>
+                  ) : null}
+                  <Button
+                    data-doc-id='canvas_clear_connector_data'
+                    className='rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10'
+                    onClick={() => {
+                      void clearConnectorData();
+                    }}
+                    type='button'
+                    disabled={!activePath}
+                  >
                       Clear Connector Data
-                    </Button>
-                    <Button
-                      data-doc-id='canvas_toggle_path_active'
-                      type='button'
-                      className={`rounded-md border text-sm ${isPathActive ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10' : 'border-rose-500/40 text-rose-200 hover:bg-rose-500/10'}`}
-                      onClick={togglePathActive}
-                      disabled={!activePath}
-                      title={isPathActive ? 'Deactivate to stop runs' : 'Activate to allow runs'}
-                    >
-                      {isPathActive ? 'Deactivate' : 'Activate'}
-                    </Button>
-                    <Button
-                      data-doc-id='canvas_clear_history'
-                      className='rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10'
-                      onClick={() => {
-                        void clearHistory();
-                      }}
-                      type='button'
-                      disabled={!activePath}
-                      title={
-                        hasHistory
-                          ? 'Clear history for all nodes in this path'
-                          : 'No history recorded yet'
-                      }
-                    >
+                  </Button>
+                  <Button
+                    data-doc-id='canvas_toggle_path_active'
+                    type='button'
+                    className={`rounded-md border text-sm ${isPathActive ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10' : 'border-rose-500/40 text-rose-200 hover:bg-rose-500/10'}`}
+                    onClick={togglePathActive}
+                    disabled={!activePath}
+                    title={isPathActive ? 'Deactivate to stop runs' : 'Activate to allow runs'}
+                  >
+                    {isPathActive ? 'Deactivate' : 'Activate'}
+                  </Button>
+                  <Button
+                    data-doc-id='canvas_clear_history'
+                    className='rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10'
+                    onClick={() => {
+                      void clearHistory();
+                    }}
+                    type='button'
+                    disabled={!activePath}
+                    title={
+                      hasHistory
+                        ? 'Clear history for all nodes in this path'
+                        : 'No history recorded yet'
+                    }
+                  >
                       Clear History
-                    </Button>
-                  </div>
-                  {lastError && (
-                    <div className='flex items-center gap-2 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200'>
-                      <span className='max-w-[220px] truncate'>
+                  </Button>
+                </div>
+                {lastError && (
+                  <div className='flex items-center gap-2 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200'>
+                    <span className='max-w-[220px] truncate'>
                         Last error: {lastError.message}
-                      </span>
+                    </span>
+                    <Button
+                      type='button'
+                      className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
+                      onClick={() => {
+                        clearLastError(null);
+                        void persistLastErrorSafe(null);
+                      }}
+                    >
+                        Clear
+                    </Button>
+                    {lastError.message === 'Failed to load AI Paths settings' && (
                       <Button
                         type='button'
                         className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
                         onClick={() => {
                           clearLastError(null);
                           void persistLastErrorSafe(null);
+                          bumpLoadNonce();
                         }}
                       >
-                        Clear
-                      </Button>
-                      {lastError.message === 'Failed to load AI Paths settings' && (
-                        <Button
-                          type='button'
-                          className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
-                          onClick={() => {
-                            clearLastError(null);
-                            void persistLastErrorSafe(null);
-                            bumpLoadNonce();
-                          }}
-                        >
                           Retry
-                        </Button>
-                      )}
-                      <Button
-                        type='button'
-                        className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
-                        onClick={(): void =>
-                          window.location.assign(
-                            `/admin/system/logs?level=error&source=client&query=${encodeURIComponent(
-                              'AI Paths'
-                            )}`
-                          )
-                        }
-                      >
-                        View logs
                       </Button>
-                    </div>
-                  )}
-                </div>
+                    )}
+                    <Button
+                      type='button'
+                      className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
+                      onClick={(): void =>
+                        window.location.assign(
+                          `/admin/system/logs?level=error&source=client&query=${encodeURIComponent(
+                            'AI Paths'
+                          )}`
+                        )
+                      }
+                    >
+                        View logs
+                    </Button>
+                  </div>
+                )}
               </div>
-            ),
-            document.getElementById('ai-paths-actions') ?? document.body
-          )
+            </div>
+          ),
+          document.getElementById('ai-paths-actions') ?? document.body
+        )
         : null}
 
       {!isFocusMode && typeof document !== 'undefined' && activePath
         ? createPortal(
-            <div className='flex items-center justify-end gap-2'>
-              {autoSaveLabel ? (
-                <StatusBadge
-                  status={autoSaveLabel}
-                  variant={autoSaveVariant}
-                  size='sm'
-                  className='font-medium'
-                />
-              ) : null}
-              {lastRunAt && (
-                <StatusBadge
-                  status={'Last run: ' + new Date(lastRunAt).toLocaleTimeString()}
-                  variant='active'
-                  size='sm'
-                  className='font-medium'
-                />
-              )}
-              <div className='flex items-center gap-2'>
-                {isPathNameEditing ? (
-                  <input
-                    data-doc-id='canvas_path_name_field'
-                    type='text'
-                    value={renameDraft}
-                    onChange={(event) => {
-                      setRenameDraft(event.target.value);
-                    }}
-                    onBlur={commitPathNameEdit}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        event.currentTarget.blur();
-                        return;
-                      }
-                      if (event.key === 'Escape') {
-                        event.preventDefault();
-                        cancelPathNameEdit();
-                      }
-                    }}
-                    autoFocus
-                    className='h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-sm text-white outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                    placeholder='Path name'
-                    disabled={!activePath}
-                  />
-                ) : (
-                  <button
-                    data-doc-id='canvas_path_name_field'
-                    type='button'
-                    className='h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-left text-sm text-gray-200 hover:bg-card/70 disabled:cursor-not-allowed disabled:opacity-60'
-                    onDoubleClick={startPathNameEdit}
-                    disabled={!activePath}
-                    title={
-                      activePath ? 'Double-click to rename this path' : 'No active path selected'
+          <div className='flex items-center justify-end gap-2'>
+            {autoSaveLabel ? (
+              <StatusBadge
+                status={autoSaveLabel}
+                variant={autoSaveVariant}
+                size='sm'
+                className='font-medium'
+              />
+            ) : null}
+            {lastRunAt && (
+              <StatusBadge
+                status={'Last run: ' + new Date(lastRunAt).toLocaleTimeString()}
+                variant='active'
+                size='sm'
+                className='font-medium'
+              />
+            )}
+            <div className='flex items-center gap-2'>
+              {isPathNameEditing ? (
+                <input
+                  data-doc-id='canvas_path_name_field'
+                  type='text'
+                  value={renameDraft}
+                  onChange={(event) => {
+                    setRenameDraft(event.target.value);
+                  }}
+                  onBlur={commitPathNameEdit}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      event.currentTarget.blur();
+                      return;
                     }
-                  >
-                    <span className='block truncate'>{pathName || 'Untitled path'}</span>
-                  </button>
-                )}
-                <SelectSimple
-                  dataDocId='canvas_path_selector'
-                  size='sm'
-                  value={activePath ?? undefined}
-                  onValueChange={(value: string): void => {
-                    if (value !== activePath) {
-                      switchPath(value);
+                    if (event.key === 'Escape') {
+                      event.preventDefault();
+                      cancelPathNameEdit();
                     }
                   }}
-                  options={pathOptions}
-                  placeholder='Select path'
-                  className='w-[240px]'
-                  triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
-                  disabled={pathOptions.length === 0}
+                  autoFocus
+                  className='h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-sm text-white outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                  placeholder='Path name'
+                  disabled={!activePath}
                 />
-              </div>
-            </div>,
-            document.getElementById('ai-paths-name') ?? document.body
-          )
+              ) : (
+                <button
+                  data-doc-id='canvas_path_name_field'
+                  type='button'
+                  className='h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-left text-sm text-gray-200 hover:bg-card/70 disabled:cursor-not-allowed disabled:opacity-60'
+                  onDoubleClick={startPathNameEdit}
+                  disabled={!activePath}
+                  title={
+                    activePath ? 'Double-click to rename this path' : 'No active path selected'
+                  }
+                >
+                  <span className='block truncate'>{pathName || 'Untitled path'}</span>
+                </button>
+              )}
+              <SelectSimple
+                dataDocId='canvas_path_selector'
+                size='sm'
+                value={activePath ?? undefined}
+                onValueChange={(value: string): void => {
+                  if (value !== activePath) {
+                    switchPath(value);
+                  }
+                }}
+                options={pathOptions}
+                placeholder='Select path'
+                className='w-[240px]'
+                triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                disabled={pathOptions.length === 0}
+              />
+            </div>
+          </div>,
+          document.getElementById('ai-paths-name') ?? document.body
+        )
         : null}
 
       <div

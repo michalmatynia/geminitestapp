@@ -52,7 +52,7 @@ export function useDropValidation(): {
   canDropInNestedBlock: (blockType: string, parentBlockType: string) => DropValidationResult;
   canConvertSectionToBlock: (sectionType: string) => DropValidationResult;
   isContainerBlock: (blockType: string) => boolean;
-} {
+  } {
   /**
    * Check if a block type can be dropped directly into a Row
    */

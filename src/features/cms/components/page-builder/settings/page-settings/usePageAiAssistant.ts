@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useToast } from '@/shared/ui';
 import { ApiError } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -8,6 +9,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getSectionDefinition } from '../../section-registry';
 import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
+import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import {
   usePageBuilderState,
   usePageBuilderDispatch,
@@ -18,15 +20,18 @@ export function usePageAiAssistant() {
   const dispatch = usePageBuilderDispatch();
   const page = state.currentPage;
   const { toast } = useToast();
+  const brainAi = useBrainAssignment({
+    capability: 'cms.css_stream',
+  });
 
-  const [pageAiProvider, setPageAiProvider] = useState<'model' | 'agent'>('model');
-  const [pageAiModelId, setPageAiModelId] = useState<string>('');
-  const [pageAiAgentId, setPageAiAgentId] = useState<string>('');
   const [pageAiPrompt, setPageAiPrompt] = useState<string>('');
   const [pageAiTask, setPageAiTask] = useState<'layout' | 'seo'>('layout');
   const [pageAiOutput, setPageAiOutput] = useState<string>('');
   const [pageAiError, setPageAiError] = useState<string | null>(null);
   const pageAiAbortRef = useRef<AbortController | null>(null);
+  const pageAiProvider = brainAi.assignment.provider;
+  const pageAiModelId = brainAi.assignment.modelId.trim();
+  const pageAiAgentId = brainAi.assignment.agentId.trim();
 
   const pageContext = useMemo((): string => {
     if (!page) return '';
@@ -65,35 +70,64 @@ export function usePageAiAssistant() {
     }
   }, []);
 
+  const buildPageAiMessages = useCallback((): ChatMessage[] => {
+    const sessionId = `page-ai-${Date.now()}`;
+    const timestamp = new Date().toISOString();
+    const systemContent =
+      pageAiTask === 'seo'
+        ? 'You are a CMS SEO assistant. Return only valid JSON with concise SEO recommendations for this page. Do not use markdown or code fences.'
+        : 'You are a CMS layout assistant. Return only valid JSON. The response must be an object with a "sections" array. Each section should use { "type": string, "zone": string, "settings"?: object }. Do not use markdown or code fences.';
+    const userContent = [
+      `Task: ${pageAiTask}`,
+      pageAiPrompt.trim() ? `Prompt:\n${pageAiPrompt.trim()}` : 'Prompt:\nGenerate a useful result.',
+      `Context:\n${pageContext}`,
+    ].join('\n\n');
+
+    return [
+      {
+        id: `sys-${Date.now()}`,
+        sessionId,
+        timestamp,
+        role: 'system',
+        content: systemContent,
+      },
+      {
+        id: `user-${Date.now()}`,
+        sessionId,
+        timestamp,
+        role: 'user',
+        content: userContent,
+      },
+    ];
+  }, [pageAiPrompt, pageAiTask, pageContext]);
+
   const generatePageAiMutation = createMutationV2<
-    { accumulated: string; provider: string },
+    { accumulated: string; provider: 'model' | 'agent' },
     {
-      provider: 'model' | 'agent';
-      modelId?: string;
-      agentId?: string;
-      task: string;
-      prompt: string;
-      context: string;
+      messages: ChatMessage[];
     }
   >({
     mutationFn: async (variables) => {
-      const { provider, modelId, agentId, task, prompt, context } = variables;
-      const endpoint =
-        provider === 'model'
-          ? `/api/cms/pages/${page?.id}/ai/generate-layout`
-          : `/api/cms/pages/${page?.id}/ai/agent-layout`;
+      const { messages } = variables;
+      const controller = new AbortController();
+      pageAiAbortRef.current = controller;
 
-      const response = await fetch(endpoint, {
+      const response = await fetch('/api/cms/css-ai/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ modelId, agentId, task, prompt, context }),
-        signal: pageAiAbortRef.current?.signal,
+        body: JSON.stringify({
+          provider: pageAiProvider,
+          modelId: pageAiModelId || undefined,
+          agentId: pageAiAgentId || undefined,
+          messages,
+        }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
-        const error = (await response.json()) as Record<string, unknown>;
+        const error = (await response.json().catch(() => null)) as Record<string, unknown> | null;
         throw new ApiError(
-          String(error['message'] || 'Failed to generate AI output'),
+          String(error?.['message'] || error?.['error'] || 'Failed to generate AI output'),
           response.status
         );
       }
@@ -104,19 +138,59 @@ export function usePageAiAssistant() {
 
         let accumulated = '';
         const decoder = new TextDecoder();
-        while (true) {
+        let buffer = '';
+        let doneSignal = false;
+
+        const processEvent = (raw: string): void => {
+          const lines = raw.split('\n').map((line: string) => line.trim());
+          const dataLine = lines.find((line: string) => line.startsWith('data:'));
+          if (!dataLine) return;
+          const payload = JSON.parse(dataLine.replace(/^data:\s*/, '')) as {
+            delta?: string;
+            done?: boolean;
+            error?: string;
+            brainApplied?: unknown;
+          };
+          if (payload.error) {
+            throw new ApiError(payload.error, 400);
+          }
+          if (payload.delta) {
+            accumulated += payload.delta;
+            setPageAiOutput(accumulated);
+          }
+          if (payload.done) {
+            doneSignal = true;
+          }
+        };
+
+        while (!doneSignal) {
           const { done, value } = await reader.read();
           if (done) break;
-          const chunk = decoder.decode(value);
-          accumulated += chunk;
-          setPageAiOutput(accumulated);
+          if (!value) continue;
+          buffer += decoder.decode(value, { stream: true });
+          const chunks = buffer.split('\n\n');
+          buffer = chunks.pop() ?? '';
+          for (const chunk of chunks) {
+            processEvent(chunk);
+            if (doneSignal) break;
+          }
         }
-        return { accumulated, provider: modelId || agentId || 'ai' };
+        if (buffer.trim() && !doneSignal) {
+          processEvent(buffer);
+        }
+        if (doneSignal) {
+          try {
+            await reader.cancel();
+          } catch {
+            // ignore
+          }
+        }
+        return { accumulated, provider: pageAiProvider };
       }
 
       const data = (await response.json()) as { output: string };
       setPageAiOutput(data.output);
-      return { accumulated: data.output, provider: modelId || agentId || 'ai' };
+      return { accumulated: data.output, provider: pageAiProvider };
     },
     mutationKey: QUERY_KEYS.cms.pages.all,
     meta: {
@@ -132,16 +206,22 @@ export function usePageAiAssistant() {
     if (!page) return;
     setPageAiError(null);
     setPageAiOutput('');
-    pageAiAbortRef.current = new AbortController();
+    if (pageAiProvider === 'model' && !pageAiModelId) {
+      const message = 'Configure CMS CSS Stream in AI Brain first.';
+      setPageAiError(message);
+      toast(message, { variant: 'error' });
+      return;
+    }
+    if (pageAiProvider === 'agent' && !pageAiAgentId) {
+      const message = 'Configure a CMS CSS Stream agent in AI Brain first.';
+      setPageAiError(message);
+      toast(message, { variant: 'error' });
+      return;
+    }
 
     try {
       const { accumulated, provider } = await generatePageAiMutation.mutateAsync({
-        provider: pageAiProvider,
-        modelId: pageAiModelId,
-        agentId: pageAiAgentId,
-        task: pageAiTask,
-        prompt: pageAiPrompt,
-        context: pageContext,
+        messages: buildPageAiMessages(),
       });
 
       const parsed = extractPageAiJson(accumulated) as Record<string, unknown> | null;
@@ -164,9 +244,12 @@ export function usePageAiAssistant() {
     pageAiAgentId,
     pageAiTask,
     pageAiPrompt,
-    pageContext,
+    buildPageAiMessages,
     generatePageAiMutation,
     extractPageAiJson,
+    pageAiProvider,
+    pageAiModelId,
+    pageAiAgentId,
     toast,
   ]);
 
@@ -212,11 +295,8 @@ export function usePageAiAssistant() {
 
   return {
     pageAiProvider,
-    setPageAiProvider,
     pageAiModelId,
-    setPageAiModelId,
     pageAiAgentId,
-    setPageAiAgentId,
     pageAiPrompt,
     setPageAiPrompt,
     pageAiTask,

@@ -3,19 +3,17 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type { ChatbotSettingsDto as ChatbotSettingsPayload } from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
 
-import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/features/ai/chatbot/utils/constants';
+import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/shared/lib/ai/chatbot/constants';
 import { useChatbotSettings } from './useChatbotQueries';
 import { useSaveChatbotSettings } from './useChatbotMutations';
 
 export interface UseChatbotSettingsStateReturn {
-  modelOptions: string[];
   model: string;
   setModel: React.Dispatch<React.SetStateAction<string>>;
-  modelLoading: boolean;
   webSearchEnabled: boolean;
   setWebSearchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   useGlobalContext: boolean;
@@ -115,11 +113,17 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
   const settingsLoadedRef = useRef<boolean>(false);
 
   // External settings & data
-  const brainModelOptions = useBrainModelOptions({
+  const brainAssignment = useBrainAssignment({
     feature: 'chatbot',
   });
   const settingsQuery = useChatbotSettings(CHATBOT_SETTINGS_KEY);
   const saveMutation = useSaveChatbotSettings();
+
+  useEffect((): void => {
+    const nextModel = brainAssignment.effectiveModelId.trim();
+    if (!nextModel || nextModel === model) return;
+    setModel(nextModel);
+  }, [brainAssignment.effectiveModelId, model]);
 
   const {
     agentModeEnabled,
@@ -344,10 +348,8 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
   };
 
   return {
-    modelOptions: brainModelOptions.models,
     model,
     setModel,
-    modelLoading: brainModelOptions.isLoading,
     webSearchEnabled,
     setWebSearchEnabled,
     useGlobalContext,

@@ -1,7 +1,7 @@
 import { createValidationErrorResponse } from '@/shared/lib/api/handle-api-error';
-import { formDataToObject } from '@/features/products/services/product-service-form-utils';
+import { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';
 
-import { validateProductCreate, validateProductUpdate, type ValidationError } from './validators';
+import { validateProductCreate, validateProductUpdate, type ValidationError } from '@/features/products/validations/validators';
 
 export type ValidationMiddlewareOptions = {
   skipValidation?: boolean;

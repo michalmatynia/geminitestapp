@@ -11,10 +11,20 @@ vi.mock('@/features/cms/hooks/useCmsDomainSelection', () => ({
 
 // Mock SelectSimple to avoid Radix UI issues in unit tests
 vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual('@/shared/ui');
+  const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
   return {
     ...actual,
-    SelectSimple: ({ value, onValueChange, options, disabled }: any) => (
+    SelectSimple: ({
+      value,
+      onValueChange,
+      options,
+      disabled,
+    }: {
+      value: string;
+      onValueChange: (val: string) => void;
+      options: Array<{ value: string; label: string }>;
+      disabled?: boolean;
+    }) => (
       <select
         data-testid='select-simple'
         value={value}
@@ -22,7 +32,7 @@ vi.mock('@/shared/ui', async () => {
         onChange={(e) => onValueChange(e.target.value)}
         aria-label='Zone selector'
       >
-        {options.map((opt: any) => (
+        {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>
@@ -43,13 +53,13 @@ describe('CmsDomainSelector', () => {
   });
 
   it('should render simple routing message when zoning is disabled', () => {
-    (useCmsDomainSelection as any).mockReturnValue({
+    vi.mocked(useCmsDomainSelection).mockReturnValue({
       domains: [],
       activeDomainId: null,
       hostDomainId: null,
       setActiveDomainId: vi.fn(),
       zoningEnabled: false,
-    });
+    } as any);
 
     render(<CmsDomainSelector />);
 
@@ -58,13 +68,13 @@ describe('CmsDomainSelector', () => {
   });
 
   it('should render SelectSimple when zoning is enabled', () => {
-    (useCmsDomainSelection as any).mockReturnValue({
+    vi.mocked(useCmsDomainSelection).mockReturnValue({
       domains: mockDomains,
       activeDomainId: '1',
       hostDomainId: '1',
       setActiveDomainId: vi.fn(),
       zoningEnabled: true,
-    });
+    } as any);
 
     render(<CmsDomainSelector label='Test Zone' />);
 
@@ -78,13 +88,13 @@ describe('CmsDomainSelector', () => {
     const setActiveDomainId = vi.fn();
     const onChange = vi.fn();
 
-    (useCmsDomainSelection as any).mockReturnValue({
+    vi.mocked(useCmsDomainSelection).mockReturnValue({
       domains: mockDomains,
       activeDomainId: '1',
       hostDomainId: '1',
       setActiveDomainId,
       zoningEnabled: true,
-    });
+    } as any);
 
     render(<CmsDomainSelector onChange={onChange} />);
 
@@ -96,13 +106,13 @@ describe('CmsDomainSelector', () => {
   });
 
   it('should disable selector when there are no domains', () => {
-    (useCmsDomainSelection as any).mockReturnValue({
+    vi.mocked(useCmsDomainSelection).mockReturnValue({
       domains: [],
       activeDomainId: null,
       hostDomainId: null,
       setActiveDomainId: vi.fn(),
       zoningEnabled: true,
-    });
+    } as any);
 
     render(<CmsDomainSelector />);
 

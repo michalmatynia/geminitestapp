@@ -232,12 +232,12 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     const snapshot =
       runtimeProfileEventCount > 0 || runtimeProfileSummary || nodeSpans.length > 0
         ? buildRuntimeProfileSnapshot({
-            traceId,
-            eventCount: runtimeProfileEventCount,
-            sampledHighlights: runtimeProfileHighlights,
-            summary: runtimeProfileSummary,
-            nodeSpans,
-          })
+          traceId,
+          eventCount: runtimeProfileEventCount,
+          sampledHighlights: runtimeProfileHighlights,
+          summary: runtimeProfileSummary,
+          nodeSpans,
+        })
         : null;
     runtimeProfilePersisted = true;
     if (!snapshot || dbRunMissing) return snapshot;
@@ -1070,29 +1070,29 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         );
         const updated = shouldFailOnBlocked
           ? await updateRunSnapshot({
-              status: 'failed',
-              runtimeState: terminalRuntimeState,
-              finishedAt: finishedAt.toISOString(),
-              errorMessage: blockedFailureMessage,
-              meta: withRuntimeFingerprintMeta({
-                ...((run.meta as Record<string, unknown>) ?? {}),
-                runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
-                resumeMode: 'replay',
-                retryNodeIds: [],
-              }),
-            })
+            status: 'failed',
+            runtimeState: terminalRuntimeState,
+            finishedAt: finishedAt.toISOString(),
+            errorMessage: blockedFailureMessage,
+            meta: withRuntimeFingerprintMeta({
+              ...((run.meta as Record<string, unknown>) ?? {}),
+              runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
+              resumeMode: 'replay',
+              retryNodeIds: [],
+            }),
+          })
           : await updateRunSnapshot({
-              status: 'completed',
-              runtimeState: terminalRuntimeState,
-              finishedAt: finishedAt.toISOString(),
-              errorMessage: null,
-              meta: withRuntimeFingerprintMeta({
-                ...((run.meta as Record<string, unknown>) ?? {}),
-                runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
-                resumeMode: 'replay',
-                retryNodeIds: [],
-              }),
-            });
+            status: 'completed',
+            runtimeState: terminalRuntimeState,
+            finishedAt: finishedAt.toISOString(),
+            errorMessage: null,
+            meta: withRuntimeFingerprintMeta({
+              ...((run.meta as Record<string, unknown>) ?? {}),
+              runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
+              resumeMode: 'replay',
+              retryNodeIds: [],
+            }),
+          });
         if (updated) {
           await repo.createRunEvent({
             runId: run.id,
@@ -1108,11 +1108,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               traceId,
               ...(runBlocked
                 ? {
-                    haltReason: runtimeHaltReason,
-                    haltIteration: runtimeHaltIteration,
-                    blockedRunPolicy,
-                    blockedNodes: blockedNodeDiagnostics.slice(0, 10),
-                  }
+                  haltReason: runtimeHaltReason,
+                  haltIteration: runtimeHaltIteration,
+                  blockedRunPolicy,
+                  blockedNodes: blockedNodeDiagnostics.slice(0, 10),
+                }
                 : {}),
             },
           });

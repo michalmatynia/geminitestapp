@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import type { AnyBulkWriteOperation } from 'mongodb';
+import { Product } from '@prisma/client';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { migrateProductBatch } from '@/features/products/services/product-migration';
-import { createMockProduct } from '@/features/products/utils/productUtils';
+import { migrateProductBatch } from '@/shared/lib/products/services/product-migration';
+import { createMockProduct } from '@/shared/lib/products/utils/productUtils';
 import prisma from '@/shared/lib/db/prisma';
 
 // Use vi.hoisted to define the mock before it's used in vi.mock
@@ -61,7 +62,7 @@ describe('productMigration', () => {
 
       const skus = bulkWriteCall.map((op) => {
         if ('replaceOne' in op) {
-          return (op.replaceOne.replacement as any).sku;
+          return (op.replaceOne.replacement as unknown as Product).sku;
         }
         return null;
       });

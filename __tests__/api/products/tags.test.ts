@@ -1,6 +1,8 @@
+import { ProductTag } from '@prisma/client';
 import { NextRequest } from 'next/server';
 import { vi, beforeEach, afterAll } from 'vitest';
 import { describe, it, expect } from 'vitest';
+import type { ZodSchema } from 'zod';
 
 import { GET, POST } from '@/app/api/products/tags/route';
 import prisma from '@/shared/lib/db/prisma';
@@ -28,11 +30,11 @@ vi.mock('@/shared/lib/db/prisma', () => ({
 
 // Mock data provider
 vi.mock('@/features/products/server', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
+  const actual = await importOriginal<typeof import('@/features/products/server')>();
   return {
     ...actual,
     getProductDataProvider: vi.fn().mockResolvedValue('prisma'),
-    parseJsonBody: async (req: any, schema: any) => {
+    parseJsonBody: async (req: NextRequest, schema: ZodSchema) => {
       try {
         const body = await req.json();
         const result = schema.safeParse(body);
@@ -64,7 +66,7 @@ describe('Product Tags API', () => {
   describe('GET /api/products/tags', () => {
     it('should return tags for a given catalogId', async () => {
       const now = new Date();
-      const mockTags = [
+      const mockTags: ProductTag[] = [
         {
           id: '1',
           name: 'Tag 1',
@@ -74,7 +76,7 @@ describe('Product Tags API', () => {
           updatedAt: now,
         },
       ];
-      vi.mocked(prisma.productTag.findMany).mockResolvedValue(mockTags as any);
+      vi.mocked(prisma.productTag.findMany).mockResolvedValue(mockTags);
 
       const res = await GET(new NextRequest('http://localhost/api/products/tags?catalogId=cat1'));
       const data = await res.json();
@@ -93,7 +95,7 @@ describe('Product Tags API', () => {
         ...newTag,
         createdAt: now,
         updatedAt: now,
-      } as any);
+      } as ProductTag);
 
       const res = await POST(
         new NextRequest('http://localhost/api/products/tags', {

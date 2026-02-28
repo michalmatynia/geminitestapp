@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import React from 'react';
 
-import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import ProductForm from '@/features/products/components/ProductForm';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ModalStateProps } from '@/shared/contracts/ui';

@@ -4,7 +4,7 @@ import {
   normalizeSelectedIds,
   shouldReuseIdempotentRun,
   shouldFilterToUniqueOnly,
-} from '@/features/integrations/services/imports/base-import-service-shared';
+} from '@/shared/lib/integrations/services/imports/base-import-service-shared';
 
 describe('base-import-service-shared', () => {
   it('normalizes selected ids by trimming and deduping', () => {

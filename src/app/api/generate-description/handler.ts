@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { generateProductAiDescription } from '@/features/products/services/aiDescriptionService';
+import { generateProductAiDescription } from '@/shared/lib/products/services/aiDescriptionService';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 interface GenerateDescriptionBody {

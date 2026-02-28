@@ -175,21 +175,21 @@ const ensureDocumentPromptPorts = (
     const normalizedNode: AiNode =
       node.type === 'template' && isTextNode
         ? {
-            ...node,
-            type: 'prompt',
-            config: {
-              ...(node.config ?? {}),
-              prompt: {
-                ...(node.config?.prompt ?? {}),
-                template:
+          ...node,
+          type: 'prompt',
+          config: {
+            ...(node.config ?? {}),
+            prompt: {
+              ...(node.config?.prompt ?? {}),
+              template:
                   typeof node.config?.prompt?.template === 'string'
                     ? node.config.prompt.template
                     : typeof node.config?.template?.template === 'string'
                       ? node.config.template.template
                       : '',
-              },
             },
-          }
+          },
+        }
         : node;
     if (normalizedNode.type !== 'prompt' || !isTextNode) return normalizedNode;
     const isExplanatoryNode = nodeMeta[node.id]?.role === 'explanatory';

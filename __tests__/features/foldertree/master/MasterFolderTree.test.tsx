@@ -101,8 +101,8 @@ function MasterTreeHarness({
       onNodeDrop={
         onNodeDrop
           ? async (payload): Promise<void> => {
-              await onNodeDrop(payload);
-            }
+            await onNodeDrop(payload);
+          }
           : undefined
       }
       canDrop={canDrop ? (): boolean => canDrop() : undefined}

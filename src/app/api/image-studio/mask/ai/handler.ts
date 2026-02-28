@@ -12,7 +12,7 @@ import {
   parseImageStudioSettings,
 } from '@/shared/lib/ai/image-studio/studio-settings';
 import { auth } from '@/features/auth/server';
-import { getSettingValue } from '@/features/products/services/aiDescriptionService.settings';
+import { getSettingValue } from '@/shared/lib/products/services/aiDescriptionService.settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -37,8 +37,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     | string
     | null
     | undefined;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-  const settings = parseImageStudioSettings(settingsRaw) as any;
+  const settings = parseImageStudioSettings(settingsRaw);
 
   const publicRoot = path.join(process.cwd(), 'public');
   const normalized = parsed.data.imagePath.replace(/^\/+/, '');
@@ -52,8 +51,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       ? 'Return only JSON: { "polygon": [{"x":0..1,"y":0..1}, ...] } for the main product. Use 12-32 points.'
       : 'Return only JSON: { "bbox": { "x":0..1, "y":0..1, "w":0..1, "h":0..1 } } for the main product.';
   const brainConfig = await resolveBrainExecutionConfigForCapability('image_studio.mask_ai', {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    defaultTemperature: settings.uiExtractor.temperature ?? 0.1, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+    defaultTemperature: settings.uiExtractor.temperature ?? 0.1,
     defaultMaxTokens: 800,
     defaultSystemPrompt: systemPrompt,
     runtimeKind: 'vision',

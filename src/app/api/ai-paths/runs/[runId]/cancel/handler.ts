@@ -9,7 +9,7 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { mongoPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository';
 import { prismaPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository';
 import { cancelPathRunWithRepository } from '@/features/ai/ai-paths/services/path-run-service';
-import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
+import { removePathRunQueueEntries } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

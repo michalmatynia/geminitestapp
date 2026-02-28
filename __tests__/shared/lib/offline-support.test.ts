@@ -42,8 +42,8 @@ describe('offline-support', () => {
     setupOfflineSupport(queryClient);
 
     expect(persistQueryClientMock).toHaveBeenCalledTimes(1);
-    const firstCallArgs: any = persistQueryClientMock.mock.calls[0];
-    const options = firstCallArgs ? firstCallArgs[0] : {};
+    const callArgs = vi.mocked(persistQueryClientMock).mock.calls[0];
+    const options = callArgs?.[0];
     const shouldDehydrate = options?.dehydrateOptions?.shouldDehydrateQuery;
     expect(typeof shouldDehydrate).toBe('function');
     if (!shouldDehydrate) return;

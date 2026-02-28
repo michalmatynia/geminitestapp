@@ -17,12 +17,12 @@ vi.mock('@/features/jobs/server', () => ({
   startProductAiJobQueue: vi.fn(),
   getQueueStatus: vi.fn().mockReturnValue({ active: 0, waiting: 0 }),
   enqueueProductAiJob: vi.fn().mockResolvedValue({ id: 'job1' }),
-  processSingleJob: vi.fn().mockResolvedValue(undefined),
+  processProductAiJob: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock products server
 vi.mock('@/features/products/server', () => ({
-  parseJsonBody: async (req: any) => {
+  parseJsonBody: async (req: NextRequest) => {
     try {
       const body = await req.json();
       return { ok: true, data: body };

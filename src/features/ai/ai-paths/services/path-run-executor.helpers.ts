@@ -78,15 +78,15 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
       const parsed = JSON.parse(value) as RuntimeState;
       return parsed && typeof parsed === 'object'
         ? {
-            ...EMPTY_RUNTIME_STATE,
-            ...parsed,
-            inputs: parsed.inputs ?? {},
-            outputs: parsed.outputs ?? {},
-            nodeOutputs: parsed.nodeOutputs ?? {},
-            nodeStatuses: parsed.nodeStatuses ?? {},
-            variables: parsed.variables ?? {},
-            events: parsed.events ?? [],
-          }
+          ...EMPTY_RUNTIME_STATE,
+          ...parsed,
+          inputs: parsed.inputs ?? {},
+          outputs: parsed.outputs ?? {},
+          nodeOutputs: parsed.nodeOutputs ?? {},
+          nodeStatuses: parsed.nodeStatuses ?? {},
+          variables: parsed.variables ?? {},
+          events: parsed.events ?? [],
+        }
         : EMPTY_RUNTIME_STATE;
     } catch {
       return EMPTY_RUNTIME_STATE;

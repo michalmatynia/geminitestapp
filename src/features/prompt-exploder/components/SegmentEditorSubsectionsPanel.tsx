@@ -153,9 +153,9 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
                     (candidate: PromptExploderSubsection, candidateIndex: number) =>
                       candidateIndex === subsectionIndex
                         ? {
-                            ...candidate,
-                            title: event.target.value,
-                          }
+                          ...candidate,
+                          title: event.target.value,
+                        }
                         : candidate
                   );
                   return {
@@ -175,9 +175,9 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
                     (candidate: PromptExploderSubsection, candidateIndex: number) =>
                       candidateIndex === subsectionIndex
                         ? {
-                            ...candidate,
-                            code: event.target.value.trim().toUpperCase() || null,
-                          }
+                          ...candidate,
+                          code: event.target.value.trim().toUpperCase() || null,
+                        }
                         : candidate
                   );
                   return {
@@ -198,9 +198,9 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
                   (candidate: PromptExploderSubsection, candidateIndex: number) =>
                     candidateIndex === subsectionIndex
                       ? {
-                          ...candidate,
-                          condition: event.target.value.trim() || null,
-                        }
+                        ...candidate,
+                        condition: event.target.value.trim() || null,
+                      }
                       : candidate
                 );
                 return {
@@ -256,9 +256,9 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
                   (candidate: PromptExploderSubsection, candidateIndex: number) =>
                     candidateIndex === subsectionIndex
                       ? {
-                          ...candidate,
-                          condition: nextCondition,
-                        }
+                        ...candidate,
+                        condition: nextCondition,
+                      }
                       : candidate
                 );
                 return {
@@ -282,9 +282,9 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
                             (candidate: PromptExploderSubsection, candidateIndex: number) =>
                               candidateIndex === subsectionIndex
                                 ? {
-                                    ...candidate,
-                                    condition: null,
-                                  }
+                                  ...candidate,
+                                  condition: null,
+                                }
                                 : candidate
                           );
                           return {

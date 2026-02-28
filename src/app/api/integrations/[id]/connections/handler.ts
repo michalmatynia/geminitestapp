@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getIntegrationRepository } from '@/features/integrations/server';
-import { encryptSecret } from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/shared/lib/integrations/server';
+import { encryptSecret } from '@/shared/lib/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -160,9 +160,9 @@ export async function POST_handler(
       : {}),
     ...(typeof data.traderaApiToken === 'string'
       ? {
-          traderaApiToken: encryptSecret(data.traderaApiToken),
-          traderaApiTokenUpdatedAt: new Date(),
-        }
+        traderaApiToken: encryptSecret(data.traderaApiToken),
+        traderaApiTokenUpdatedAt: new Date(),
+      }
       : {}),
     ...(typeof data.traderaApiSandbox === 'boolean'
       ? { traderaApiSandbox: data.traderaApiSandbox }

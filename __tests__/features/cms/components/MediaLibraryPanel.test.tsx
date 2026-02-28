@@ -13,7 +13,11 @@ vi.mock('@/shared/ui/toast', () => ({
 // Mock next/dynamic to return a synchronous component
 vi.mock('next/dynamic', () => ({
   default: () => {
-    const MockFileManager = ({ onSelectFile }: any) => (
+    const MockFileManager = ({
+      onSelectFile,
+    }: {
+      onSelectFile?: (files: Array<{ id: string; filepath: string }>) => void;
+    }) => (
       <div data-testid='file-manager'>
         <button
           data-testid='select-file-btn'
@@ -32,11 +36,14 @@ vi.mock('@/shared/ui', async (importOriginal) => {
   const actual = (await importOriginal()) as any;
   return {
     ...actual,
-    Dialog: ({ children, open }: any) => (open ? <div data-testid='dialog'>{children}</div> : null),
-    DialogContent: ({ children }: any) => <div data-testid='dialog-content'>{children}</div>,
-    DialogHeader: ({ children }: any) => <div>{children}</div>,
-    DialogTitle: ({ children }: any) => <div>{children}</div>,
-    DialogClose: ({ children }: any) => <div>{children}</div>,
+    Dialog: ({ children, open }: { children: React.ReactNode; open?: boolean }) =>
+      open ? <div data-testid='dialog'>{children}</div> : null,
+    DialogContent: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid='dialog-content'>{children}</div>
+    ),
+    DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DialogTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DialogClose: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   };
 });
 

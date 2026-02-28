@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
-import { invalidateValidationPatternRuntimeCache } from '@/features/products/services/validation-pattern-runtime-cache';
+import { invalidateValidationPatternRuntimeCache } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 import {
   encodeDynamicReplacementRecipe,
   parseDynamicReplacementRecipe,
-} from '@/features/products/utils/validator-replacement-recipe';
+} from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type {
   ProductValidationInstanceScopeDto as ProductValidationInstanceScope,
   ProductValidationPatternDto as ProductValidationPattern,

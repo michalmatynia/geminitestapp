@@ -369,7 +369,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Detects a location-and-date heading line used in legal letters (for example: "Szczecin 25.01.2026").',
     pattern:
-      "^\\s*[\\p{L}][\\p{L}\\s\\-.'’]{1,60}?(?:,)?(?:\\s+dnia)?\\s+(?:\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\[(?:\\d{1,2}|DD)[./-](?:\\d{1,2}|MM)[./-](?:\\d{2,4}|YYYY|RRRR)\\])(?:\\s*r\\.?\\s*)?$",
+      '^\\s*[\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?(?:,)?(?:\\s+dnia)?\\s+(?:\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\[(?:\\d{1,2}|DD)[./-](?:\\d{1,2}|MM)[./-](?:\\d{2,4}|YYYY|RRRR)\\])(?:\\s*r\\.?\\s*)?$',
     flags: 'imu',
     message: 'Place and date heading detected.',
     sequence: 35,
@@ -506,7 +506,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Place Date City',
     description: 'Extracts city/place from a place+date line (for example: "Szczecin 25.01.2026").',
     pattern:
-      "^\\s*([\\p{L}][\\p{L}\\s\\-.'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$",
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
     flags: 'imu',
     message: 'Case Resolver place/date city captured.',
     sequence: 38,
@@ -527,7 +527,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Place Date Day',
     description: 'Extracts day value from a place+date line.',
     pattern:
-      "^\\s*([\\p{L}][\\p{L}\\s\\-.'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$",
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
     flags: 'imu',
     message: 'Case Resolver place/date day captured.',
     sequence: 39,
@@ -548,7 +548,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Place Date Month',
     description: 'Extracts month value from a place+date line.',
     pattern:
-      "^\\s*([\\p{L}][\\p{L}\\s\\-.'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$",
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
     flags: 'imu',
     message: 'Case Resolver place/date month captured.',
     sequence: 40,
@@ -569,7 +569,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Place Date Year',
     description: 'Extracts year value from a place+date line.',
     pattern:
-      "^\\s*([\\p{L}][\\p{L}\\s\\-.'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$",
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
     flags: 'imu',
     message: 'Case Resolver place/date year captured.',
     sequence: 41,
@@ -670,7 +670,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Address Street',
     description: 'Extracts street, street number, and house number from address lines.',
     pattern:
-      "^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$",
+      '^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
     flags: 'imu',
     message: 'Case Resolver address street captured.',
     sequence: 45,
@@ -691,7 +691,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Address Street Number',
     description: 'Extracts street number from address lines.',
     pattern:
-      "^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$",
+      '^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
     flags: 'imu',
     message: 'Case Resolver address street number captured.',
     sequence: 46,
@@ -712,7 +712,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Address House Number',
     description: 'Extracts house/unit number from address lines.',
     pattern:
-      "^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$",
+      '^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
     flags: 'imu',
     message: 'Case Resolver address house number captured.',
     sequence: 47,
@@ -732,7 +732,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     id: 'segment.case_resolver.extract.address.postal_code',
     title: 'Case Resolver Extract: Address Postal Code',
     description: 'Extracts postal code from postal-code and city lines.',
-    pattern: "^\\s*(?:PL-)?(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s'’.-]+)\\s*$",
+    pattern: '^\\s*(?:PL-)?(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s\'’.-]+)\\s*$',
     flags: 'imu',
     message: 'Case Resolver address postal code captured.',
     sequence: 48,
@@ -752,7 +752,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     id: 'segment.case_resolver.extract.address.city',
     title: 'Case Resolver Extract: Address City',
     description: 'Extracts city from postal-code and city lines.',
-    pattern: "^\\s*(?:PL-)?(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s'’.-]+)\\s*$",
+    pattern: '^\\s*(?:PL-)?(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s\'’.-]+)\\s*$',
     flags: 'imu',
     message: 'Case Resolver address city captured.',
     sequence: 49,

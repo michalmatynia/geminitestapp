@@ -101,7 +101,7 @@ export const collectUiInventory = async (
         .filter(visible)
         .map(describe);
       const buttons = Array.from(
-        document.querySelectorAll("button, input[type='submit'], input[type='button']")
+        document.querySelectorAll('button, input[type=\'submit\'], input[type=\'button\']')
       )
         .filter(visible)
         .map(describe);

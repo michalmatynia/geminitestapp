@@ -40,7 +40,7 @@ describe('usePickerSearch', () => {
   });
 
   it('uses custom matcher function', () => {
-    const customMatcher = (query: string, item: any) => item.id === query;
+    const customMatcher = (query: string, item: { id: string; label: string }) => item.id === query;
 
     const { result } = renderHook(() => usePickerSearch(mockItems, { matcher: customMatcher }));
 

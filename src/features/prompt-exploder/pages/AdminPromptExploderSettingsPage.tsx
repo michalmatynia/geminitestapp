@@ -8,13 +8,18 @@ import {
   parseValidatorPatternLists,
   VALIDATOR_PATTERN_LISTS_KEY,
 } from '@/shared/contracts/validator';
-import {
-  AI_BRAIN_PROVIDER_CATALOG_KEY,
-  parseBrainProviderCatalog,
-} from '@/shared/lib/ai-brain/settings';
+import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { FormSection, SectionHeader, Button, useToast } from '@/shared/ui';
+import {
+  FormField,
+  FormSection,
+  Input,
+  SectionHeader,
+  Button,
+  SelectSimple,
+  useToast,
+} from '@/shared/ui';
 import {
   SettingsFieldsRenderer,
   type SettingsField,
@@ -31,7 +36,6 @@ import {
 } from '../validation-stack';
 
 import type {
-  PromptExploderAiProvider,
   PromptExploderOperationMode,
   PromptExploderSettings,
 } from '../types';
@@ -51,17 +55,6 @@ const OPERATION_MODE_OPTIONS: Array<{
   { value: 'ai_assisted', label: 'AI Assisted' },
 ];
 
-const AI_PROVIDER_OPTIONS: Array<{
-  value: PromptExploderAiProvider;
-  label: string;
-}> = [
-  { value: 'auto', label: 'Auto' },
-  { value: 'ollama', label: 'Ollama' },
-  { value: 'openai', label: 'OpenAI' },
-  { value: 'anthropic', label: 'Anthropic' },
-  { value: 'gemini', label: 'Gemini' },
-];
-
 type SettingsDraft = Pick<PromptExploderSettings, 'runtime' | 'learning' | 'ai'>;
 
 const toSettingsDraft = (settings: PromptExploderSettings): SettingsDraft => ({
@@ -70,78 +63,13 @@ const toSettingsDraft = (settings: PromptExploderSettings): SettingsDraft => ({
   ai: settings.ai,
 });
 
-const normalizeModelValues = (values: unknown): string[] => {
-  const seen = new Set<string>();
-  const output: string[] = [];
-  const visited = new WeakSet<object>();
-
-  const append = (value: unknown): void => {
-    if (typeof value === 'string') {
-      const normalized = value.trim();
-      if (!normalized || seen.has(normalized)) return;
-      seen.add(normalized);
-      output.push(normalized);
-      return;
-    }
-
-    if (Array.isArray(value)) {
-      value.forEach((entry: unknown) => {
-        append(entry);
-      });
-      return;
-    }
-
-    if (!value || typeof value !== 'object') return;
-    if (visited.has(value)) return;
-    visited.add(value);
-
-    if (value instanceof Map) {
-      value.forEach((entry: unknown): void => {
-        append(entry);
-      });
-      return;
-    }
-
-    if (value instanceof Set) {
-      value.forEach((entry: unknown): void => {
-        append(entry);
-      });
-      return;
-    }
-
-    const record = value as Record<string, unknown>;
-    const keyOrder = ['models', 'data', 'id', 'model', 'name', 'value'] as const;
-    let matchedKnownKey = false;
-    keyOrder.forEach((key: (typeof keyOrder)[number]): void => {
-      if (!(key in record)) return;
-      matchedKnownKey = true;
-      append(record[key]);
-    });
-    if (matchedKnownKey) return;
-
-    Object.values(record).forEach((entry: unknown): void => {
-      append(entry);
-    });
-  };
-
-  try {
-    append(values);
-  } catch {
-    if (typeof values === 'string') {
-      append(values);
-    }
-  }
-
-  return output;
-};
-
 export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const { docsTooltipsEnabled, setDocsTooltipsEnabled } = usePromptExploderDocsTooltips();
   const settingsQuery = useSettingsMap({ scope: 'heavy' });
   const updateSetting = useUpdateSetting();
   const brainModelOptions = useBrainModelOptions({
-    feature: 'prompt_engine',
+    capability: 'prompt_engine.prompt_exploder',
     enabled: settingsQuery.isSuccess,
   });
 
@@ -159,11 +87,6 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     () => buildPromptExploderValidationRuleStackOptions(validatorPatternLists),
     [validatorPatternLists]
   );
-  const providerCatalog = useMemo(
-    () => parseBrainProviderCatalog(settingsQuery.data?.get(AI_BRAIN_PROVIDER_CATALOG_KEY) ?? null),
-    [settingsQuery.data]
-  );
-
   useEffect(() => {
     const raw = rawSettings ?? '';
     if (draft && loadedFrom === raw) return;
@@ -200,126 +123,28 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     });
   }, [validatorPatternLists]);
 
-  const modelOptions = useMemo(() => {
-    const options: Array<{
-      value: string;
-      label: string;
-      description: string;
-    }> = [];
-    const seen = new Set<string>();
-
-    const append = (values: unknown, source: string): void => {
-      const normalizedValues = normalizeModelValues(values);
-      for (const value of normalizedValues) {
-        const model = value.trim();
-        if (!model || seen.has(model)) continue;
-        seen.add(model);
-        options.push({
-          value: model,
-          label: model,
-          description: source,
-        });
-      }
-    };
-
-    append(providerCatalog.modelPresets, 'AI Brain preset');
-    append(providerCatalog.paidModels, 'AI Brain paid model');
-    append(providerCatalog.ollamaModels, 'AI Brain ollama');
-    append(brainModelOptions.models, 'Brain discovery');
-
-    const openAiModel = settingsQuery.data?.get('openai_model') ?? '';
-    if (openAiModel.trim()) append(openAiModel, 'system openai_model');
-
-    const modelId = draft?.ai.modelId ?? '';
-    const fallbackModelId = draft?.ai.fallbackModelId ?? '';
-    append(modelId, 'current model');
-    append(fallbackModelId, 'fallback model');
-
-    return options;
-  }, [
-    brainModelOptions.models,
-    draft?.ai.fallbackModelId,
-    draft?.ai.modelId,
-    providerCatalog.modelPresets,
-    providerCatalog.ollamaModels,
-    providerCatalog.paidModels,
-    settingsQuery.data,
-  ]);
-
   const modelDiscoverySummary = useMemo(() => {
-    const discovered = normalizeModelValues(brainModelOptions.models).length;
-    const catalog = new Set([
-      ...normalizeModelValues(providerCatalog.modelPresets),
-      ...normalizeModelValues(providerCatalog.paidModels),
-      ...normalizeModelValues(providerCatalog.ollamaModels),
-    ]).size;
-    return `Brain catalog ${catalog} + runtime ${discovered} = ${modelOptions.length} unique model option(s)`;
-  }, [
-    brainModelOptions.models,
-    modelOptions.length,
-    providerCatalog.modelPresets,
-    providerCatalog.ollamaModels,
-    providerCatalog.paidModels,
-  ]);
+    const discovered = brainModelOptions.models.length;
+    return `AI Brain discovery returned ${discovered} compatible model option(s) for Prompt Exploder.`;
+  }, [brainModelOptions.models.length]);
 
-  const aiFields: SettingsField<PromptExploderSettings['ai']>[] = useMemo(
-    () => [
-      {
-        key: 'operationMode',
-        label: 'Operation Mode',
-        type: 'select',
-        options: OPERATION_MODE_OPTIONS,
-      },
-      {
-        key: 'provider',
-        label: 'Provider',
-        type: 'select',
-        options: AI_PROVIDER_OPTIONS,
-      },
-      {
-        key: 'modelId',
-        label: 'Primary AI Model',
-        type: 'select',
-        options: modelOptions,
-        placeholder: 'Choose model',
-      },
-      {
-        key: 'modelId',
-        label: 'Custom Primary Model',
-        type: 'text',
-        placeholder: 'Type model id (e.g. llama3.2)',
-      },
-      {
-        key: 'fallbackModelId',
-        label: 'Fallback Model',
-        type: 'select',
-        options: modelOptions,
-        placeholder: 'Optional fallback',
-      },
-      {
-        key: 'fallbackModelId',
-        label: 'Custom Fallback Model',
-        type: 'text',
-        placeholder: 'Type fallback model id',
-      },
-      {
-        key: 'temperature',
-        label: 'Temperature',
-        type: 'number',
-        min: 0,
-        max: 2,
-        step: 0.1,
-      },
-      {
-        key: 'maxTokens',
-        label: 'Max Tokens',
-        type: 'number',
-        min: 1,
-        max: 8192,
-      },
-    ],
-    [modelOptions]
-  );
+  const brainAssignment = brainModelOptions.assignment;
+  const brainEffectiveModelId = brainModelOptions.effectiveModelId.trim();
+  const hasConfiguredBrainModel =
+    brainAssignment.enabled && brainAssignment.provider === 'model' && brainEffectiveModelId !== '';
+  const providerSnapshot = hasConfiguredBrainModel
+    ? inferBrainModelVendor(brainEffectiveModelId)
+    : draft?.ai.provider ?? 'auto';
+  const primaryModelSnapshot = hasConfiguredBrainModel
+    ? brainEffectiveModelId
+    : draft?.ai.modelId.trim() || '';
+  const fallbackModelSnapshot = draft?.ai.fallbackModelId.trim() || '';
+  const temperatureSnapshot = hasConfiguredBrainModel
+    ? brainAssignment.temperature ?? draft?.ai.temperature ?? parsedSettings.ai.temperature
+    : draft?.ai.temperature ?? parsedSettings.ai.temperature;
+  const maxTokensSnapshot = hasConfiguredBrainModel
+    ? brainAssignment.maxTokens ?? draft?.ai.maxTokens ?? parsedSettings.ai.maxTokens
+    : draft?.ai.maxTokens ?? parsedSettings.ai.maxTokens;
 
   const runtimeFields: SettingsField<PromptExploderSettings['runtime']>[] = useMemo(
     () => [
@@ -442,13 +267,17 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   );
 
   const saveDisabled =
-    !draft ||
-    settingsQuery.isLoading ||
-    updateSetting.isPending ||
-    (draft.ai.operationMode !== 'rules_only' && !draft.ai.modelId.trim());
+    !draft || settingsQuery.isLoading || updateSetting.isPending;
 
   const handleSave = async (): Promise<void> => {
     if (!draft) return;
+    if (draft.ai.operationMode !== 'rules_only' && !hasConfiguredBrainModel) {
+      toast('Configure Prompt Exploder AI in AI Brain first.', {
+        variant: 'error',
+      });
+      return;
+    }
+
     const nextSettings: PromptExploderSettings = {
       ...parsedSettings,
       runtime: {
@@ -477,19 +306,25 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       },
       ai: {
         ...draft.ai,
-        modelId: draft.ai.modelId.trim(),
+        provider: hasConfiguredBrainModel ? providerSnapshot : draft.ai.provider,
+        modelId: hasConfiguredBrainModel ? brainEffectiveModelId : draft.ai.modelId.trim(),
         fallbackModelId: draft.ai.fallbackModelId.trim(),
-        temperature: clampNumber(draft.ai.temperature, 0, 2),
-        maxTokens: toIntInRange(draft.ai.maxTokens, 1, 8192),
+        temperature: clampNumber(
+          hasConfiguredBrainModel
+            ? (brainAssignment.temperature ?? draft.ai.temperature)
+            : draft.ai.temperature,
+          0,
+          2
+        ),
+        maxTokens: toIntInRange(
+          hasConfiguredBrainModel
+            ? (brainAssignment.maxTokens ?? draft.ai.maxTokens)
+            : draft.ai.maxTokens,
+          1,
+          8192
+        ),
       },
     };
-
-    if (nextSettings.ai.operationMode !== 'rules_only' && !nextSettings.ai.modelId.trim()) {
-      toast('Choose an AI model when operation mode uses AI.', {
-        variant: 'error',
-      });
-      return;
-    }
 
     try {
       const serialized = serializeSetting(nextSettings);
@@ -565,7 +400,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       <div className='grid gap-6'>
         <FormSection
           title='AI Operations'
-          description='Choose the AI model and provider used for AI-assisted operations.'
+          description='AI Brain owns Prompt Exploder routing. Local AI fields are saved as explicit compatibility snapshots only.'
           variant='subtle'
           className='p-4'
           actions={
@@ -575,14 +410,89 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
             </div>
           }
         >
-          <SettingsFieldsRenderer
-            fields={aiFields}
-            values={draft.ai}
-            onChange={(vals) =>
-              setDraft((prev) => (prev ? { ...prev, ai: { ...prev.ai, ...vals } } : null))
-            }
-            className='grid gap-x-6 gap-y-2 md:grid-cols-3 lg:grid-cols-4'
-          />
+          <div className='grid gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3'>
+            <FormField
+              label='Operation Mode'
+              description='Runtime behavior remains local. AI routing below is Brain-managed.'
+            >
+              <SelectSimple
+                value={draft.ai.operationMode}
+                onValueChange={(value: string): void => {
+                  setDraft((prev) =>
+                    prev
+                      ? {
+                        ...prev,
+                        ai: {
+                          ...prev.ai,
+                          operationMode: value as PromptExploderOperationMode,
+                        },
+                      }
+                      : null
+                  );
+                }}
+                options={OPERATION_MODE_OPTIONS}
+                size='sm'
+              />
+            </FormField>
+            <FormField
+              label='Provider Snapshot'
+              description='Derived from the Brain-assigned model. Saved only as a compatibility snapshot.'
+            >
+              <Input
+                value={providerSnapshot}
+                readOnly
+                disabled
+                className='cursor-not-allowed'
+                placeholder='Not configured in AI Brain'
+              />
+            </FormField>
+            <FormField
+              label='Primary AI Model'
+              description='Read-only Brain-managed effective model. Saved locally only as a compatibility snapshot.'
+            >
+              <Input
+                value={primaryModelSnapshot || 'Not configured in AI Brain'}
+                readOnly
+                disabled
+                className='cursor-not-allowed'
+                placeholder='Not configured in AI Brain'
+              />
+            </FormField>
+            <FormField
+              label='Fallback Model Snapshot'
+              description='Legacy fallback snapshot retained for compatibility only.'
+            >
+              <Input
+                value={fallbackModelSnapshot || 'Not configured'}
+                readOnly
+                disabled
+                className='cursor-not-allowed'
+                placeholder='Not configured'
+              />
+            </FormField>
+            <FormField
+              label='Temperature Snapshot'
+              description='Read-only Brain-managed temperature saved as a compatibility snapshot.'
+            >
+              <Input
+                value={String(temperatureSnapshot)}
+                readOnly
+                disabled
+                className='cursor-not-allowed'
+              />
+            </FormField>
+            <FormField
+              label='Max Tokens Snapshot'
+              description='Read-only Brain-managed max token limit saved as a compatibility snapshot.'
+            >
+              <Input
+                value={String(maxTokensSnapshot)}
+                readOnly
+                disabled
+                className='cursor-not-allowed'
+              />
+            </FormField>
+          </div>
         </FormSection>
 
         <FormSection
@@ -649,7 +559,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
             ? 'Loading Brain model discovery...'
             : brainModelOptions.sourceWarnings.length > 0
               ? brainModelOptions.sourceWarnings[0]
-              : 'Brain model discovery connected.'}
+              : 'AI Brain routing connected. Prompt Exploder uses the dedicated Brain capability.'}
         </span>
       </div>
       <DocsTooltipEnhancer

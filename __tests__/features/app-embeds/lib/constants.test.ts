@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { APP_EMBED_OPTIONS } from '@/features/app-embeds/lib/constants';
+import { APP_EMBED_OPTIONS } from '@/shared/lib/app-embeds/lib/constants';
 
 describe('APP_EMBED_OPTIONS', () => {
   it('should have correct number of options', () => {

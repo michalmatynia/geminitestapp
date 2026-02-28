@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
 import { CachedProductService } from '@/features/products/performance/cached-service';
-import { productService } from '@/features/products/services/productService'; // Direct import
+import { productService } from '@/shared/lib/products/services/productService'; // Direct import
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
 import type { ProductRecord, ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

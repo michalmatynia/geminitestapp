@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getCatalogRepository } from '@/features/products/server';
 import { getProductDataProvider } from '@/features/products/server';
-import { normalizeCatalogLanguageSelection } from '@/features/products/services/catalog-language-normalization';
+import { normalizeCatalogLanguageSelection } from '@/shared/lib/products/services/catalog-language-normalization';
 import type { CatalogRecord } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';

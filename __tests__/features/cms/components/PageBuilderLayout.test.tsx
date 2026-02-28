@@ -172,7 +172,7 @@ describe('PageBuilderLayout Component', () => {
   it('should handle responsive auto-collapse of right panel', async () => {
     // Mock matchMedia
     let matches = false;
-    let changeHandler: ((e: any) => void) | null = null;
+    let changeHandler: ((e: { matches: boolean }) => void) | null = null;
 
     window.matchMedia = vi.fn().mockImplementation((query) => ({
       matches,

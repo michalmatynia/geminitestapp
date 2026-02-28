@@ -18,16 +18,21 @@ import {
   deletePathRunsWithRepository,
   retryPathRunNode,
 } from '@/features/ai/ai-paths/services/path-run-service';
-import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type {
+  AiNode,
+  Edge,
+  AiPathRunRepository,
+  AiPathRunEventRecord,
+} from '@/shared/contracts/ai-paths';
 import prisma from '@/shared/lib/db/prisma';
 
-vi.mock('@/features/jobs/workers/aiPathRunQueue', () => ({
+vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
   enqueuePathRunJob: enqueuePathRunJobMock,
   removePathRunQueueEntries: removePathRunQueueEntriesMock,
 }));
 
 describe('PathRunService', () => {
-  let repo: any;
+  let repo: AiPathRunRepository;
 
   beforeEach(async () => {
     enqueuePathRunJobMock.mockClear();
@@ -113,11 +118,11 @@ describe('PathRunService', () => {
 
       const nodes = await repo.listRunNodes(run.id);
       expect(nodes.length).toBe(1);
-      expect(nodes[0].nodeId).toBe('node-111111111111111111111111');
-      expect(nodes[0].status).toBe('pending');
+      expect(nodes[0]!.nodeId).toBe('node-111111111111111111111111');
+      expect(nodes[0]!.status).toBe('pending');
 
       const events = await repo.listRunEvents(run.id);
-      expect(events.some((e: any) => e.message === 'Run queued.')).toBe(true);
+      expect(events.some((e: AiPathRunEventRecord) => e.message === 'Run queued.')).toBe(true);
     });
 
     it('should pass meta options like backoffMs to the run', async () => {
@@ -259,7 +264,7 @@ describe('PathRunService', () => {
       expect(resumed.errorMessage).toBeNull();
 
       const events = await repo.listRunEvents(run.id);
-      expect(events.some((e: any) => e.message === 'Run resumed (resume).')).toBe(true);
+      expect(events.some((e: AiPathRunEventRecord) => e.message === 'Run resumed (resume).')).toBe(true);
     });
   });
 
@@ -277,7 +282,7 @@ describe('PathRunService', () => {
       expect(removePathRunQueueEntriesMock).toHaveBeenCalledWith([run.id]);
 
       const events = await repo.listRunEvents(run.id);
-      expect(events.some((e: any) => e.message === 'Run canceled.')).toBe(true);
+      expect(events.some((e: AiPathRunEventRecord) => e.message === 'Run canceled.')).toBe(true);
     });
 
     it('should cancel using an explicit repository instance', async () => {
@@ -313,7 +318,7 @@ describe('PathRunService', () => {
       );
 
       const events = await repo.listRunEvents(run.id);
-      expect(events.some((e: any) => String(e.message).includes('Cancellation requested'))).toBe(
+      expect(events.some((e: AiPathRunEventRecord) => String(e.message).includes('Cancellation requested'))).toBe(
         true
       );
       expect(removePathRunQueueEntriesMock).toHaveBeenCalledWith([run.id]);
@@ -353,11 +358,11 @@ describe('PathRunService', () => {
       expect(updatedRun.status).toBe('queued');
 
       const nodes = await repo.listRunNodes(run.id);
-      expect(nodes[0].status).toBe('pending');
-      expect(nodes[0].errorMessage).toBeNull();
+      expect(nodes[0]!.status).toBe('pending');
+      expect(nodes[0]!.errorMessage).toBeNull();
 
       const events = await repo.listRunEvents(run.id);
-      expect(events.some((e: any) => e.message === 'Retry node node-1.')).toBe(true);
+      expect(events.some((e: AiPathRunEventRecord) => e.message === 'Retry node node-1.')).toBe(true);
     });
   });
 

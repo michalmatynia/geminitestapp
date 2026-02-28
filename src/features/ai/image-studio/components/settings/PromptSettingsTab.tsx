@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import React from 'react';
 
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import {
   Button,
   FormField,
@@ -22,10 +22,10 @@ import { IMAGE_STUDIO_SEQUENCE_OPERATIONS } from '@/shared/lib/ai/image-studio/u
 import { useImageStudioSettingsContext } from '../../context/ImageStudioSettingsContext';
 
 export function PromptSettingsTab(): React.JSX.Element {
-  const promptExtractModel = useBrainModelOptions({
+  const promptExtractModel = useBrainAssignment({
     capability: 'image_studio.prompt_extract',
   });
-  const uiExtractorModel = useBrainModelOptions({
+  const uiExtractorModel = useBrainAssignment({
     capability: 'image_studio.ui_extractor',
   });
   const {

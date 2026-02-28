@@ -13,8 +13,8 @@ vi.mock('crypto', async (importOriginal) => {
 });
 
 import { runAgentControlLoop, logAgentAudit } from '@/features/ai/agent-runtime/server';
-import { processNextQueuedAgentRun } from '@/features/jobs/processors/agent-processor';
-import { stopAgentQueue } from '@/features/jobs/workers/agentQueue';
+import { processNextQueuedAgentRun } from '@/features/ai/agent-runtime/workers/agent-processor';
+import { stopAgentQueue } from '@/features/ai/agent-runtime/workers/agentQueue';
 import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/shared/lib/db/prisma', () => {

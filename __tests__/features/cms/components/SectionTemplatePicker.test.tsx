@@ -39,14 +39,20 @@ vi.mock('@/features/cms/components/page-builder/section-templates', () => ({
 
 // Mock Dialog
 vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual('@/shared/ui');
+  const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
   return {
     ...actual,
-    Dialog: ({ children }: any) => <div data-testid='dialog'>{children}</div>,
-    DialogContent: ({ children }: any) => <div data-testid='dialog-content'>{children}</div>,
-    DialogHeader: ({ children }: any) => <div>{children}</div>,
-    DialogTitle: ({ children }: any) => <div>{children}</div>,
-    DialogTrigger: ({ children }: any) => <div data-testid='dialog-trigger'>{children}</div>,
+    Dialog: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid='dialog'>{children}</div>
+    ),
+    DialogContent: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid='dialog-content'>{children}</div>
+    ),
+    DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DialogTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DialogTrigger: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid='dialog-trigger'>{children}</div>
+    ),
   };
 });
 

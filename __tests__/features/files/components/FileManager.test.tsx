@@ -17,11 +17,17 @@ vi.mock('@/features/files/hooks/useFileQueries', () => ({
 }));
 
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
+  const actual = await importOriginal<typeof import('@/shared/ui')>();
   return {
     ...actual,
     useToast: () => ({ toast: vi.fn() }),
-    FilePreviewModal: ({ children, onClose }: any) => (
+    FilePreviewModal: ({
+      children,
+      onClose,
+    }: {
+      children: React.ReactNode;
+      onClose: () => void;
+    }) => (
       <div data-testid='preview-modal'>
         <button onClick={onClose}>Close</button>
         {children}
@@ -62,9 +68,9 @@ describe('FileManager Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useFileQueries as any).mockReturnValue({ data: mockFiles, isLoading: false });
-    (useDeleteFile as any).mockReturnValue({ mutateAsync: vi.fn() });
-    (useUpdateFileTags as any).mockReturnValue({ mutateAsync: vi.fn() });
+    vi.mocked(useFileQueries).mockReturnValue({ data: mockFiles, isLoading: false } as any);
+    vi.mocked(useDeleteFile).mockReturnValue({ mutateAsync: vi.fn() } as any);
+    vi.mocked(useUpdateFileTags).mockReturnValue({ mutateAsync: vi.fn() } as any);
   });
 
   it('should render the file list', () => {
@@ -122,7 +128,7 @@ describe('FileManager Component', () => {
 
   it('should call delete mutation when Delete is clicked and confirmed', async () => {
     const mockDelete = vi.fn().mockResolvedValue({});
-    (useDeleteFile as any).mockReturnValue({ mutateAsync: mockDelete });
+    vi.mocked(useDeleteFile).mockReturnValue({ mutateAsync: mockDelete } as any);
 
     render(<FileManager />, { wrapper });
 

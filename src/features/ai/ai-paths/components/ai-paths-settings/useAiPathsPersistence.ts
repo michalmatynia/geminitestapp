@@ -341,9 +341,9 @@ export function useAiPathsPersistence({
         const preferredPathIdFromUser = resolvePreferredActivePathId(userPreferences);
         const preferredGroups = Array.isArray(uiState?.['expandedGroups'])
           ? (uiState?.['expandedGroups'] as unknown[]).filter(
-              (value: unknown): value is string =>
-                typeof value === 'string' && value.trim().length > 0
-            )
+            (value: unknown): value is string =>
+              typeof value === 'string' && value.trim().length > 0
+          )
           : null;
         const preferredPaletteCollapsed =
           typeof uiState?.['paletteCollapsed'] === 'boolean' ? uiState?.['paletteCollapsed'] : null;

@@ -19,7 +19,7 @@ import {
   DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
-} from '@/features/ai/insights/settings';
+} from '@/shared/lib/ai/insights/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/lib/playwright/constants/playwright';
 import type { AiPathRuntimeAnalyticsSummary, AnalyticsSummaryDto } from '@/shared/contracts';
@@ -546,11 +546,11 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
           const assignment = settings.capabilities[key];
           acc[key] = assignment
             ? sanitizeBrainAssignmentForProviders(
-                assignment,
-                getBrainCapabilityDefinition(key).policy === 'agent-or-model'
-                  ? ['model', 'agent']
-                  : ['model']
-              )
+              assignment,
+              getBrainCapabilityDefinition(key).policy === 'agent-or-model'
+                ? ['model', 'agent']
+                : ['model']
+            )
             : undefined;
           return acc;
         },

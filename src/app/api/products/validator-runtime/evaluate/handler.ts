@@ -10,13 +10,13 @@ import { dbApi, type DbActionPayload, type DbQueryPayload } from '@/shared/lib/a
 import { getValueAtMappingPath } from '@/shared/lib/ai-paths/core/utils/json';
 import { renderTemplate } from '@/shared/lib/ai-paths/core/utils/template';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { listValidationPatternsCached } from '@/features/products/services/validation-pattern-runtime-cache';
+import { listValidationPatternsCached } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 import {
   isPatternEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,
   normalizeProductValidationInstanceScope,
   normalizeProductValidationSkipNoopReplacementProposal,
-} from '@/features/products/utils/validator-instance-behavior';
+} from '@/shared/lib/products/utils/validator-instance-behavior';
 import {
   deriveDiffSegment,
   isPatternLocaleMatch,
@@ -308,9 +308,9 @@ const parseAiJson = (value: string): Record<string, unknown> | null => {
   if (!trimmed) return null;
   const stripped = trimmed.startsWith('```')
     ? trimmed
-        .replace(/^```[a-zA-Z]*\n?/, '')
-        .replace(/```$/, '')
-        .trim()
+      .replace(/^```[a-zA-Z]*\n?/, '')
+      .replace(/```$/, '')
+      .trim()
     : trimmed;
   try {
     const parsed = JSON.parse(stripped) as unknown;
@@ -395,9 +395,9 @@ const resolveReplacementFromResult = (
   const replacementPaths = [
     ...(Array.isArray(config['replacementPaths'])
       ? (config['replacementPaths'] as unknown[])
-          .filter((entry: unknown): entry is string => typeof entry === 'string')
-          .map((entry: string) => entry.trim())
-          .filter((entry: string) => entry.length > 0)
+        .filter((entry: unknown): entry is string => typeof entry === 'string')
+        .map((entry: string) => entry.trim())
+        .filter((entry: string) => entry.length > 0)
       : []),
     ...(typeof config['replacementPath'] === 'string' && config['replacementPath'].trim().length > 0
       ? [config['replacementPath'].trim()]

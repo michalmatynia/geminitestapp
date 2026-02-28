@@ -34,7 +34,7 @@ const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
         script:
           'export default async function run({ page, input, emit }) {\n' +
           '  await page.goto(input?.prompt || "https://example.com");\n' +
-          "  emit('result', 'ok');\n" +
+          '  emit(\'result\', \'ok\');\n' +
           '  return { ok: true };\n' +
           '}',
         waitForResult: true,

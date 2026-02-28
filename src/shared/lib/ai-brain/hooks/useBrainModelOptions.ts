@@ -3,17 +3,14 @@
 import { useMemo } from 'react';
 
 import {
-  AI_BRAIN_SETTINGS_KEY,
   getBrainCapabilityDefinition,
-  parseBrainSettings,
-  resolveBrainAssignment,
-  resolveBrainCapabilityAssignment,
   type AiBrainAssignment,
   type AiBrainCapabilityKey,
   type AiBrainFeature,
 } from '@/shared/lib/ai-brain/settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
+import { useBrainAssignment } from './useBrainAssignment';
 import { useBrainModels } from './useBrainQueries';
 
 type UseBrainModelOptionsInput = {
@@ -49,30 +46,20 @@ export function useBrainModelOptions({
   enabled = true,
 }: UseBrainModelOptionsInput): UseBrainModelOptionsResult {
   const settingsStore = useSettingsStore();
-  const rawBrainSettings = settingsStore.get(AI_BRAIN_SETTINGS_KEY);
-  const brainSettings = useMemo(() => parseBrainSettings(rawBrainSettings), [rawBrainSettings]);
-  const assignment = useMemo(() => {
-    if (capability) {
-      return resolveBrainCapabilityAssignment(brainSettings, capability);
-    }
-    if (feature) {
-      return resolveBrainAssignment(brainSettings, feature);
-    }
-    throw new Error('useBrainModelOptions requires a feature or capability.');
-  }, [brainSettings, capability, feature]);
+  const { assignment, effectiveModelId } = useBrainAssignment({ feature, capability });
   const modelsQuery = useBrainModels({ enabled });
   const targetFamily = capability ? getBrainCapabilityDefinition(capability).modelFamily : null;
 
   const models = useMemo((): string[] => {
     const discovered = Array.isArray(modelsQuery.data?.models)
       ? (modelsQuery.data?.models ?? []).filter((modelId) => {
-          if (!targetFamily) return true;
-          const descriptor = modelsQuery.data?.descriptors?.[modelId];
-          return descriptor?.family === targetFamily;
-        })
+        if (!targetFamily) return true;
+        const descriptor = modelsQuery.data?.descriptors?.[modelId];
+        return descriptor?.family === targetFamily;
+      })
       : [];
-    return normalizeUnique([...discovered, ...(assignment.modelId ? [assignment.modelId] : [])]);
-  }, [assignment.modelId, modelsQuery.data?.descriptors, modelsQuery.data?.models, targetFamily]);
+    return normalizeUnique([...discovered, ...(effectiveModelId ? [effectiveModelId] : [])]);
+  }, [effectiveModelId, modelsQuery.data?.descriptors, modelsQuery.data?.models, targetFamily]);
 
   const sourceWarnings = useMemo((): string[] => {
     const message = modelsQuery.data?.warning?.message?.trim() ?? '';
@@ -83,7 +70,7 @@ export function useBrainModelOptions({
     models,
     isLoading: modelsQuery.isLoading || settingsStore.isLoading,
     assignment,
-    effectiveModelId: assignment.modelId?.trim() ?? '',
+    effectiveModelId,
     sourceWarnings,
     refresh: (): void => {
       void modelsQuery.refetch();

@@ -211,10 +211,10 @@ export const promptExploderValidationStackFromScope = (
 ): PromptExploderValidationRuleStack =>
   (scope === 'case_resolver_prompt_exploder'
     ? resolveStackByScope(
-        CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
-        patternLists,
-        'default_scope'
-      ).stack
+      CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
+      patternLists,
+      'default_scope'
+    ).stack
     : resolveStackByScope(PROMPT_EXPLODER_VALIDATOR_SCOPE, patternLists, 'default_scope').stack) ||
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
 
@@ -224,10 +224,10 @@ export const promptExploderValidationStackFromBridgeSource = (
 ): PromptExploderValidationRuleStack =>
   (source === 'case-resolver'
     ? resolveStackByScope(
-        CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
-        patternLists,
-        'default_scope'
-      ).stack
+      CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
+      patternLists,
+      'default_scope'
+    ).stack
     : resolveStackByScope(PROMPT_EXPLODER_VALIDATOR_SCOPE, patternLists, 'default_scope').stack) ||
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
 

@@ -468,20 +468,20 @@ export const repairPathNodeIdentities = (
 
   const nextConfig: PathConfig = changed
     ? {
-        ...pathConfig,
-        nodes: repairedNodes,
-        edges: repairedEdges,
-        ...(nextUiState ? { uiState: nextUiState } : {}),
-        ...(remappedParserSamples.changed
-          ? { parserSamples: remappedParserSamples.value as PathConfig['parserSamples'] }
-          : {}),
-        ...(remappedUpdaterSamples.changed
-          ? { updaterSamples: remappedUpdaterSamples.value as PathConfig['updaterSamples'] }
-          : {}),
-        ...(remappedRuntimeState.changed
-          ? { runtimeState: remappedRuntimeState.runtimeState }
-          : {}),
-      }
+      ...pathConfig,
+      nodes: repairedNodes,
+      edges: repairedEdges,
+      ...(nextUiState ? { uiState: nextUiState } : {}),
+      ...(remappedParserSamples.changed
+        ? { parserSamples: remappedParserSamples.value as PathConfig['parserSamples'] }
+        : {}),
+      ...(remappedUpdaterSamples.changed
+        ? { updaterSamples: remappedUpdaterSamples.value as PathConfig['updaterSamples'] }
+        : {}),
+      ...(remappedRuntimeState.changed
+        ? { runtimeState: remappedRuntimeState.runtimeState }
+        : {}),
+    }
     : pathConfig;
 
   return {

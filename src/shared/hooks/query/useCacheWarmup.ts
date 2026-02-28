@@ -65,7 +65,7 @@ export function useSmartPrefetch(): {
     queryKey: readonly unknown[],
     queryFn: () => Promise<unknown>
   ) => { onFocus: () => void };
-} {
+  } {
   const queryClient = useQueryClient();
 
   const prefetchOnHover = useCallback(

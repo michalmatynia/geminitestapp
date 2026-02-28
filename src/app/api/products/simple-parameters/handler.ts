@@ -4,7 +4,7 @@ import { z } from 'zod';
 import {
   createSimpleParameter,
   listSimpleParameters,
-} from '@/features/products/services/simple-parameter-service';
+} from '@/shared/lib/products/services/simple-parameter-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

@@ -13,7 +13,7 @@ vi.mock('@/features/products/server', () => ({
   parseJsonBody: parseJsonBodyMock,
 }));
 
-vi.mock('@/features/products/services/productService', () => ({
+vi.mock('@/shared/lib/products/services/productService', () => ({
   productService: {
     duplicateProduct: duplicateProductMock,
   },

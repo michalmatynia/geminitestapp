@@ -10,7 +10,7 @@ import {
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
   getDatabaseBackupSchedulerQueueStatus,
   startDatabaseBackupSchedulerQueue,
-} from '@/features/jobs/workers/databaseBackupSchedulerQueue';
+} from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError } from '@/shared/errors/app-error';
 

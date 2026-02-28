@@ -12,7 +12,7 @@ import React, {
 
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -72,13 +72,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(
     defaultImageStudioSettings
   );
-  const promptExtractModel = useBrainModelOptions({
+  const promptExtractModel = useBrainAssignment({
     capability: 'image_studio.prompt_extract',
   });
-  const uiExtractorModel = useBrainModelOptions({
+  const uiExtractorModel = useBrainAssignment({
     capability: 'image_studio.ui_extractor',
   });
-  const generationModel = useBrainModelOptions({
+  const generationModel = useBrainAssignment({
     capability: 'image_studio.general',
   });
   const hydratedSignatureRef = useRef<string | null>(null);

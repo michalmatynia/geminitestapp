@@ -7,7 +7,7 @@ import {
   useDefaultExportConnection,
   useDefaultExportInventory,
   useIntegrationsWithConnections,
-} from '@/features/integrations/hooks/useIntegrationQueries';
+} from '@/shared/lib/integrations/hooks/useIntegrationQueries';
 import {
   useCreateProductSyncProfileMutation,
   useDeleteProductSyncProfileMutation,

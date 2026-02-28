@@ -8,7 +8,7 @@ import {
   listDrafts,
   updateDraft,
   deleteDraft,
-} from '@/features/drafter/services/draft-repository';
+} from '@/shared/lib/drafter/services/draft-repository';
 import prisma from '@/shared/lib/db/prisma';
 
 describe('DraftRepository (Prisma)', () => {

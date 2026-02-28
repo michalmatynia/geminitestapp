@@ -139,7 +139,7 @@ describe('ChatInterface', () => {
     selectSession: vi.fn(),
   };
 
-  it("renders 'Start a conversation' when no messages", () => {
+  it('renders \'Start a conversation\' when no messages', () => {
     vi.mocked(useChatbotMessages).mockReturnValue(defaultMockValue);
     render(<ChatInterface />);
     expect(screen.getByText('Start a conversation...')).toBeInTheDocument();

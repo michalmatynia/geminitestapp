@@ -11,11 +11,6 @@ import {
   useCmsSlugs,
   useCmsAllSlugs,
 } from '@/features/cms/hooks/useCmsQueries';
-import {
-  usePageBuilderState,
-  usePageBuilderDispatch,
-  usePageBuilderSelection,
-} from '@/features/cms/hooks/usePageBuilderContext';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 // Create a new QueryClient for each test
@@ -28,29 +23,45 @@ const createTestQueryClient = () =>
     },
   });
 
+// Define shared mocks
+const { usePageBuilderStateMock, usePageBuilderDispatchMock, usePageBuilderSelectionMock } =
+  vi.hoisted(() => ({
+    usePageBuilderStateMock: vi.fn(),
+    usePageBuilderDispatchMock: vi.fn(),
+    usePageBuilderSelectionMock: vi.fn(),
+  }));
+
 // Mock hooks
-vi.mock('@/features/cms/hooks/usePageBuilderContext', () => {
-  const usePageBuilderStateMock = vi.fn();
-  const usePageBuilderDispatchMock = vi.fn();
-  const usePageBuilderSelectionMock = vi.fn();
-  return {
-    usePageBuilderState: usePageBuilderStateMock,
-    usePageBuilderDispatch: usePageBuilderDispatchMock,
-    usePageBuilderSelection: usePageBuilderSelectionMock,
-    usePageBuilder: () => ({
-      state: usePageBuilderStateMock(),
-      dispatch: usePageBuilderDispatchMock(),
-      ...usePageBuilderSelectionMock(),
-    }),
-  };
-});
+vi.mock('@/features/cms/hooks/usePageBuilderContext', () => ({
+  usePageBuilderState: usePageBuilderStateMock,
+  usePageBuilderDispatch: usePageBuilderDispatchMock,
+  usePageBuilderSelection: usePageBuilderSelectionMock,
+  usePageBuilder: () => ({
+    state: usePageBuilderStateMock(),
+    dispatch: usePageBuilderDispatchMock(),
+    ...usePageBuilderSelectionMock(),
+  }),
+}));
+
+vi.mock('@/features/cms/hooks/page-builder/PageStateContext', () => ({
+  usePageBuilderState: usePageBuilderStateMock,
+}));
+
+vi.mock('@/features/cms/hooks/page-builder/PageDispatchContext', () => ({
+  usePageBuilderDispatch: usePageBuilderDispatchMock,
+}));
+
+vi.mock('@/features/cms/hooks/page-builder/PageSelectionContext', () => ({
+  usePageBuilderSelection: usePageBuilderSelectionMock,
+}));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  SettingsStoreProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useSettingsStore: vi.fn(),
 }));
 
 vi.mock('@/features/cms/hooks/useCmsQueries', async (importOriginal) => {
-  const actual = await importOriginal<any>();
+  const actual = await importOriginal<typeof import('@/features/cms/hooks/useCmsQueries')>();
   return {
     ...actual,
     useCmsThemes: vi.fn(),
@@ -93,19 +104,35 @@ vi.mock('@/features/cms/components/page-builder/section-registry', () => ({
 }));
 
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
-  const MockTabsList = ({ children, activeValue, onValueChange }: any) => (
+  const actual = await importOriginal<typeof import('@/shared/ui')>();
+  const MockTabsList = ({
+    children,
+    activeValue,
+    onValueChange,
+  }: {
+    children: React.ReactNode;
+    activeValue?: string;
+    onValueChange?: (val: string) => void;
+  }) => (
     <div data-testid='tabs-list' role='tablist'>
       {React.Children.map(children, (child) =>
         React.isValidElement(child)
-          ? React.cloneElement(child as any, { activeValue, onValueChange })
+          ? React.cloneElement(child as React.ReactElement<any>, { activeValue, onValueChange })
           : child
       )}
     </div>
   );
   MockTabsList.displayName = 'TabsList';
 
-  const MockTabsContent = ({ children, value, activeValue }: any) => {
+  const MockTabsContent = ({
+    children,
+    value,
+    activeValue,
+  }: {
+    children: React.ReactNode;
+    value: string;
+    activeValue?: string;
+  }) => {
     if (value !== activeValue) return null;
     return (
       <div role='tabpanel' data-testid={`tab-content-${value}`}>
@@ -117,16 +144,27 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 
   return {
     ...actual,
-    Tabs: ({ children, value, onValueChange }: any) => (
+    Tabs: ({
+      children,
+      value,
+      onValueChange,
+    }: {
+      children: React.ReactNode;
+      value: string;
+      onValueChange: (val: string) => void;
+    }) => (
       <div data-testid='tabs'>
         {React.Children.map(children, (child) => {
           if (React.isValidElement(child)) {
             const type = child.type as any;
             if (type.displayName === 'TabsList') {
-              return React.cloneElement(child as any, { activeValue: value, onValueChange });
+              return React.cloneElement(child as React.ReactElement<any>, {
+                activeValue: value,
+                onValueChange,
+              });
             }
             if (type.displayName === 'TabsContent') {
-              return React.cloneElement(child as any, { activeValue: value });
+              return React.cloneElement(child as React.ReactElement<any>, { activeValue: value });
             }
           }
           return child;
@@ -134,7 +172,17 @@ vi.mock('@/shared/ui', async (importOriginal) => {
       </div>
     ),
     TabsList: MockTabsList,
-    TabsTrigger: ({ children, value, activeValue, onValueChange }: any) => (
+    TabsTrigger: ({
+      children,
+      value,
+      activeValue,
+      onValueChange,
+    }: {
+      children: React.ReactNode;
+      value: string;
+      activeValue?: string;
+      onValueChange?: (val: string) => void;
+    }) => (
       <button
         role='tab'
         aria-selected={value === activeValue}
@@ -145,7 +193,15 @@ vi.mock('@/shared/ui', async (importOriginal) => {
       </button>
     ),
     TabsContent: MockTabsContent,
-    Button: ({ children, onClick, variant }: any) => (
+    Button: ({
+      children,
+      onClick,
+      variant,
+    }: {
+      children: React.ReactNode;
+      onClick?: () => void;
+      variant?: string;
+    }) => (
       <button onClick={onClick} data-variant={variant}>
         {children}
       </button>
@@ -162,7 +218,15 @@ vi.mock('@/features/cms/components/page-builder/MediaLibraryPanel', () => ({
 }));
 
 vi.mock('@/features/cms/components/page-builder/SettingsFieldRenderer', () => ({
-  SettingsFieldRenderer: ({ field, value, onChange }: any) => (
+  SettingsFieldRenderer: ({
+    field,
+    value,
+    onChange,
+  }: {
+    field: { key: string; label: string };
+    value: unknown;
+    onChange: (key: string, val: unknown) => void;
+  }) => (
     <div data-testid={`field-${field.key}`}>
       <label htmlFor={`input-${field.key}`}>{field.label}</label>
       <input
@@ -195,11 +259,11 @@ describe('ComponentSettingsPanel Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useCmsThemes as any).mockReturnValue({ data: [], isLoading: false });
-    (useCmsDomains as any).mockReturnValue({ data: [], isLoading: false });
-    (useCmsSlugs as any).mockReturnValue({ data: [], isLoading: false });
-    (useCmsAllSlugs as any).mockReturnValue({ data: [], isLoading: false });
-    (useSettingsStore as any).mockReturnValue({ get: vi.fn() });
+    vi.mocked(useCmsThemes).mockReturnValue({ data: [], isLoading: false } as any);
+    vi.mocked(useCmsDomains).mockReturnValue({ data: [], isLoading: false } as any);
+    vi.mocked(useCmsSlugs).mockReturnValue({ data: [], isLoading: false } as any);
+    vi.mocked(useCmsAllSlugs).mockReturnValue({ data: [], isLoading: false } as any);
+    vi.mocked(useSettingsStore).mockReturnValue({ get: vi.fn() } as any);
   });
 
   const renderWithProviders = (ui: React.ReactElement) => {
@@ -211,14 +275,14 @@ describe('ComponentSettingsPanel Component', () => {
     );
   };
 
-  it("should show 'Select a page' message when no page is set", () => {
-    (usePageBuilderState as any).mockReturnValue({
+  it('should show \'Select a page\' message when no page is set', () => {
+    usePageBuilderStateMock.mockReturnValue({
       currentPage: null,
       inspectorSettings: { showEditorChrome: true },
       sections: [],
     });
-    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
-    (usePageBuilderSelection as any).mockReturnValue({
+    usePageBuilderDispatchMock.mockReturnValue(mockDispatch);
+    usePageBuilderSelectionMock.mockReturnValue({
       selectedSection: null,
       selectedBlock: null,
       selectedColumn: null,
@@ -229,13 +293,13 @@ describe('ComponentSettingsPanel Component', () => {
   });
 
   it('should show page settings when nothing is selected', () => {
-    (usePageBuilderState as any).mockReturnValue({
+    usePageBuilderStateMock.mockReturnValue({
       currentPage: mockPage,
       inspectorSettings: { showEditorChrome: true },
       sections: [],
     });
-    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
-    (usePageBuilderSelection as any).mockReturnValue({
+    usePageBuilderDispatchMock.mockReturnValue(mockDispatch);
+    usePageBuilderSelectionMock.mockReturnValue({
       selectedSection: null,
       selectedBlock: null,
       selectedColumn: null,
@@ -256,13 +320,13 @@ describe('ComponentSettingsPanel Component', () => {
       settings: { imageHeight: 'large' },
     };
 
-    (usePageBuilderState as any).mockReturnValue({
+    usePageBuilderStateMock.mockReturnValue({
       currentPage: mockPage,
       inspectorSettings: { showEditorChrome: true },
       sections: [mockSection],
     });
-    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
-    (usePageBuilderSelection as any).mockReturnValue({
+    usePageBuilderDispatchMock.mockReturnValue(mockDispatch);
+    usePageBuilderSelectionMock.mockReturnValue({
       selectedSection: mockSection,
       selectedBlock: null,
       selectedColumn: null,
@@ -277,13 +341,13 @@ describe('ComponentSettingsPanel Component', () => {
   it('should handle removing a section', () => {
     const mockSection = { id: 'sec-1', type: 'Hero', settings: {} };
 
-    (usePageBuilderState as any).mockReturnValue({
+    usePageBuilderStateMock.mockReturnValue({
       currentPage: mockPage,
       inspectorSettings: { showEditorChrome: true },
       sections: [mockSection],
     });
-    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
-    (usePageBuilderSelection as any).mockReturnValue({
+    usePageBuilderDispatchMock.mockReturnValue(mockDispatch);
+    usePageBuilderSelectionMock.mockReturnValue({
       selectedSection: mockSection,
       selectedBlock: null,
       selectedColumn: null,
@@ -301,13 +365,13 @@ describe('ComponentSettingsPanel Component', () => {
   });
 
   it('should update SEO settings', async () => {
-    (usePageBuilderState as any).mockReturnValue({
+    usePageBuilderStateMock.mockReturnValue({
       currentPage: mockPage,
       inspectorSettings: { showEditorChrome: true },
       sections: [],
     });
-    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
-    (usePageBuilderSelection as any).mockReturnValue({
+    usePageBuilderDispatchMock.mockReturnValue(mockDispatch);
+    usePageBuilderSelectionMock.mockReturnValue({
       selectedSection: null,
       selectedBlock: null,
       selectedColumn: null,

@@ -17,7 +17,7 @@ import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/setti
 import {
   enqueueCaseResolverOcrJob,
   startCaseResolverOcrQueue,
-} from '@/features/jobs/workers/caseResolverOcrQueue';
+} from '@/features/case-resolver/workers/caseResolverOcrQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 

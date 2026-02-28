@@ -337,7 +337,7 @@ describe('prompt exploder parser', () => {
       document.bindings.some(
         (binding: PromptExploderBinding) =>
           binding.type === 'references' &&
-          /RL4/i.test(binding.targetLabel) &&
+          /RL4/i.test(binding.targetLabel || '') &&
           binding.origin === 'auto' &&
           Boolean(binding.toSubsectionId)
       )
@@ -351,12 +351,12 @@ describe('prompt exploder parser', () => {
     });
 
     const allItems = document.segments.flatMap((segment: PromptExploderSegment) => [
-      ...segment.listItems,
+      ...(segment.listItems ?? []),
       ...segment.subsections.flatMap((subsection: PromptExploderSubsection) => subsection.items),
     ]);
     const conditionalItem = allItems.find(
-      (item: PromptExploderListItem) =>
-        item.logicalOperator === 'if' && item.referencedParamPath === 'add_new_ground_shadow'
+      (item: PromptExploderListItem | undefined) =>
+        item?.logicalOperator === 'if' && item?.referencedParamPath === 'add_new_ground_shadow'
     );
 
     expect(conditionalItem).toBeTruthy();
@@ -364,13 +364,14 @@ describe('prompt exploder parser', () => {
     expect(conditionalItem?.referencedValue).toBe(true);
     expect(conditionalItem?.logicalConditions).toHaveLength(2);
     expect(conditionalItem?.logicalConditions?.[0]?.paramPath).toBe('add_new_ground_shadow');
+    expect(conditionalItem?.logicalConditions?.[0]?.paramPath).toBe('add_new_ground_shadow');
     expect(conditionalItem?.logicalConditions?.[0]?.comparator).toBe('equals');
     expect(conditionalItem?.logicalConditions?.[0]?.value).toBe(true);
     expect(conditionalItem?.logicalConditions?.[1]?.joinWithPrevious).toBe('and');
     expect(conditionalItem?.logicalConditions?.[1]?.paramPath).toBe('preserve_original_shadows');
     expect(conditionalItem?.logicalConditions?.[1]?.comparator).toBe('equals');
     expect(conditionalItem?.logicalConditions?.[1]?.value).toBe(false);
-    expect(conditionalItem?.text.toLowerCase()).toContain('add one neutral gray soft shadow');
+    expect(conditionalItem?.text!.toLowerCase()).toContain('add one neutral gray soft shadow');
   });
 
   it('merges manual bindings with auto bindings', () => {
@@ -387,7 +388,7 @@ describe('prompt exploder parser', () => {
       (subsection: PromptExploderSubsection) => subsection.code === 'QA_R2'
     );
     const relightSegment = document.segments.find(
-      (segment: PromptExploderSegment) => segment.type === 'sequence' && /STUDIO RELIGHTING/i.test(segment.title)
+      (segment: PromptExploderSegment) => segment.type === 'sequence' && /STUDIO RELIGHTING/i.test(segment.title || '')
     );
     const relightSubsection = relightSegment?.subsections.find(
       (subsection: PromptExploderSubsection) => subsection.code === 'RL4'
@@ -495,9 +496,9 @@ Rejected when visual coherence does not hold.`;
     );
 
     const headings = document.segments.map((segment: PromptExploderSegment) => segment.title);
-    expect(headings.some((title: string | null) => title && title.includes('GLOBAL_SETTINGS'))).toBe(true);
-    expect(headings.some((title: string | null) => title && title.includes('EXECUTION_TEMPLATE'))).toBe(true);
-    expect(headings.some((title: string | null) => title && title.includes('VALIDATION_MODULE'))).toBe(true);
+    expect(headings.some((title: string | null) => title?.includes('GLOBAL_SETTINGS'))).toBe(true);
+    expect(headings.some((title: string | null) => title?.includes('EXECUTION_TEMPLATE'))).toBe(true);
+    expect(headings.some((title: string | null) => title?.includes('VALIDATION_MODULE'))).toBe(true);
   });
 
   it('splits numbered section prompts into multiple heading-driven segments', () => {
@@ -515,7 +516,7 @@ Rejected when visual coherence does not hold.`;
       )
     ).toBe(true);
     expect(
-      document.segments.some((segment: PromptExploderSegment) => segment.title && segment.title.includes('Background Replacement'))
+      document.segments.some((segment: PromptExploderSegment) => segment.title?.includes('Background Replacement'))
     ).toBe(true);
   });
 
@@ -627,7 +628,7 @@ Rejected when visual coherence does not hold.`;
 
     const pipeline = document.segments.find((segment: PromptExploderSegment) => segment.title === 'PIPELINE');
     expect(pipeline?.type).toBe('hierarchical_list');
-    expect(pipeline?.listItems.some((item: PromptExploderListItem) => /Step 4/i.test(item.text))).toBe(true);
+    expect(pipeline?.listItems.some((item: PromptExploderListItem) => /Step 4/i.test(item.text || ''))).toBe(true);
 
     const qa = document.segments.find((segment: PromptExploderSegment) => segment.type === 'qa_matrix');
     const qaR1 = qa?.subsections.find((subsection: PromptExploderSubsection) => subsection.code === 'QA_R1');
@@ -653,7 +654,7 @@ Rejected when visual coherence does not hold.`;
       ],
     });
 
-    const p0 = document.segments.find((segment: any) => segment.code === 'P0');
+    const p0 = document.segments.find((segment: PromptExploderSegment) => segment.code === 'P0');
     expect(p0?.type).toBe('referential_list');
     expect(p0?.listItems).toHaveLength(1);
     expect(p0?.listItems[0]?.text).toContain(
@@ -688,18 +689,18 @@ Rejected when visual coherence does not hold.`;
       ],
     });
 
-    const pipeline = document.segments.find((segment: any) => segment.title === 'WORKSTEPS');
-    const qa = document.segments.find((segment: any) => segment.title === 'FINAL CHECKS');
+    const pipeline = document.segments.find((segment: PromptExploderSegment) => segment.title === 'WORKSTEPS');
+    const qa = document.segments.find((segment: PromptExploderSegment) => segment.title === 'FINAL CHECKS');
 
     expect(pipeline?.type).toBe('hierarchical_list');
-    expect(pipeline?.listItems.map((item: any) => item.text)).toEqual([
+    expect(pipeline?.listItems.map((item: PromptExploderListItem) => item.text)).toEqual([
       'Parse prompt.',
       'Apply parameters.',
       'Run quality checks.',
     ]);
 
     expect(qa?.type).toBe('qa_matrix');
-    expect(qa?.subsections.map((subsection: any) => subsection.code)).toEqual(['QA1', 'QA2']);
+    expect(qa?.subsections.map((subsection: PromptExploderSubsection) => subsection.code)).toEqual(['QA1', 'QA2']);
   });
 
   it('allows subsection grammar to be tuned via validation rules', () => {
@@ -717,7 +718,7 @@ Rejected when visual coherence does not hold.`;
       ],
     });
 
-    const requirements = document.segments.find((segment: any) => segment.title === 'REQUIREMENTS');
+    const requirements = document.segments.find((segment: PromptExploderSegment) => segment.title === 'REQUIREMENTS');
     expect(requirements?.type).toBe('sequence');
     expect(requirements?.subsections).toHaveLength(2);
 
@@ -750,7 +751,7 @@ Rejected when visual coherence does not hold.`;
       validationScope: 'prompt_exploder',
     });
     const withoutCaseScopeSegment = withoutCaseScope.segments.find(
-      (segment: any) => segment.title === 'WORKSTEPS'
+      (segment: PromptExploderSegment) => segment.title === 'WORKSTEPS'
     );
     expect(withoutCaseScopeSegment?.type).not.toBe('hierarchical_list');
 
@@ -760,7 +761,7 @@ Rejected when visual coherence does not hold.`;
       validationScope: 'case_resolver_prompt_exploder',
     });
     const withCaseScopeSegment = withCaseScope.segments.find(
-      (segment: any) => segment.title === 'WORKSTEPS'
+      (segment: PromptExploderSegment) => segment.title === 'WORKSTEPS'
     );
     expect(withCaseScopeSegment?.type).toBe('hierarchical_list');
   });
@@ -821,7 +822,7 @@ Rejected when visual coherence does not hold.`;
     expect(document.sourcePrompt).toContain('Szczecin 25.01.2026');
     expect(document.sourcePrompt).toContain('Wniosek o umorzenie zadłużenia');
     expect(document.sourcePrompt).not.toContain('<p>');
-    expect(document.segments.map((segment: any) => segment.title)).toEqual(
+    expect(document.segments.map((segment: PromptExploderSegment) => segment.title)).toEqual(
       expect.arrayContaining([
         'Szczecin 25.01.2026',
         'Wniosek o umorzenie zadłużenia',

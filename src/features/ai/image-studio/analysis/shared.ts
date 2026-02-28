@@ -286,6 +286,50 @@ export const resolveAlphaObjectBoundsFromRgba = (
   };
 };
 
+/**
+ * Simple white-background bounding box detection.
+ * Scans every pixel once; a pixel is "object" if any channel is darker than
+ * (255 - whiteThreshold). No BFS, no component analysis, no shadow policy.
+ * Returns the axis-aligned bounding box of all non-white (and non-transparent) pixels.
+ */
+export const resolveWhiteBgSimpleBboxFromRgba = (
+  pixelData: PixelData,
+  width: number,
+  height: number,
+  whiteThreshold = IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD
+): ImageStudioCenterObjectBounds | null => {
+  const minChannel = 255 - Math.max(0, Math.min(255, Math.round(whiteThreshold)));
+  let minX = width;
+  let maxX = -1;
+  let minY = height;
+  let maxY = -1;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 4;
+      const a = pixelData[i + 3];
+      if (typeof a !== 'number' || a <= IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD) continue;
+      const r = pixelData[i] ?? 0;
+      const g = pixelData[i + 1] ?? 0;
+      const b = pixelData[i + 2] ?? 0;
+      if (r >= minChannel && g >= minChannel && b >= minChannel) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+
+  if (maxX < minX || maxY < minY) return null;
+
+  return {
+    left: minX,
+    top: minY,
+    width: Math.max(1, maxX - minX + 1),
+    height: Math.max(1, maxY - minY + 1),
+  };
+};
+
 const resolveWhiteBackgroundModel = (
   pixelData: PixelData,
   width: number,
@@ -928,13 +972,13 @@ export const detectObjectBoundsForLayoutFromRgba = (
     normalizedLayout.detection === 'alpha_bbox'
       ? null
       : resolveWhiteForegroundObjectDetectionFromRgba(
-          pixelData,
-          width,
-          height,
-          normalizedLayout.whiteThreshold,
-          normalizedLayout.chromaThreshold,
-          normalizedLayout.shadowPolicy
-        );
+        pixelData,
+        width,
+        height,
+        normalizedLayout.whiteThreshold,
+        normalizedLayout.chromaThreshold,
+        normalizedLayout.shadowPolicy
+      );
 
   const alphaBounds =
     normalizedLayout.detection === 'white_bg_first_colored_pixel'
@@ -943,20 +987,20 @@ export const detectObjectBoundsForLayoutFromRgba = (
 
   const alphaCandidate = alphaBounds
     ? {
-        bounds: alphaBounds,
-        detectionUsed: 'alpha_bbox' as const,
-        confidence: computeAlphaDetectionConfidence(alphaBounds, width, height),
-        detectionDetails: null,
-      }
+      bounds: alphaBounds,
+      detectionUsed: 'alpha_bbox' as const,
+      confidence: computeAlphaDetectionConfidence(alphaBounds, width, height),
+      detectionDetails: null,
+    }
     : null;
 
   const whiteDetectionCandidate = whiteCandidate
     ? {
-        bounds: whiteCandidate.bounds,
-        detectionUsed: 'white_bg_first_colored_pixel' as const,
-        confidence: whiteCandidate.confidence,
-        detectionDetails: whiteCandidate.details,
-      }
+      bounds: whiteCandidate.bounds,
+      detectionUsed: 'white_bg_first_colored_pixel' as const,
+      confidence: whiteCandidate.confidence,
+      detectionDetails: whiteCandidate.details,
+    }
     : null;
 
   const decision: ImageStudioDetectionPolicyDecision<ImageStudioDetectionDetails> =
@@ -970,12 +1014,12 @@ export const detectObjectBoundsForLayoutFromRgba = (
 
   const details = decision.selected.detectionDetails
     ? {
-        ...decision.selected.detectionDetails,
-        policyVersion: decision.policyVersion,
-        policyReason: decision.reason,
-        fallbackApplied: decision.fallbackApplied,
-        candidateDetections: decision.candidateDetections,
-      }
+      ...decision.selected.detectionDetails,
+      policyVersion: decision.policyVersion,
+      policyReason: decision.reason,
+      fallbackApplied: decision.fallbackApplied,
+      candidateDetections: decision.candidateDetections,
+    }
     : null;
 
   return {

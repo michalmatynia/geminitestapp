@@ -18,16 +18,17 @@ import {
   listDrafts,
   updateDraft,
   deleteDraft,
-} from '@/features/drafter/services/draft-repository';
+} from '@/shared/lib/drafter/services/draft-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 vi.mock('mongodb', async () => {
-  const actual = await vi.importActual('mongodb');
+  const actual = (await vi.importActual('mongodb'));
   return {
     ...actual,
     ObjectId: vi.fn().mockImplementation((id: string) => ({
       toString: () => id,
-      equals: (other: any) => other.toString() === id,
+      equals: (other: unknown) =>
+        other && (other as { toString: () => string }).toString() === id,
     })),
   };
 });

@@ -294,8 +294,8 @@ const fetchSettingsPayloadWithTimeout = async (input: {
   const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
   const timeoutId = controller
     ? setTimeout((): void => {
-        controller.abort();
-      }, input.timeoutMs)
+      controller.abort();
+    }, input.timeoutMs)
     : null;
   try {
     return await fetch(input.url, {
@@ -338,8 +338,8 @@ export const fetchCaseResolverWorkspaceMetadata = async (
   const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
   const timeoutId = controller
     ? setTimeout((): void => {
-        controller.abort();
-      }, CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS)
+      controller.abort();
+    }, CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS)
     : null;
   try {
     const response = await fetch(
@@ -482,19 +482,19 @@ export const compactCaseResolverWorkspaceForPersist = (
     const rawHistory = fileRecord['documentHistory'];
     const compactedHistory = Array.isArray(rawHistory)
       ? rawHistory.map((entry: unknown) => {
-          if (!entry || typeof entry !== 'object') return entry;
-          const entryRecord = entry as Record<string, unknown>;
-          const rest = { ...entryRecord };
-          if (isScanFile) {
-            delete rest['documentContent'];
-            delete rest['documentContentHtml'];
-            delete rest['documentContentPlainText'];
-          } else {
-            delete rest['documentContentMarkdown'];
-            delete rest['documentContentPlainText'];
-          }
-          return rest;
-        })
+        if (!entry || typeof entry !== 'object') return entry;
+        const entryRecord = entry as Record<string, unknown>;
+        const rest = { ...entryRecord };
+        if (isScanFile) {
+          delete rest['documentContent'];
+          delete rest['documentContentHtml'];
+          delete rest['documentContentPlainText'];
+        } else {
+          delete rest['documentContentMarkdown'];
+          delete rest['documentContentPlainText'];
+        }
+        return rest;
+      })
       : rawHistory;
     if (isScanFile) {
       const {

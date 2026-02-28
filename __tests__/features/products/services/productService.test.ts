@@ -4,8 +4,8 @@ import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { productService } from '@/features/products/services/productService';
-import { createMockProduct } from '@/features/products/utils/productUtils';
+import { productService } from '@/shared/lib/products/services/productService';
+import { createMockProduct } from '@/shared/lib/products/utils/productUtils';
 import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('fs/promises', () => ({

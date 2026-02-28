@@ -144,19 +144,19 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
   const [recent, active, queueStats] = await Promise.all([
     RUN_RATE_MAX > 0
       ? repo.listRuns({
-          userId: access.userId,
-          createdAfter: new Date(now - windowMs).toISOString(),
-          limit: 1,
-          offset: 0,
-        })
+        userId: access.userId,
+        createdAfter: new Date(now - windowMs).toISOString(),
+        limit: 1,
+        offset: 0,
+      })
       : null,
     RUN_ACTIVE_MAX > 0
       ? repo.listRuns({
-          userId: access.userId,
-          statuses: activeStatuses,
-          limit: 1,
-          offset: 0,
-        })
+        userId: access.userId,
+        statuses: activeStatuses,
+        limit: 1,
+        offset: 0,
+      })
       : null,
     RUN_GLOBAL_QUEUED_MAX > 0 ? repo.getQueueStats() : null,
   ]);

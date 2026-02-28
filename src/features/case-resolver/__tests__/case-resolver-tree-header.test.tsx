@@ -74,7 +74,7 @@ describe('CaseResolverTreeHeader', () => {
       id: 'case-a',
       name: 'Case A',
       caseIdentifierId: null,
-    } as any;
+    } as unknown as CaseResolverFile;
     folderTreeContext.activeCaseChildCount = 2;
     folderTreeContext.showChildCaseFolders = true;
   });

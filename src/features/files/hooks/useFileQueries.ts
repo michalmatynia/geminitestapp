@@ -53,7 +53,7 @@ export function useDeleteFile(): DeleteMutation {
 export function useUpdateFileTags(): UpdateMutation<
   ExpandedImageFile,
   { id: string; tags: string[] }
-> {
+  > {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, tags }: { id: string; tags: string[] }) =>

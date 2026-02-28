@@ -150,7 +150,7 @@ export function useProducers(): ListQuery<Producer> {
 export function useSaveProducerMutation(): SaveMutation<
   Producer,
   { id: string | undefined; data: { name: string; website: string | null } }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productMetadataKeys.producers();
   return createMutationV2({

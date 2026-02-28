@@ -160,10 +160,10 @@ export function FrontendCarousel(): React.ReactNode {
           style={{
             ...(transitionType === 'slide'
               ? {
-                  display: 'flex',
-                  transform: `translateX(-${currentIndex * 100}%)`,
-                  transition: `transform ${transitionDuration}ms ease-in-out`,
-                }
+                display: 'flex',
+                transform: `translateX(-${currentIndex * 100}%)`,
+                transition: `transform ${transitionDuration}ms ease-in-out`,
+              }
               : {}),
           }}
         >
@@ -188,18 +188,18 @@ export function FrontendCarousel(): React.ReactNode {
               ...(transitionType === 'slide'
                 ? { minWidth: '100%', flexShrink: 0 }
                 : {
-                    position: index === 0 ? 'relative' : 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    opacity: transitionType === 'fade' ? (isActive ? 1 : 0) : isActive ? 1 : 0,
-                    visibility: isActive ? 'visible' : 'hidden',
-                    transition:
+                  position: index === 0 ? 'relative' : 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: transitionType === 'fade' ? (isActive ? 1 : 0) : isActive ? 1 : 0,
+                  visibility: isActive ? 'visible' : 'hidden',
+                  transition:
                       transitionType === 'fade'
                         ? `opacity ${transitionDuration}ms ease-in-out`
                         : undefined,
-                  }),
+                }),
             };
 
             const contentAnimationStyles = getAnimationStyles(

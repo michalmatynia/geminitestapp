@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type {
   ChatMessageDto as ChatMessage,
   CreateChatbotSettingsDto as ChatbotSettingsPayload,
@@ -15,7 +15,7 @@ import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import * as chatbotApi from '../api';
-import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/features/ai/chatbot/utils/constants';
+import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/shared/lib/ai/chatbot/constants';
 
 export interface UseChatbotLogicReturn {
   messages: ChatMessage[];
@@ -27,10 +27,8 @@ export interface UseChatbotLogicReturn {
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
   isSending: boolean;
   setIsSending: React.Dispatch<React.SetStateAction<boolean>>;
-  modelOptions: string[];
   model: string;
   setModel: React.Dispatch<React.SetStateAction<string>>;
-  modelLoading: boolean;
   webSearchEnabled: boolean;
   setWebSearchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   useGlobalContext: boolean;
@@ -172,9 +170,8 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setAgentLoopBackoffBaseMs,
     agentLoopBackoffMaxMs,
     setAgentLoopBackoffMaxMs,
-    modelsLoading: agentModelsLoading,
   } = useAgentCreatorSettings();
-  const brainModelOptions = useBrainModelOptions({
+  const brainAssignment = useBrainAssignment({
     feature: 'chatbot',
   });
   const [latestAgentRunId, setLatestAgentRunId] = useState<string | null>(null);
@@ -206,10 +203,10 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
   }, []);
 
   useEffect((): void => {
-    const nextModel = brainModelOptions.effectiveModelId || brainModelOptions.models[0] || '';
+    const nextModel = brainAssignment.effectiveModelId.trim();
     if (!nextModel || nextModel === model) return;
     setModelState(nextModel);
-  }, [brainModelOptions.effectiveModelId, brainModelOptions.models, model]);
+  }, [brainAssignment.effectiveModelId, model]);
 
   const currentSettings = useMemo<ChatbotSettingsPayload>(
     () => ({
@@ -527,10 +524,8 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setAttachments: setAttachments,
     isSending: isSending,
     setIsSending: setIsSending,
-    modelOptions: brainModelOptions.models,
     model: model,
     setModel: setModel,
-    modelLoading: Boolean(brainModelOptions.isLoading || agentModelsLoading),
     webSearchEnabled: webSearchEnabled,
     setWebSearchEnabled: setWebSearchEnabled,
     useGlobalContext: useGlobalContext,

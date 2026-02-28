@@ -1,7 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import { productFilterSchema } from '@/features/products/validations';
+import { productFilterSchema } from '@/shared/lib/products/validations';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
 import { GET_handler } from './handler';

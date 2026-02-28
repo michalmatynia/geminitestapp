@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { uploadFile } from '@/features/files/server';
 import { parseJsonBody } from '@/features/products/server';
-import { getProductRepository } from '@/features/products/services/product-repository';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 

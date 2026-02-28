@@ -256,7 +256,7 @@ export async function postDatabasesPreviewHandler(
     await previewClient.connect();
 
     const tablesResult = await previewClient.query<{ tablename: string }>(
-      "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename"
+      'SELECT tablename FROM pg_tables WHERE schemaname = \'public\' ORDER BY tablename'
     );
     const tables = tablesResult.rows.map((row: { tablename: string }) => row.tablename);
     if (previewMode === 'current') {
@@ -328,7 +328,7 @@ export async function postDatabasesPreviewHandler(
       indexname: string;
       indexdef: string;
     }>(
-      "SELECT tablename, indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' ORDER BY tablename, indexname"
+      'SELECT tablename, indexname, indexdef FROM pg_indexes WHERE schemaname = \'public\' ORDER BY tablename, indexname'
     );
     const uniqueIndexResult = await previewClient.query<{
       indexname: string;

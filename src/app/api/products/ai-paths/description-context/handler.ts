@@ -120,10 +120,10 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
     parameterRepository.listParameters({ catalogId }),
     shouldFetchCategories
       ? (async (): Promise<DescriptionContextCategory[]> => {
-          const categoryRepository = await getCategoryRepository();
-          const categoryList = await categoryRepository.listCategories({ catalogId });
-          return categoryList.map(toDescriptionContextCategory);
-        })()
+        const categoryRepository = await getCategoryRepository();
+        const categoryList = await categoryRepository.listCategories({ catalogId });
+        return categoryList.map(toDescriptionContextCategory);
+      })()
       : Promise.resolve<DescriptionContextCategory[]>([]),
   ]);
 

@@ -1,8 +1,7 @@
 import 'server-only';
 
 import prisma from '@/shared/lib/db/prisma';
-
-const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 
 type LLMContext = {
   model: string;
@@ -10,12 +9,6 @@ type LLMContext = {
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>;
   activeStepId?: string | null;
   stepLabel?: string | null;
-};
-
-const extractMessageContent = (payload: unknown): string => {
-  if (!payload || typeof payload !== 'object') return '';
-  const message = (payload as { message?: { content?: unknown } }).message;
-  return typeof message?.content === 'string' ? message.content : '';
 };
 
 const parseJsonObject = (raw: string): unknown => {
@@ -28,6 +21,30 @@ const parseJsonObject = (raw: string): unknown => {
   } catch {
     return null;
   }
+};
+
+const runStructuredAgentRuntimeTask = async (input: {
+  model: string;
+  temperature: number;
+  systemPrompt: string;
+  userContent: string;
+}): Promise<Record<string, unknown> | null> => {
+  const response = await runBrainChatCompletion({
+    modelId: input.model,
+    temperature: input.temperature,
+    jsonMode: true,
+    messages: [
+      {
+        role: 'system',
+        content: input.systemPrompt,
+      },
+      {
+        role: 'user',
+        content: input.userContent,
+      },
+    ],
+  });
+  return parseJsonObject(response.text) as Record<string, unknown> | null;
 };
 
 export const validateExtractionWithLLM = async (
@@ -63,43 +80,24 @@ export const validateExtractionWithLLM = async (
   } = params;
 
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You validate extraction results against the user goal. Return only JSON with keys: valid (boolean), acceptedItems (array), rejectedItems (array), issues (array of strings), missingCount (number), evidence (array of {item, snippet, reason}). Each accepted item must cite evidence from the provided snippets. If the URL hostname does not match targetHostname (when provided), mark valid=false. If stepLabel is provided, ensure accepted items align with that step context. For product_names, reject non-product UI text (cookies, headings, nav labels).',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              url,
-              extractionType,
-              requiredCount,
-              items,
-              domTextSample,
-              targetHostname,
-              evidence,
-              stepId: context.activeStepId,
-              stepLabel: context.stepLabel,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const parsed = await runStructuredAgentRuntimeTask({
+      model,
+      temperature: 0.2,
+      systemPrompt:
+        'You validate extraction results against the user goal. Return only JSON with keys: valid (boolean), acceptedItems (array), rejectedItems (array), issues (array of strings), missingCount (number), evidence (array of {item, snippet, reason}). Each accepted item must cite evidence from the provided snippets. If the URL hostname does not match targetHostname (when provided), mark valid=false. If stepLabel is provided, ensure accepted items align with that step context. For product_names, reject non-product UI text (cookies, headings, nav labels).',
+      userContent: JSON.stringify({
+        prompt,
+        url,
+        extractionType,
+        requiredCount,
+        items,
+        domTextSample,
+        targetHostname,
+        evidence,
+        stepId: context.activeStepId,
+        stepLabel: context.stepLabel,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Extraction validation failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as unknown;
-    const content = extractMessageContent(payload);
-    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const acceptedItems = Array.isArray(parsed?.['acceptedItems'])
       ? (parsed?.['acceptedItems'] as unknown[]).filter((item: unknown) => typeof item === 'string')
       : [];
@@ -125,14 +123,14 @@ export const validateExtractionWithLLM = async (
       missingCount,
       evidence: Array.isArray(parsed?.['evidence'])
         ? (parsed?.['evidence'] as unknown[]).filter(
-            (item: unknown): item is { item: string; snippet: string } =>
-              typeof item === 'object' &&
+          (item: unknown): item is { item: string; snippet: string } =>
+            typeof item === 'object' &&
               item !== null &&
               'item' in item &&
               typeof (item as Record<string, unknown>)['item'] === 'string' &&
               'snippet' in item &&
               typeof (item as Record<string, unknown>)['snippet'] === 'string'
-          )
+        )
         : [],
     };
   } catch (error) {
@@ -162,36 +160,17 @@ export const normalizeExtractionItemsWithLLM = async (
     return items;
   }
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: normalizationModel,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              "You clean extracted outputs. Return only JSON with key 'items' as an array of cleaned strings. Remove hashes, IDs, boilerplate, and duplicates. Keep original ordering where possible. For emails, return lowercase valid emails only.",
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              extractionType,
-              items,
-            }),
-          },
-        ],
-        options: { temperature: 0.1 },
+    const parsed = await runStructuredAgentRuntimeTask({
+      model: normalizationModel,
+      temperature: 0.1,
+      systemPrompt:
+        'You clean extracted outputs. Return only JSON with key \'items\' as an array of cleaned strings. Remove hashes, IDs, boilerplate, and duplicates. Keep original ordering where possible. For emails, return lowercase valid emails only.',
+      userContent: JSON.stringify({
+        prompt,
+        extractionType,
+        items,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Output normalization failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as unknown;
-    const content = extractMessageContent(payload).trim();
-    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const cleaned = Array.isArray(parsed?.['items'])
       ? (parsed?.['items'] as unknown[]).filter((item: unknown) => typeof item === 'string')
       : [];
@@ -212,40 +191,22 @@ export const inferSelectorsFromLLM = async (
   const { runId, model, log, activeStepId } = context;
   if (!uiInventory) return [];
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: inferenceModel ?? model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              "You are a DOM selector expert. Return only JSON with a 'selectors' array. Use concise, robust CSS selectors.",
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              task,
-              domTextSample,
-              uiInventory,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const resolvedModel = inferenceModel ?? model;
+    const parsed = await runStructuredAgentRuntimeTask({
+      model: resolvedModel,
+      temperature: 0.2,
+      systemPrompt:
+        'You are a DOM selector expert. Return only JSON with a \'selectors\' array. Use concise, robust CSS selectors.',
+      userContent: JSON.stringify({
+        task,
+        domTextSample,
+        uiInventory,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`LLM selector inference failed (${response.status}).`);
-    }
-    const json = (await response.json()) as unknown;
-    const content = extractMessageContent(json);
-    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const selectors = Array.isArray(parsed?.['selectors'])
       ? (parsed?.['selectors'] as unknown[]).filter(
-          (selector: unknown) => typeof selector === 'string'
-        )
+        (selector: unknown) => typeof selector === 'string'
+      )
       : [];
     if (log) {
       await log('info', 'LLM selector inference completed.', {
@@ -264,7 +225,7 @@ export const inferSelectorsFromLLM = async (
           label,
           task,
           selectors,
-          model: inferenceModel ?? model,
+          model: resolvedModel,
           stepId: activeStepId ?? null,
         },
       },
@@ -301,45 +262,27 @@ export const buildExtractionPlan = async (
   const { runId, model, log, activeStepId } = context;
   if (!request.uiInventory) return null;
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: inferenceModel ?? model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are an extraction planner. Return only JSON with keys: target, fields, primarySelectors, fallbackSelectors, notes. target is the data entity. fields is an array of field names. primarySelectors/fallbackSelectors are arrays of CSS selectors.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              request: request.type,
-              domTextSample: request.domTextSample,
-              uiInventory: request.uiInventory,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const resolvedModel = inferenceModel ?? model;
+    const parsed = await runStructuredAgentRuntimeTask({
+      model: resolvedModel,
+      temperature: 0.2,
+      systemPrompt:
+        'You are an extraction planner. Return only JSON with keys: target, fields, primarySelectors, fallbackSelectors, notes. target is the data entity. fields is an array of field names. primarySelectors/fallbackSelectors are arrays of CSS selectors.',
+      userContent: JSON.stringify({
+        request: request.type,
+        domTextSample: request.domTextSample,
+        uiInventory: request.uiInventory,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Extraction planner failed (${response.status}).`);
-    }
-    const json = (await response.json()) as unknown;
-    const content = extractMessageContent(json);
-    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const primarySelectors = Array.isArray(parsed?.['primarySelectors'])
       ? (parsed?.['primarySelectors'] as unknown[]).filter(
-          (selector: unknown) => typeof selector === 'string'
-        )
+        (selector: unknown) => typeof selector === 'string'
+      )
       : [];
     const fallbackSelectors = Array.isArray(parsed?.['fallbackSelectors'])
       ? (parsed?.['fallbackSelectors'] as unknown[]).filter(
-          (selector: unknown) => typeof selector === 'string'
-        )
+        (selector: unknown) => typeof selector === 'string'
+      )
       : [];
     const plan = {
       target: typeof parsed?.['target'] === 'string' ? parsed?.['target'] : null,
@@ -363,7 +306,7 @@ export const buildExtractionPlan = async (
         message: 'LLM extraction plan created.',
         metadata: {
           plan,
-          model: inferenceModel ?? model,
+          model: resolvedModel,
           stepId: activeStepId ?? null,
         },
       },
@@ -406,44 +349,26 @@ export const buildFailureRecoveryPlan = async (
   const { runId, model, log, activeStepId } = context;
   if (!request.uiInventory) return null;
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: inferenceModel ?? model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You recover failed web automation. Return only JSON with keys: reason, selectors, listingUrls, clickSelector, loginUrl, usernameSelector, passwordSelector, submitSelector, notes. Provide only fields relevant to the failure type.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              failureType: request.type,
-              prompt: request.prompt,
-              url: request.url,
-              domTextSample: request.domTextSample,
-              uiInventory: request.uiInventory,
-              extractionPlan: request.extractionPlan ?? null,
-              loginCandidates: request.loginCandidates ?? null,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const resolvedModel = inferenceModel ?? model;
+    const parsed = await runStructuredAgentRuntimeTask({
+      model: resolvedModel,
+      temperature: 0.2,
+      systemPrompt:
+        'You recover failed web automation. Return only JSON with keys: reason, selectors, listingUrls, clickSelector, loginUrl, usernameSelector, passwordSelector, submitSelector, notes. Provide only fields relevant to the failure type.',
+      userContent: JSON.stringify({
+        failureType: request.type,
+        prompt: request.prompt,
+        url: request.url,
+        domTextSample: request.domTextSample,
+        uiInventory: request.uiInventory,
+        extractionPlan: request.extractionPlan ?? null,
+        loginCandidates: request.loginCandidates ?? null,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Failure recovery planner failed (${response.status}).`);
-    }
-    const json = (await response.json()) as unknown;
-    const content = extractMessageContent(json);
-    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const selectors = Array.isArray(parsed?.['selectors'])
       ? (parsed?.['selectors'] as unknown[]).filter(
-          (selector: unknown) => typeof selector === 'string'
-        )
+        (selector: unknown) => typeof selector === 'string'
+      )
       : [];
     const listingUrls = Array.isArray(parsed?.['listingUrls'])
       ? (parsed?.['listingUrls'] as unknown[]).filter((item: unknown) => typeof item === 'string')
@@ -478,7 +403,7 @@ export const buildFailureRecoveryPlan = async (
         metadata: {
           failureType: request.type,
           plan,
-          model: inferenceModel ?? model,
+          model: resolvedModel,
           stepId: activeStepId ?? null,
         },
       },
@@ -502,32 +427,12 @@ export const buildSearchQueryWithLLM = async (
 ): Promise<string | null> => {
   const { model, log, activeStepId } = context;
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You craft concise web search queries. Return only JSON with keys: query, intent.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({ prompt }),
-          },
-        ],
-        options: { temperature: 0.2 },
-      }),
+    const parsed = await runStructuredAgentRuntimeTask({
+      model,
+      temperature: 0.2,
+      systemPrompt: 'You craft concise web search queries. Return only JSON with keys: query, intent.',
+      userContent: JSON.stringify({ prompt }),
     });
-    if (!response.ok) {
-      throw new Error(`Search query inference failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as unknown;
-    const content = extractMessageContent(payload);
-    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const query = typeof parsed?.['query'] === 'string' ? parsed['query'].trim() : '';
     return query || null;
   } catch (error) {
@@ -549,31 +454,12 @@ export const pickSearchResultWithLLM = async (
 ): Promise<string | null> => {
   const { model, log, activeStepId } = context;
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content: 'You select the best URL for the user task. Return only JSON with key: url.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({ query, prompt, results }),
-          },
-        ],
-        options: { temperature: 0.2 },
-      }),
+    const parsed = await runStructuredAgentRuntimeTask({
+      model,
+      temperature: 0.2,
+      systemPrompt: 'You select the best URL for the user task. Return only JSON with key: url.',
+      userContent: JSON.stringify({ query, prompt, results }),
     });
-    if (!response.ok) {
-      throw new Error(`Search result selection failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as unknown;
-    const content = extractMessageContent(payload);
-    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const url = typeof parsed?.['url'] === 'string' ? parsed['url'].trim() : '';
     return url || null;
   } catch (error) {
@@ -599,36 +485,17 @@ export const decideSearchFirstWithLLM = async (
   const { runId, model, log, activeStepId } = context;
   if (!prompt || hasExplicitUrl) return null;
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You decide whether to use web search before direct navigation. Return only JSON with keys: useSearchFirst (boolean), reason, query.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              inferredUrl: targetUrl,
-              hasExplicitUrl,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const parsed = await runStructuredAgentRuntimeTask({
+      model,
+      temperature: 0.2,
+      systemPrompt:
+        'You decide whether to use web search before direct navigation. Return only JSON with keys: useSearchFirst (boolean), reason, query.',
+      userContent: JSON.stringify({
+        prompt,
+        inferredUrl: targetUrl,
+        hasExplicitUrl,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Tool selection failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as unknown;
-    const content = extractMessageContent(payload);
-    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const useSearchFirst = Boolean(parsed?.['useSearchFirst']);
     const query = typeof parsed?.['query'] === 'string' ? parsed['query'].trim() : '';
     if (log) {

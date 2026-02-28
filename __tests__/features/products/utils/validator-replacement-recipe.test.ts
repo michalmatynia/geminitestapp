@@ -5,7 +5,7 @@ import {
   evaluateDynamicReplacementRecipe,
   evaluateStringCondition,
   parseDynamicReplacementRecipe,
-} from '@/features/products/utils/validator-replacement-recipe';
+} from '@/shared/lib/products/utils/validator-replacement-recipe';
 
 describe('validator-replacement-recipe', () => {
   it('increments SKU from latest product value for auto-sequence flow', () => {

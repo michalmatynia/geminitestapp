@@ -57,13 +57,13 @@ describe('prompt exploder parser tuning', () => {
       }).map((draft) =>
         draft.id === 'segment.boundary.pipeline'
           ? {
-              ...draft,
-              pattern: '^\\s*WORKSTEPS\\b',
-              flags: 'mi',
-              promptExploderSegmentType: 'hierarchical_list',
-              promptExploderPriority: 31,
-              promptExploderConfidenceBoost: 0.2,
-            }
+            ...draft,
+            pattern: '^\\s*WORKSTEPS\\b',
+            flags: 'mi',
+            promptExploderSegmentType: 'hierarchical_list',
+            promptExploderPriority: 31,
+            promptExploderConfidenceBoost: 0.2,
+          }
           : draft
       );
 

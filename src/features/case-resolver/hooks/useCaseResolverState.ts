@@ -8,8 +8,8 @@ import {
   CASE_RESOLVER_CAPTURE_SETTINGS_KEY,
   parseCaseResolverCaptureSettings,
   type CaseResolverCaptureSettings as CaseResolverCaptureSettingsType,
-} from '@/features/case-resolver-capture/settings';
-import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '@/features/filemaker/settings';
+} from '@/shared/lib/case-resolver-capture/settings';
+import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '@/shared/lib/filemaker/settings';
 import { useCountries } from '@/shared/lib/internationalization/hooks/useInternationalizationQueries';
 import type {
   CaseResolverCategory,
@@ -381,9 +381,9 @@ export function useCaseResolverState(): CaseResolverStateValue {
         current.activeFileId === null
           ? current
           : {
-              ...current,
-              activeFileId: null,
-            }
+            ...current,
+            activeFileId: null,
+          }
     );
   }, [
     resetRequestedContextState,

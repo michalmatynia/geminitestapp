@@ -236,7 +236,7 @@ export const buildMongoQueryValidation = (value: string): QueryValidationResult 
     if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
       hints.push('Start with a JSON object, e.g. { "field": "value" }.');
     }
-    if (raw.includes("'")) {
+    if (raw.includes('\'')) {
       hints.push('Use double quotes for keys and string values.');
     }
     if (/\bObjectId\s*\(/.test(raw)) {
@@ -297,7 +297,7 @@ export const buildJsonQueryValidation = (value: string): QueryValidationResult =
     if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
       hints.push('Start with a JSON object, e.g. { "field": "value" }.');
     }
-    if (raw.includes("'")) {
+    if (raw.includes('\'')) {
       hints.push('Use double quotes for keys and string values.');
     }
     if (/,\s*[}\]]/.test(raw)) {

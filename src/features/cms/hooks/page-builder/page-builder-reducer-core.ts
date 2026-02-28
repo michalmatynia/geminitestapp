@@ -219,13 +219,13 @@ export function reducePageBuilderStateCore(
       const updatedSections = state.sections.map((s: SectionInstance) =>
         s.id === action.sectionId
           ? {
-              ...s,
-              blocks: s.blocks.map((b: BlockInstance) =>
-                b.id === action.blockId
-                  ? applyTextAtomSettings(b, { ...b.settings, ...action.settings })
-                  : b
-              ),
-            }
+            ...s,
+            blocks: s.blocks.map((b: BlockInstance) =>
+              b.id === action.blockId
+                ? applyTextAtomSettings(b, { ...b.settings, ...action.settings })
+                : b
+            ),
+          }
           : s
       );
       return { ...state, sections: updatedSections };
@@ -524,11 +524,11 @@ export function reducePageBuilderStateCore(
             blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
               pb.id === action.parentBlockId
                 ? {
-                    ...pb,
-                    blocks: (pb.blocks ?? []).filter(
-                      (eb: BlockInstance) => eb.id !== action.elementId
-                    ),
-                  }
+                  ...pb,
+                  blocks: (pb.blocks ?? []).filter(
+                    (eb: BlockInstance) => eb.id !== action.elementId
+                  ),
+                }
                 : pb
             ),
           })),
@@ -551,13 +551,13 @@ export function reducePageBuilderStateCore(
             blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
               pb.id === action.parentBlockId
                 ? {
-                    ...pb,
-                    blocks: (pb.blocks ?? []).map((eb: BlockInstance) =>
-                      eb.id === action.blockId
-                        ? applyTextAtomSettings(eb, { ...eb.settings, ...action.settings })
-                        : eb
-                    ),
-                  }
+                  ...pb,
+                  blocks: (pb.blocks ?? []).map((eb: BlockInstance) =>
+                    eb.id === action.blockId
+                      ? applyTextAtomSettings(eb, { ...eb.settings, ...action.settings })
+                      : eb
+                  ),
+                }
                 : pb
             ),
           })),
@@ -666,9 +666,9 @@ export function reducePageBuilderStateCore(
             blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
               pb.id === action.carouselId
                 ? {
-                    ...pb,
-                    blocks: (pb.blocks ?? []).filter((f: BlockInstance) => f.id !== action.frameId),
-                  }
+                  ...pb,
+                  blocks: (pb.blocks ?? []).filter((f: BlockInstance) => f.id !== action.frameId),
+                }
                 : pb
             ),
           })),
@@ -693,13 +693,13 @@ export function reducePageBuilderStateCore(
             blocks: (col.blocks ?? []).map((carousel: BlockInstance) =>
               carousel.id === action.carouselId
                 ? {
-                    ...carousel,
-                    blocks: (carousel.blocks ?? []).map((frame: BlockInstance) =>
-                      frame.id === action.frameId
-                        ? { ...frame, blocks: [...(frame.blocks ?? []), newElem] }
-                        : frame
-                    ),
-                  }
+                  ...carousel,
+                  blocks: (carousel.blocks ?? []).map((frame: BlockInstance) =>
+                    frame.id === action.frameId
+                      ? { ...frame, blocks: [...(frame.blocks ?? []), newElem] }
+                      : frame
+                  ),
+                }
                 : carousel
             ),
           })),

@@ -10,10 +10,8 @@ import React, {
   useMemo,
 } from 'react';
 
-import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { BlockInstance, SectionInstance, CustomCssAiConfig } from '@/shared/contracts/cms';
 import { internalError } from '@/shared/errors/app-error';
@@ -42,12 +40,6 @@ export interface InspectorAiContextValue {
   cancelCss: () => void;
 
   // Content AI State
-  contentAiProvider: 'model' | 'agent';
-  setContentAiProvider: (val: 'model' | 'agent') => void;
-  contentAiModelId: string;
-  setContentAiModelId: (val: string) => void;
-  contentAiAgentId: string;
-  setContentAiAgentId: (val: string) => void;
   contentAiPrompt: string;
   setContentAiPrompt: (val: string) => void;
   contentAiLoading: boolean;
@@ -76,11 +68,6 @@ export interface InspectorAiContextValue {
   brainAiProvider: 'model' | 'agent';
   brainAiModelId: string;
   brainAiAgentId: string;
-
-  // Options
-  modelOptions: string[];
-  agentOptions: Array<{ label: string; value: string }>;
-  providerOptions: Array<{ label: string; value: string }>;
 
   // Configuration & Data
   customCssValue: string;
@@ -154,7 +141,6 @@ export interface InspectorAiProviderProps {
   onUpdateSettings: (settings: Record<string, unknown>) => void;
   onUpdateCustomCssAiConfig: (patch: Partial<CustomCssAiConfig>) => void;
   contentAiAllowedKeys?: string[];
-  aiQueriesEnabled?: boolean;
 }
 
 export function InspectorAiProvider({
@@ -165,7 +151,6 @@ export function InspectorAiProvider({
   onUpdateSettings,
   onUpdateCustomCssAiConfig,
   contentAiAllowedKeys = [],
-  aiQueriesEnabled = false,
 }: InspectorAiProviderProps): React.JSX.Element {
   const {
     state,
@@ -188,9 +173,6 @@ export function InspectorAiProvider({
   const cssAiAbortRef = useRef<AbortController | null>(null);
 
   // --- State: Content AI ---
-  const [contentAiProvider, setContentAiProvider] = useState<'model' | 'agent'>('model');
-  const [contentAiModelId, setContentAiModelId] = useState<string>('');
-  const [contentAiAgentId, setContentAiAgentId] = useState<string>('');
   const [contentAiPrompt, setContentAiPrompt] = useState<string>('');
   const [contentAiLoading, setContentAiLoading] = useState<boolean>(false);
   const [contentAiError, setContentAiError] = useState<string | null>(null);
@@ -204,48 +186,12 @@ export function InspectorAiProvider({
   const [contextPreviewNonce, setContextPreviewNonce] = useState<number>(0);
 
   // --- Data Loading ---
-  const brainModelOptions = useBrainModelOptions({
+  const { assignment: brainAssignment } = useBrainAssignment({
     capability: 'cms.css_stream',
-    enabled: aiQueriesEnabled,
   });
-  const brainAiProvider = brainModelOptions.assignment.provider;
-  const brainAiModelId = brainModelOptions.assignment.modelId.trim();
-  const brainAiAgentId = brainModelOptions.assignment.agentId.trim();
-  const teachingAgentsQuery = useTeachingAgents({
-    enabled: aiQueriesEnabled && brainAiProvider === 'agent',
-  });
-
-  const modelOptions = useMemo((): string[] => {
-    const fromApi = brainModelOptions.models
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      .map((value) => value.trim());
-    return Array.from(new Set(fromApi));
-  }, [brainModelOptions.models]);
-
-  const agentOptions = useMemo(
-    (): Array<{ label: string; value: string }> =>
-      (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({
-        label: agent.name,
-        value: agent.id,
-      })),
-    [teachingAgentsQuery.data]
-  );
-
-  const providerOptions = useMemo(
-    (): Array<{ label: string; value: string }> => [
-      { label: 'AI model', value: 'model' },
-      { label: 'Deepthinking agent', value: 'agent' },
-    ],
-    []
-  );
-
-  // Initialize Content AI model default
-  useEffect((): void => {
-    if (contentAiProvider !== 'model') return;
-    if (contentAiModelId.trim().length) return;
-    if (!modelOptions.length) return;
-    setContentAiModelId(modelOptions[0]!);
-  }, [contentAiProvider, contentAiModelId, modelOptions]);
+  const brainAiProvider = brainAssignment.provider;
+  const brainAiModelId = brainAssignment.modelId.trim();
+  const brainAiAgentId = brainAssignment.agentId.trim();
 
   // Cancel on unmount
   useEffect((): (() => void) => {
@@ -584,12 +530,12 @@ export function InspectorAiProvider({
       const filtered =
         allowed.size > 0
           ? Object.entries(settingsPatch).reduce<Record<string, unknown>>(
-              (acc: Record<string, unknown>, [key, value]: [string, unknown]) => {
-                if (allowed.has(key)) acc[key] = value;
-                return acc;
-              },
-              {}
-            )
+            (acc: Record<string, unknown>, [key, value]: [string, unknown]) => {
+              if (allowed.has(key)) acc[key] = value;
+              return acc;
+            },
+            {}
+          )
           : settingsPatch;
       const entries = Object.entries(filtered);
       if (entries.length === 0) {
@@ -781,12 +727,6 @@ export function InspectorAiProvider({
     generateCss,
     cancelCss,
 
-    contentAiProvider,
-    setContentAiProvider,
-    contentAiModelId,
-    setContentAiModelId,
-    contentAiAgentId,
-    setContentAiAgentId,
     contentAiPrompt,
     setContentAiPrompt,
     contentAiLoading,
@@ -810,10 +750,6 @@ export function InspectorAiProvider({
     brainAiProvider,
     brainAiModelId,
     brainAiAgentId,
-
-    modelOptions,
-    agentOptions,
-    providerOptions,
 
     customCssValue,
     customCssAiConfig,

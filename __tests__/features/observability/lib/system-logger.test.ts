@@ -109,14 +109,14 @@ describe('system-logger', () => {
     });
 
     it('should handle circular references in context', async () => {
-      const context: any = { a: 1 };
-      context.self = context;
+      const context: Record<string, unknown> = { a: 1 };
+      context['self'] = context;
 
       await logSystemEvent({ message: 'Circular', context });
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      const calls = (createSystemLog as any).mock.calls;
-      const actualContext = calls[0][0].context;
+      const calls = vi.mocked(createSystemLog).mock.calls;
+      const actualContext = (calls[0]?.[0] as any).context;
       expect(actualContext.self.self).toBe('[Circular]');
     });
   });

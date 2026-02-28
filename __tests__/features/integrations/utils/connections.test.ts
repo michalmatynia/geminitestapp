@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { coerceStatus, normalizeSteps } from '@/features/integrations/utils/connections';
+import { coerceStatus, normalizeSteps } from '@/shared/lib/integrations/utils/connections';
 
 describe('integrations connection utils', () => {
   describe('coerceStatus', () => {

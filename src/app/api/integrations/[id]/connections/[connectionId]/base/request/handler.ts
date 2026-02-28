@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getIntegrationRepository } from '@/features/integrations/server';
-import { callBaseApi, fetchBaseProducts } from '@/features/integrations/server';
-import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
+import { getIntegrationRepository } from '@/shared/lib/integrations/server';
+import { callBaseApi, fetchBaseProducts } from '@/shared/lib/integrations/server';
+import { resolveBaseConnectionToken } from '@/shared/lib/integrations/services/base-token-resolver';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

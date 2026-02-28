@@ -20,11 +20,11 @@ vi.mock('@/shared/lib/queue', () => ({
   }),
 }));
 
-vi.mock('@/features/jobs/processors/product-ai-processors', () => ({
+vi.mock('@/features/products/workers/product-ai-processors', () => ({
   dispatchProductAiJob: vi.fn(),
 }));
 
-vi.mock('@/features/jobs/services/product-ai-job-repository', () => ({
+vi.mock('@/shared/lib/products/services/product-ai-job-repository', () => ({
   getProductAiJobRepository: vi.fn(),
 }));
 
@@ -36,9 +36,9 @@ vi.mock('@/features/observability/server', () => ({
 }));
 
 // Import after mocks
-import { dispatchProductAiJob } from '@/features/jobs/processors/product-ai-processors';
-import { getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
-import { startProductAiJobQueue } from '@/features/jobs/workers/productAiQueue';
+import { dispatchProductAiJob } from '@/features/products/workers/product-ai-processors';
+import { getProductAiJobRepository } from '@/shared/lib/products/services/product-ai-job-repository';
+import { startProductAiJobQueue } from '@/features/products/workers/productAiQueue';
 import { ErrorSystem } from '@/features/observability/server';
 
 describe('Product AI Job Queue Worker', () => {

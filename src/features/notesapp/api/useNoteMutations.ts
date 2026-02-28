@@ -52,7 +52,7 @@ export function useCreateNote(): CreateMutation<NoteWithRelations, NoteCreateInp
 export function useUpdateNote(): UpdateMutation<
   NoteWithRelations,
   NoteUpdateInput & { id: string }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createUpdateMutationV2({
@@ -120,7 +120,7 @@ export function useCreateNoteFolder(): CreateMutation<CategoryRecord, CategoryCr
 export function useUpdateNoteFolder(): UpdateMutation<
   CategoryRecord,
   CategoryUpdateInput & { id: string }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createUpdateMutationV2({
@@ -188,7 +188,7 @@ export function useCreateNotebook(): CreateMutation<NotebookRecord, NotebookCrea
 export function useUpdateNotebook(): UpdateMutation<
   NotebookRecord,
   NotebookUpdateInput & { id: string }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.notebooks();
   return createUpdateMutationV2({
@@ -326,7 +326,7 @@ export function useCreateNoteTheme(): CreateMutation<ThemeRecord, ThemeCreateInp
 export function useUpdateNoteTheme(): UpdateMutation<
   ThemeRecord,
   ThemeUpdateInput & { id: string }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.themes();
   return createUpdateMutationV2({

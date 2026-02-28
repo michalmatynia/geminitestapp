@@ -22,7 +22,7 @@ interface ImportFolderResponse {
 export function useImportFolderMutation(): CreateMutation<
   ImportFolderResponse,
   ImportFolderPayload
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
 

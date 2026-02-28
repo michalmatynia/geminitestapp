@@ -165,9 +165,9 @@ export const listBrainModels = async (
   const warning =
     liveOllamaModels === null
       ? {
-          code: 'OLLAMA_UNAVAILABLE',
-          message: 'Live Ollama discovery failed. Showing Brain-configured model catalog only.',
-        }
+        code: 'OLLAMA_UNAVAILABLE',
+        message: 'Live Ollama discovery failed. Showing Brain-configured model catalog only.',
+      }
       : undefined;
 
   return {

@@ -30,10 +30,8 @@ export const useChatbotMessages = () => {
 
 // --- Settings Context ---
 export interface ChatbotSettingsData {
-  modelOptions: string[];
   model: string;
   setModel: React.Dispatch<React.SetStateAction<string>>;
-  modelLoading: boolean;
   webSearchEnabled: boolean;
   setWebSearchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   useGlobalContext: boolean;
@@ -126,10 +124,8 @@ export function ChatbotProvider({ children }: { children: ReactNode }): React.JS
 
   const settingsValue = useMemo<ChatbotSettingsData>(
     () => ({
-      modelOptions: logic.modelOptions,
       model: logic.model,
       setModel: logic.setModel,
-      modelLoading: logic.modelLoading,
       webSearchEnabled: logic.webSearchEnabled,
       setWebSearchEnabled: logic.setWebSearchEnabled,
       useGlobalContext: logic.useGlobalContext,
@@ -152,10 +148,8 @@ export function ChatbotProvider({ children }: { children: ReactNode }): React.JS
       saveChatbotSettings: logic.saveChatbotSettings,
     }),
     [
-      logic.modelOptions,
       logic.model,
       logic.setModel,
-      logic.modelLoading,
       logic.webSearchEnabled,
       logic.setWebSearchEnabled,
       logic.useGlobalContext,

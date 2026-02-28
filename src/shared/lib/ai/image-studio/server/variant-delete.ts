@@ -5,7 +5,7 @@ import fs from 'fs/promises';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { getProductRepository } from '@/features/products/services/product-repository';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 import { removeImageStudioRunOutputs } from './run-repository';
 import {

@@ -112,10 +112,10 @@ export function PreviewCarouselBlock({
         style={{
           ...(transitionType === 'slide'
             ? {
-                display: 'flex',
-                transform: `translateX(-${currentIndex * 100}%)`,
-                transition: `transform ${transitionDuration}ms ease-in-out`,
-              }
+              display: 'flex',
+              transform: `translateX(-${currentIndex * 100}%)`,
+              transition: `transform ${transitionDuration}ms ease-in-out`,
+            }
             : {}),
         }}
       >
@@ -136,18 +136,18 @@ export function PreviewCarouselBlock({
             ...(transitionType === 'slide'
               ? { minWidth: '100%', flexShrink: 0 }
               : {
-                  position: index === 0 ? 'relative' : 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: transitionType === 'fade' ? (isActive ? 1 : 0) : isActive ? 1 : 0,
-                  visibility: isActive ? 'visible' : 'hidden',
-                  transition:
+                position: index === 0 ? 'relative' : 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: transitionType === 'fade' ? (isActive ? 1 : 0) : isActive ? 1 : 0,
+                visibility: isActive ? 'visible' : 'hidden',
+                transition:
                     transitionType === 'fade'
                       ? `opacity ${transitionDuration}ms ease-in-out`
                       : undefined,
-                }),
+              }),
           };
 
           const alignmentClass =
@@ -362,14 +362,14 @@ export function PreviewSlideshowBlock({
                   style={
                     transition === 'fade'
                       ? {
-                          opacity: isActiveFrame ? 1 : 0,
-                          pointerEvents: isActiveFrame ? 'auto' : 'none',
-                          transitionDuration: `${transitionDuration}ms`,
-                        }
+                        opacity: isActiveFrame ? 1 : 0,
+                        pointerEvents: isActiveFrame ? 'auto' : 'none',
+                        transitionDuration: `${transitionDuration}ms`,
+                      }
                       : {
-                          transform: `translateX(${(idx - currentActiveIndex) * 100}%)`,
-                          transitionDuration: `${transitionDuration}ms`,
-                        }
+                        transform: `translateX(${(idx - currentActiveIndex) * 100}%)`,
+                        transitionDuration: `${transitionDuration}ms`,
+                      }
                   }
                 >
                   <div className='flex h-full w-full flex-col' style={frameStyle}>
@@ -380,19 +380,19 @@ export function PreviewSlideshowBlock({
                           const animationStyle: React.CSSProperties =
                             isActiveFrame && resolvedAnimationType !== 'none'
                               ? {
-                                  animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
-                                }
+                                animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
+                              }
                               : {};
                           const shouldFillBlock =
                             fillContent &&
                             (child.type === 'Image' || child.type === 'ImageElement');
                           const wrapperStyle: React.CSSProperties = shouldFillBlock
                             ? {
-                                ...animationStyle,
-                                width: '100%',
-                                height: '100%',
-                                alignSelf: 'stretch',
-                              }
+                              ...animationStyle,
+                              width: '100%',
+                              height: '100%',
+                              alignSelf: 'stretch',
+                            }
                             : animationStyle;
                           const triggerKey = `${child.id}-${currentActiveIndex}-${blockIdx}`;
                           return (

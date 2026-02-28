@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useGenerationToolbarState } from './GenerationToolbar.hooks';
 import { UPSCALE_MAX_OUTPUT_SIDE } from './GenerationToolbar.utils';
 import {
@@ -22,7 +22,7 @@ import { GenerationToolbarMaskSection } from './GenerationToolbarMaskSection';
 import { GenerationToolbarUpscaleSection } from './GenerationToolbarUpscaleSection';
 
 export function GenerationToolbarInner(): React.JSX.Element {
-  const brainGenerationModel = useBrainModelOptions({
+  const brainGenerationModel = useBrainAssignment({
     capability: 'image_studio.general',
   });
   const state = useGenerationToolbarState();
@@ -211,6 +211,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
     () => [
       { value: 'client_alpha_bbox', label: 'Center Client: Canvas' },
       { value: 'server_alpha_bbox', label: 'Center Server: Sharp' },
+      { value: 'client_white_bg_bbox', label: 'Center Client: White BG Bbox' },
       { value: 'client_object_layout_v1', label: 'Object Layouting Client (Experimental)' },
       { value: 'server_object_layout_v1', label: 'Object Layouting Server (Experimental)' },
     ],

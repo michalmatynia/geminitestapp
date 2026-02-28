@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { listProductStudioRunAudit } from '@/features/products/services/product-studio-audit-service';
+import { listProductStudioRunAudit } from '@/shared/lib/products/services/product-studio-audit-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

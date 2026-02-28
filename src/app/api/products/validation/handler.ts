@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { validateProductsBatch } from '@/features/products/validations';
+import { validateProductsBatch } from '@/shared/lib/products/validations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

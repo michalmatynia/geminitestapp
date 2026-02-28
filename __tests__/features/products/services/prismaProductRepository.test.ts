@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { prismaProductRepository } from '@/features/products/services/product-repository/prisma-product-repository';
+import { prismaProductRepository } from '@/shared/lib/products/services/product-repository/prisma-product-repository';
 import prisma from '@/shared/lib/db/prisma';
 
 const createAdvancedFilterGroup = (

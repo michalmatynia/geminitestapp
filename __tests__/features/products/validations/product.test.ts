@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { productCreateSchema, productUpdateSchema } from '@/features/products/validations';
+import { productCreateSchema, productUpdateSchema } from '@/shared/lib/products/validations';
 
 describe('product validations', () => {
   describe('productCreateSchema', () => {

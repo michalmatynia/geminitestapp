@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   buildImageBase64Slots,
   type ProductImageBase64Source,
-} from '@/features/products/services/image-base64';
-import { getProductRepository } from '@/features/products/services/product-repository';
+} from '@/shared/lib/products/services/image-base64';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getCategoryMappingRepository } from '@/features/integrations/server';
+import { getCategoryMappingRepository } from '@/shared/lib/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 

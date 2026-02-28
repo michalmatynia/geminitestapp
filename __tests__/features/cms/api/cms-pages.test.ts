@@ -10,10 +10,10 @@ import {
 } from '@/app/api/cms/pages/[id]/route';
 import { GET as GET_pages, POST as POST_pages } from '@/app/api/cms/pages/route';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import type { Page } from '@/shared/contracts/cms';
+import type { Page, CmsRepository } from '@/shared/contracts/cms';
 
 describe('CMS Pages API', () => {
-  let cmsRepository: any;
+  let cmsRepository: CmsRepository;
 
   beforeEach(async () => {
     cmsRepository = await getCmsRepository();
@@ -103,12 +103,13 @@ describe('CMS Pages API', () => {
 
       // Verify page in repository has slugs
       const savedPage = await cmsRepository.getPageById(data.id);
-      expect(savedPage.slugs.length).toBe(2);
+      expect(savedPage!.slugs.length).toBe(2);
     });
 
     it('should create a new page with a theme', async () => {
       const theme = await cmsRepository.createTheme({
         name: 'Creation Theme',
+        isDefault: false,
         colors: {
           primary: '#000',
           secondary: '#fff',
@@ -144,7 +145,7 @@ describe('CMS Pages API', () => {
 
       // Verify page in repository has the theme
       const savedPage = await cmsRepository.getPageById(data.id);
-      expect(savedPage.themeId).toBe(theme.id);
+      expect(savedPage!.themeId).toBe(theme.id);
     });
 
     it('should return 400 for invalid input', async () => {
@@ -186,6 +187,7 @@ describe('CMS Pages API', () => {
       const slug = await cmsRepository.createSlug({ slug: 'updated-slug' });
       const theme = await cmsRepository.createTheme({
         name: 'Page Theme',
+        isDefault: false,
         colors: {
           primary: '#000',
           secondary: '#fff',
@@ -234,10 +236,10 @@ describe('CMS Pages API', () => {
 
       // Verify in repository
       const updatedPage = await cmsRepository.getPageById(page.id);
-      expect(updatedPage.components.length).toBe(2);
-      expect(updatedPage.slugs.length).toBe(1);
-      expect(updatedPage.slugs[0].slug).toBe('updated-slug');
-      expect(updatedPage.themeId).toBe(theme.id);
+      expect(updatedPage!.components.length).toBe(2);
+      expect(updatedPage!.slugs.length).toBe(1);
+      expect((updatedPage!.slugs[0] as any).slug).toBe('updated-slug');
+      expect(updatedPage!.themeId).toBe(theme.id);
     });
 
     it('should return 404 when updating non-existent page', async () => {

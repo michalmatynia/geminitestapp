@@ -15,8 +15,8 @@ import {
   normalizeProductValidationDenyBehavior,
   normalizeProductValidationInstanceDenyBehaviorMap,
   normalizeProductValidationPatternDenyBehaviorOverride,
-} from '@/features/products/utils/validator-instance-behavior';
-import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+} from '@/shared/lib/products/utils/validator-instance-behavior';
+import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
@@ -598,8 +598,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           const resolved =
             typeof next === 'function'
               ? (next as (prev: ProductValidationDenyBehavior) => ProductValidationDenyBehavior)(
-                  current
-                )
+                current
+              )
               : next;
           const normalized = normalizeProductValidationDenyBehavior(resolved);
           if (normalized === current && prev[validationInstanceScope] === normalized) {

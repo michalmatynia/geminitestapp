@@ -32,9 +32,9 @@ const toRecord = (value: unknown): Record<string, unknown> | null => {
 const toArray = (value: unknown): Array<Record<string, unknown>> =>
   Array.isArray(value)
     ? value.filter(
-        (entry: unknown): entry is Record<string, unknown> =>
-          Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
-      )
+      (entry: unknown): entry is Record<string, unknown> =>
+        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+    )
     : [];
 
 const isTranslationEnPlPathConfig = (parsed: Record<string, unknown>): boolean => {

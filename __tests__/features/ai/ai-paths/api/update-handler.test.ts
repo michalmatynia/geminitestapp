@@ -12,7 +12,7 @@ import {
   requireAiPathsAccessOrInternal,
 } from '@/features/ai/ai-paths/server';
 import { getProductRepository } from '@/features/products/server';
-import { getProductDataProvider } from '@/features/products/services/product-provider';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -21,7 +21,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   ensureAiPathsPermission: vi.fn(),
 }));
 
-vi.mock('@/features/products/services/product-provider', () => ({
+vi.mock('@/shared/lib/products/services/product-provider', () => ({
   getProductDataProvider: vi.fn(),
 }));
 

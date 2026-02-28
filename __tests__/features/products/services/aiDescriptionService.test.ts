@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { generateProductAiDescription } from '@/features/products/services/aiDescriptionService';
+import { generateProductAiDescription } from '@/shared/lib/products/services/aiDescriptionService';
 
 // Mock brain server
 vi.mock('@/shared/lib/ai-brain/server', () => ({

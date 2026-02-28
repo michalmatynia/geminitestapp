@@ -6,13 +6,18 @@ import {
   usePlaywrightSettings,
 } from '@/shared/lib/playwright/context/PlaywrightSettingsContext';
 import { buildPlaywrightSettings } from '@/shared/lib/playwright/utils/personas';
+import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 
 const TestComponent = () => {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
     <div>
       <div data-testid='headless'>{settings.headless ? 'true' : 'false'}</div>
-      <button onClick={() => setSettings((prev: any) => ({ ...prev, headless: !prev.headless }))}>
+      <button
+        onClick={() =>
+          setSettings((prev: PlaywrightSettings) => ({ ...prev, headless: !prev.headless }))
+        }
+      >
         Toggle Headless
       </button>
     </div>

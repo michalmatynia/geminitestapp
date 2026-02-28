@@ -3,12 +3,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUpDown, Download } from 'lucide-react';
 
-import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   fetchProductListings,
   productListingsQueryKey,
-} from '@/features/integrations/hooks/useListingQueries';
+} from '@/shared/lib/integrations/hooks/useListingQueries';
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
 import { useProductListActionsContext } from '@/features/products/context/ProductListContext';
@@ -20,7 +20,7 @@ import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,
-} from '@/features/products/utils/priceCalculation';
+} from '@/shared/lib/products/utils/priceCalculation';
 import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { Badge, Button, Checkbox, ActionMenu, DropdownMenuItem, Tooltip } from '@/shared/ui';

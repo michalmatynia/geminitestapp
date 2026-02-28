@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useCallback } from 'react';
-import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
+import { useAiPathRuntimeAnalytics } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import { useAiPathsSettingsOrchestrator } from '../AiPathsSettingsOrchestratorContext';
 import { Button, Card, StatusBadge, useToast } from '@/shared/ui';
 import {

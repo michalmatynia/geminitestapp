@@ -16,30 +16,6 @@ import {
 } from '@/features/jobs/server';
 import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
 
-vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler:
-    (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
-    async (req: NextRequest): Promise<Response> =>
-      handler(req, {
-        requestId: 'test-request-id',
-      }),
-  apiHandlerWithParams:
-    (
-      handler: (req: NextRequest, ctx: unknown, params: Record<string, string>) => Promise<Response>
-    ) =>
-    async (
-      req: NextRequest,
-      routeCtx: { params: Promise<Record<string, string>> }
-    ): Promise<Response> =>
-      handler(
-        req,
-        {
-          requestId: 'test-request-id',
-        },
-        await routeCtx.params
-      ),
-}));
-
 vi.mock('@/features/auth/server', () => ({
   auth: vi.fn(),
 }));
@@ -140,14 +116,14 @@ describe('Database Engine operations jobs API', () => {
       payload: { direction: 'mongo_to_prisma' },
       result: null,
       errorMessage: null,
-      error: null, // Added
+      error: null,
       createdAt: '2026-02-10T10:00:00.000Z',
-      updatedAt: '2026-02-10T10:00:00.000Z', // Added
+      updatedAt: '2026-02-10T10:00:00.000Z',
       startedAt: '2026-02-10T10:00:01.000Z',
       finishedAt: null,
-      completedAt: null, // Added
+      completedAt: null,
       product: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof getProductAiJob>>);
     vi.mocked(cancelProductAiJob).mockResolvedValue({
       id: 'job-db-sync-1',
       productId: 'system',
@@ -162,7 +138,7 @@ describe('Database Engine operations jobs API', () => {
       startedAt: '2026-02-10T10:00:01.000Z',
       finishedAt: '2026-02-10T10:00:10.000Z',
       completedAt: '2026-02-10T10:00:10.000Z',
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cancelProductAiJob>>);
 
     const req = new NextRequest(
       'http://localhost/api/databases/engine/operations/jobs/job-db-sync-1/cancel',
@@ -199,11 +175,14 @@ describe('Database Engine operations jobs API', () => {
         method: 'POST',
       }
     );
-    await expect(
-      POST_CANCEL(req, {
-        params: Promise.resolve({ jobId: 'job-db-sync-1' }),
-      })
-    ).rejects.toThrow('disabled by Database Engine controls');
+    const res = await POST_CANCEL(req, {
+      params: Promise.resolve({ jobId: 'job-db-sync-1' }),
+    });
+
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toContain('disabled by Database Engine controls');
+
     expect(getProductAiJob).not.toHaveBeenCalled();
     expect(cancelProductAiJob).not.toHaveBeenCalled();
   });

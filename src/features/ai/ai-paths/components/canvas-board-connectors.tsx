@@ -187,9 +187,9 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
   const diff =
     info.isHistory && Array.isArray(info.rawValue) && info.rawValue.length > 1
       ? buildDiffLines(
-          stringifyForDiff(info.rawValue[info.rawValue.length - 2]),
-          stringifyForDiff(info.rawValue[info.rawValue.length - 1])
-        )
+        stringifyForDiff(info.rawValue[info.rawValue.length - 2]),
+        stringifyForDiff(info.rawValue[info.rawValue.length - 1])
+      )
       : null;
   return (
     <div className='space-y-1'>

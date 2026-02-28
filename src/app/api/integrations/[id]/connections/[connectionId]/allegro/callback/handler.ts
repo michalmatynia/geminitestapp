@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getIntegrationRepository } from '@/features/integrations/server';
-import { decryptSecret, encryptSecret } from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/shared/lib/integrations/server';
+import { decryptSecret, encryptSecret } from '@/shared/lib/integrations/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
@@ -148,12 +148,12 @@ export async function GET_handler(
         connectionId,
         ...(mapped
           ? {
-              code: mapped.code,
-              httpStatus: mapped.httpStatus,
-              expected: mapped.expected,
-              critical: mapped.critical,
-              retryable: mapped.retryable,
-            }
+            code: mapped.code,
+            httpStatus: mapped.httpStatus,
+            expected: mapped.expected,
+            critical: mapped.critical,
+            retryable: mapped.retryable,
+          }
           : {}),
       },
     });

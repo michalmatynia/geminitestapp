@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildBaseProductData } from '@/features/integrations/services/exports/base-exporter';
+import { buildBaseProductData } from '@/shared/lib/integrations/services/exports/base-exporter';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
 const createProduct = (): ProductWithImages =>

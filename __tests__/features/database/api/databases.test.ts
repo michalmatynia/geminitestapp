@@ -17,7 +17,6 @@ import { auth } from '@/features/auth/server';
 import { execFileAsync } from '@/shared/lib/db/utils/postgres';
 import {
   enqueueProductAiJob,
-  enqueueProductAiJobToQueue,
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
@@ -33,7 +32,6 @@ vi.mock('@/shared/lib/db/utils/postgres', async (importOriginal) => {
 
 vi.mock('@/features/jobs/server', () => ({
   enqueueProductAiJob: vi.fn(),
-  enqueueProductAiJobToQueue: vi.fn(),
   startProductAiJobQueue: vi.fn(),
 }));
 
@@ -80,7 +78,7 @@ describe('Databases API', () => {
       finishedAt: null,
       completedAt: null,
     });
-    vi.mocked(enqueueProductAiJobToQueue).mockResolvedValue(undefined);
+    vi.mocked(enqueueProductAiJob).mockResolvedValue(undefined);
     vi.mocked(startProductAiJobQueue).mockImplementation(() => {});
     process.env['DATABASE_URL'] = 'postgresql://localhost:5432/test';
     vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
@@ -113,7 +111,7 @@ describe('Databases API', () => {
         })
       );
       expect(startProductAiJobQueue).toHaveBeenCalledTimes(1);
-      expect(enqueueProductAiJobToQueue).toHaveBeenCalledWith(
+      expect(enqueueProductAiJob).toHaveBeenCalledWith(
         'job-backup-1',
         'system',
         'db_backup',

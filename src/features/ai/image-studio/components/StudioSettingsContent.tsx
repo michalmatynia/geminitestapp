@@ -3,19 +3,19 @@
 import { RefreshCcw } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { Button, Input, Label, SectionHeader, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useSettings } from '../context/SettingsContext';
 
 export function StudioSettingsContent(): React.JSX.Element {
-  const promptExtractModel = useBrainModelOptions({
+  const promptExtractModel = useBrainAssignment({
     capability: 'image_studio.prompt_extract',
   });
-  const uiExtractorModel = useBrainModelOptions({
+  const uiExtractorModel = useBrainAssignment({
     capability: 'image_studio.ui_extractor',
   });
-  const generationModel = useBrainModelOptions({
+  const generationModel = useBrainAssignment({
     capability: 'image_studio.general',
   });
   const {

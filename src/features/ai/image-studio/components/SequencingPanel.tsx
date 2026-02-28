@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
 
@@ -71,7 +71,7 @@ const toStepLogLine = (event: { at: string | number | Date; message: string }): 
 };
 
 export function SequencingPanel(): React.JSX.Element {
-  const brainGenerationModel = useBrainModelOptions({
+  const brainGenerationModel = useBrainAssignment({
     capability: 'image_studio.general',
   });
   const queryClient = useQueryClient();

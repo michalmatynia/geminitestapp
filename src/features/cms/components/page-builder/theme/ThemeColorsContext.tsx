@@ -7,12 +7,9 @@ import React, {
   useCallback,
   useMemo,
   useRef,
-  useEffect,
 } from 'react';
 
-import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -38,15 +35,6 @@ interface ThemeColorsContextValue {
   updateSchemeColor: (key: keyof ColorSchemeColors) => (value: string) => void;
   isGlobalPaletteOpen: boolean;
   toggleGlobalPalette: () => void;
-  schemeAiProvider: 'model' | 'agent';
-  setSchemeAiProvider: (value: 'model' | 'agent') => void;
-  schemeProviderOptions: Array<{ label: string; value: string }>;
-  schemeAiModelId: string;
-  setSchemeAiModelId: (value: string) => void;
-  modelOptions: string[];
-  schemeAiAgentId: string;
-  setSchemeAiAgentId: (value: string) => void;
-  agentOptions: Array<{ label: string; value: string }>;
   schemeAiPrompt: string;
   setSchemeAiPrompt: (value: string) => void;
   schemeAiLoading: boolean;
@@ -75,9 +63,6 @@ export function ThemeColorsProvider({
   const [newSchemeName, setNewSchemeName] = useState('');
   const [newSchemeColors, setNewSchemeColors] = useState<ColorSchemeColors>(DEFAULT_SCHEME_COLORS);
 
-  const [schemeAiProvider, setSchemeAiProvider] = useState<'model' | 'agent'>('model');
-  const [schemeAiModelId, setSchemeAiModelId] = useState<string>('');
-  const [schemeAiAgentId, setSchemeAiAgentId] = useState<string>('');
   const [schemeAiPrompt, setSchemeAiPrompt] = useState<string>('');
   const [schemeAiOutput, setSchemeAiOutput] = useState<string>('');
   const [schemeAiError, setSchemeAiError] = useState<string | null>(null);
@@ -85,42 +70,12 @@ export function ThemeColorsProvider({
 
   const [isGlobalPaletteOpen, setIsGlobalPaletteOpen] = useState(false);
 
-  const brainModelOptions = useBrainModelOptions({
+  const { assignment: brainAssignment } = useBrainAssignment({
     capability: 'cms.css_stream',
-    enabled: schemeView === 'edit',
   });
-  const brainAssignment = brainModelOptions.assignment;
   const brainAiProvider = brainAssignment.provider;
   const brainAiModelId = brainAssignment.modelId.trim();
   const brainAiAgentId = brainAssignment.agentId.trim();
-
-  const teachingAgentsQuery = useTeachingAgents({
-    enabled: schemeView === 'edit' && brainAiProvider === 'agent',
-  });
-
-  const modelOptions = useMemo((): string[] => {
-    const fromApi = brainModelOptions.models
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      .map((value) => value.trim());
-    return Array.from(new Set(fromApi));
-  }, [brainModelOptions.models]);
-
-  const agentOptions = useMemo(
-    (): Array<{ label: string; value: string }> =>
-      (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({
-        label: agent.name,
-        value: agent.id,
-      })),
-    [teachingAgentsQuery.data]
-  );
-
-  const schemeProviderOptions = useMemo(
-    () => [
-      { label: 'AI model', value: 'model' },
-      { label: 'Deepthinking agent', value: 'agent' },
-    ],
-    []
-  );
 
   const activeScheme = useMemo((): {
     id: string;
@@ -248,54 +203,55 @@ Theme context:
 ${schemeContext}`;
   }, [schemeAiPrompt, schemeContext]);
 
-  const parseSchemeFromText = useCallback<
-    (text: string) => { name?: string | undefined; colors: Partial<ColorSchemeColors> } | null
-  >((text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return null;
-    const jsonBlock = extractJsonBlock(trimmed);
-    if (jsonBlock) {
-      try {
-        const payload = JSON.parse(jsonBlock) as unknown;
-        const parsed = parseColorSchemePayload(payload);
-        if (parsed) return parsed;
-      } catch {
-        // fall through to regex parsing
-      }
-    }
-
-    const pickFromText = (labels: string[]): string | undefined => {
-      for (const label of labels) {
-        const regex = new RegExp(
-          `${label}\\s*[:=]\\s*["']?([^"'
-]+)`,
-          'i'
-        );
-        const match = trimmed.match(regex);
-        if (match?.[1]) {
-          const normalized = normalizeAiString(match[1]);
-          if (normalized) return normalized;
+  const parseSchemeFromText = useCallback(
+    (text: string): { name?: string | undefined; colors: Partial<ColorSchemeColors> } | null => {
+      const trimmed = text.trim();
+      if (!trimmed) return null;
+      const jsonBlock = extractJsonBlock(trimmed);
+      if (jsonBlock) {
+        try {
+          const payload = JSON.parse(jsonBlock) as unknown;
+          const parsed = parseColorSchemePayload(payload);
+          if (parsed) return parsed;
+        } catch {
+          // fall through to regex parsing
         }
       }
-      return undefined;
-    };
 
-    const colors: Partial<ColorSchemeColors> = {};
-    const background = pickFromText(['background', 'bg']);
-    if (background !== undefined) colors.background = background;
-    const surface = pickFromText(['surface', 'card', 'layer']);
-    if (surface !== undefined) colors.surface = surface;
-    const parsedText = pickFromText(['text', 'foreground']);
-    if (parsedText !== undefined) colors.text = parsedText;
-    const accent = pickFromText(['accent', 'primary']);
-    if (accent !== undefined) colors.accent = accent;
-    const border = pickFromText(['border', 'outline']);
-    if (border !== undefined) colors.border = border;
-    const name = pickFromText(['name', 'scheme', 'title']);
+      const pickFromText = (labels: string[]): string | undefined => {
+        for (const label of labels) {
+          const regex = new RegExp(
+            `${label}\\s*[:=]\\s*["']?([^"'
+]+)`,
+            'i'
+          );
+          const match = trimmed.match(regex);
+          if (match?.[1]) {
+            const normalized = normalizeAiString(match[1]);
+            if (normalized) return normalized;
+          }
+        }
+        return undefined;
+      };
 
-    if (!Object.values(colors).some(Boolean) && name === undefined) return null;
-    return { ...(name !== undefined ? { name } : {}), colors };
-  }, []);
+      const colors: Partial<ColorSchemeColors> = {};
+      const background = pickFromText(['background', 'bg']);
+      if (background !== undefined) colors.background = background;
+      const surface = pickFromText(['surface', 'card', 'layer']);
+      if (surface !== undefined) colors.surface = surface;
+      const parsedText = pickFromText(['text', 'foreground']);
+      if (parsedText !== undefined) colors.text = parsedText;
+      const accent = pickFromText(['accent', 'primary']);
+      if (accent !== undefined) colors.accent = accent;
+      const border = pickFromText(['border', 'outline']);
+      if (border !== undefined) colors.border = border;
+      const name = pickFromText(['name', 'scheme', 'title']);
+
+      if (!Object.values(colors).some(Boolean) && name === undefined) return null;
+      return { ...(name !== undefined ? { name } : {}), colors };
+    },
+    []
+  );
 
   const schemeAiPreview = useMemo(
     () => (schemeAiOutput ? parseSchemeFromText(schemeAiOutput) : null),
@@ -493,17 +449,6 @@ ${schemeContext}`;
     }
   }, []);
 
-  useEffect(() => {
-    if (!brainAssignment.enabled) return;
-    setSchemeAiProvider(brainAiProvider);
-    if (brainAiProvider === 'model') {
-      setSchemeAiModelId(brainAiModelId);
-    }
-    if (brainAiProvider === 'agent') {
-      setSchemeAiAgentId(brainAiAgentId);
-    }
-  }, [brainAssignment.enabled, brainAiAgentId, brainAiModelId, brainAiProvider]);
-
   const value = useMemo(
     (): ThemeColorsContextValue => ({
       schemeView,
@@ -520,15 +465,6 @@ ${schemeContext}`;
       updateSchemeColor,
       isGlobalPaletteOpen,
       toggleGlobalPalette,
-      schemeAiProvider,
-      setSchemeAiProvider,
-      schemeProviderOptions,
-      schemeAiModelId,
-      setSchemeAiModelId,
-      modelOptions,
-      schemeAiAgentId,
-      setSchemeAiAgentId,
-      agentOptions,
       schemeAiPrompt,
       setSchemeAiPrompt,
       schemeAiLoading,
@@ -553,12 +489,6 @@ ${schemeContext}`;
       updateSchemeColor,
       isGlobalPaletteOpen,
       toggleGlobalPalette,
-      schemeAiProvider,
-      schemeProviderOptions,
-      schemeAiModelId,
-      modelOptions,
-      schemeAiAgentId,
-      agentOptions,
       schemeAiPrompt,
       schemeAiLoading,
       schemeAiError,

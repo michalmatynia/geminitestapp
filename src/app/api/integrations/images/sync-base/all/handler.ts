@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import {
   enqueueProductAiJob,
-  processSingleJob,
+  processProductAiJob,
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import { logSystemError } from '@/features/observability/server';
@@ -18,7 +18,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
     process.env['AI_JOBS_INLINE'] === 'true' || process.env['NODE_ENV'] !== 'production';
 
   if (inlineJobs) {
-    processSingleJob(job.id).catch(async (error: unknown) => {
+    processProductAiJob(job.id).catch(async (error: unknown) => {
       await logSystemError({
         message: '[integrations.images.sync-base.all] Failed to run base image sync job',
         error,

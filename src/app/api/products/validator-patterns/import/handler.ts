@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
-import { invalidateValidationPatternRuntimeCache } from '@/features/products/services/validation-pattern-runtime-cache';
+import { invalidateValidationPatternRuntimeCache } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
   normalizeProductValidationLaunchScopeBehavior,
@@ -9,9 +9,9 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
   normalizeProductValidationSkipNoopReplacementProposal,
-} from '@/features/products/utils/validator-instance-behavior';
+} from '@/shared/lib/products/utils/validator-instance-behavior';
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
-import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { validateAndNormalizeRuntimeConfig } from '@/features/products/validations/validator-runtime-config';
 import type {
   CreateProductValidationPatternInput,

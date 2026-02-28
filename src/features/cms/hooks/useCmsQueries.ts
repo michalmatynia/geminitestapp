@@ -114,7 +114,7 @@ export function useCreatePage(): CreateMutation<Page, { name: string; slugIds: s
 export function useUpdatePage(): UpdateMutation<
   Page,
   { id: string; input: Page & { slugIds?: string[] } }
-> {
+  > {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, input }: { id: string; input: Page & { slugIds?: string[] } }) =>
@@ -253,7 +253,7 @@ export function useCreateSlug(): CreateMutation<Slug, { slug: string; domainId?:
 export function useUpdateSlug(): UpdateMutation<
   Slug,
   { id: string; input: Partial<Slug>; domainId?: string | null }
-> {
+  > {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({
@@ -290,7 +290,7 @@ export function useUpdateSlug(): UpdateMutation<
 export function useUpdateSlugDomains(): UpdateMutation<
   { domainIds: string[] },
   { id: string; domainIds: string[] }
-> {
+  > {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, domainIds }: { id: string; domainIds: string[] }) =>
@@ -398,7 +398,7 @@ export function useDeleteCmsDomain(): UpdateMutation<string, string> {
 export function useUpdateCmsDomain(): UpdateMutation<
   CmsDomain,
   { id: string; input: { aliasOf?: string | null } }
-> {
+  > {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, input }: { id: string; input: { aliasOf?: string | null } }) =>
@@ -481,7 +481,7 @@ export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateInput> 
 export function useUpdateTheme(): UpdateMutation<
   CmsTheme,
   { id: string; input: CmsThemeUpdateInput }
-> {
+  > {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, input }: { id: string; input: CmsThemeUpdateInput }) =>
@@ -529,7 +529,7 @@ export function useDeleteTheme(): UpdateMutation<string, string> {
 export function useUploadCmsMedia(): CreateMutation<
   ImageFileRecord,
   { file: File; onProgress?: (loaded: number, total?: number) => void }
-> {
+  > {
   const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: async ({

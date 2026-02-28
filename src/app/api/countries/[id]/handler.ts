@@ -97,9 +97,9 @@ export async function PUT_handler(
       const requestedCurrencyIds = Array.from(new Set(currencyIds));
       currencyDocs = requestedCurrencyIds.length
         ? await db
-            .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-            .find({ id: { $in: requestedCurrencyIds } })
-            .toArray()
+          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+          .find({ id: { $in: requestedCurrencyIds } })
+          .toArray()
         : [];
       const validCurrencyIds = new Set(
         currencyDocs.map((currency: CurrencyDoc | WithId<CurrencyDoc>) => currency.id)

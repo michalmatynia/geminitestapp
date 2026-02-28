@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { validateRegexSafety } from '@/features/products/utils/validator-regex-safety';
+import { validateRegexSafety } from '@/shared/lib/products/utils/validator-regex-safety';
 
 describe('validator-regex-safety', () => {
   it('accepts safe regex and normalized flags', () => {

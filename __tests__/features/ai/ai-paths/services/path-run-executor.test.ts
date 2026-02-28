@@ -3,7 +3,16 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
-import type { AiNode, Edge, AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type {
+  AiNode,
+  Edge,
+  AiPathRunRecord,
+  AiPathRunRepository,
+  AiPathRunUpdate,
+  AiPathRunStatus,
+  AiPathRunCreateInput,
+} from '@/shared/contracts/ai-paths';
+import type { EvaluateGraphArgs } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
 
 // Mock evaluateGraphWithIteratorAutoContinue directly in its source module
 vi.mock('@/shared/lib/ai-paths/core/runtime/engine-server', () => ({
@@ -11,41 +20,57 @@ vi.mock('@/shared/lib/ai-paths/core/runtime/engine-server', () => ({
 }));
 
 // Define stateful mockRepo
-let runStore: Record<string, any> = {};
+let runStore: Record<string, AiPathRunRecord> = {};
 
-const mockRepo = vi.hoisted(() => ({
-  createRun: vi.fn().mockImplementation((args) => {
-    const id = args.id || 'mock-run-id';
-    const run = {
-      id,
-      status: 'queued',
-      createdAt: new Date().toISOString(),
-      ...args,
-    };
-    runStore[id] = run;
-    return Promise.resolve(run);
-  }),
-  listRunNodes: vi.fn().mockResolvedValue([]),
-  listRunEvents: vi.fn().mockResolvedValue([]),
-  findRunById: vi.fn().mockImplementation((id) => Promise.resolve(runStore[id] || null)),
-  createRunNodes: vi.fn().mockResolvedValue(undefined),
-  createRunEvent: vi.fn().mockResolvedValue({ id: 'mock-event-id' }),
-  updateRun: vi.fn().mockImplementation((id, data) => {
-    if (runStore[id]) {
-      runStore[id] = { ...runStore[id], ...data };
-    }
-    return Promise.resolve(runStore[id]);
-  }),
-  updateRunIfStatus: vi.fn().mockImplementation((id, statuses, data) => {
-    if (runStore[id] && statuses.includes(runStore[id].status)) {
-      runStore[id] = { ...runStore[id], ...data };
+const mockRepo = vi.hoisted(() => {
+  const repo: Partial<AiPathRunRepository> = {
+    createRun: vi.fn().mockImplementation((args: AiPathRunCreateInput) => {
+      const id = args.id || 'mock-run-id';
+      const run: AiPathRunRecord = {
+        id,
+        status: (args.status as AiPathRunStatus) || 'queued',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        userId: args.userId || null,
+        pathId: args.pathId,
+        requestId: args.requestId || null,
+        source: args.source || 'api',
+        triggerEvent: args.triggerEvent || null,
+        triggerNodeId: args.triggerNodeId || null,
+        triggerContext: args.triggerContext || null,
+        graph: args.graph || null,
+        meta: args.meta || {},
+        runtimeState: args.runtimeState || null,
+      };
+      runStore[id] = run;
+      return Promise.resolve(run);
+    }),
+    listRunNodes: vi.fn().mockResolvedValue([]),
+    listRunEvents: vi.fn().mockResolvedValue([]),
+    findRunById: vi.fn().mockImplementation((id: string) => Promise.resolve(runStore[id] || null)),
+    createRunNodes: vi.fn().mockResolvedValue(undefined),
+    createRunEvent: vi.fn().mockResolvedValue({ id: 'mock-event-id' } as any),
+    updateRun: vi.fn().mockImplementation((id: string, data: AiPathRunUpdate) => {
+      if (runStore[id]) {
+        runStore[id] = { ...runStore[id], ...data, updatedAt: new Date().toISOString() };
+      }
       return Promise.resolve(runStore[id]);
-    }
-    return Promise.resolve(null);
-  }),
-  updateRunNode: vi.fn().mockResolvedValue(undefined),
-  upsertRunNode: vi.fn().mockResolvedValue(undefined),
-}));
+    }),
+    updateRunIfStatus: vi
+      .fn()
+      .mockImplementation((id: string, statuses: AiPathRunStatus[], data: AiPathRunUpdate) => {
+        const run = runStore[id];
+        if (run && statuses.includes(run.status as AiPathRunStatus)) {
+          runStore[id] = { ...run, ...data, updatedAt: new Date().toISOString() };
+          return Promise.resolve(runStore[id]);
+        }
+        return Promise.resolve(null);
+      }),
+    updateRunNode: vi.fn().mockResolvedValue(undefined as any),
+    upsertRunNode: vi.fn().mockResolvedValue(undefined as any),
+  };
+  return repo as AiPathRunRepository;
+});
 
 vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: vi.fn().mockResolvedValue(mockRepo),
@@ -57,9 +82,11 @@ describe('PathRunExecutor', () => {
     runStore = {};
 
     // Default mocks
-    mockRepo.findRunById.mockImplementation((id) => Promise.resolve(runStore[id] || null));
-    mockRepo.listRunNodes.mockResolvedValue([]);
-    mockRepo.listRunEvents.mockResolvedValue([]);
+    vi.mocked(mockRepo.findRunById).mockImplementation((id: string) =>
+      Promise.resolve(runStore[id] || null)
+    );
+    vi.mocked(mockRepo.listRunNodes).mockResolvedValue([]);
+    vi.mocked(mockRepo.listRunEvents).mockResolvedValue([]);
   });
 
   const mockNodes: AiNode[] = [
@@ -123,9 +150,15 @@ describe('PathRunExecutor', () => {
   ];
 
   it('should execute a run successfully', async () => {
-    (evaluateGraphWithIteratorAutoContinue as any).mockResolvedValue({
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockResolvedValue({
+      status: 'completed',
+      nodeStatuses: { 'node-111111111111111111111111': 'completed' },
+      nodeOutputs: { 'node-111111111111111111111111': { value: 'test' } },
+      variables: {},
+      events: [],
       inputs: { 'node-111111111111111111111111': {} },
       outputs: { 'node-111111111111111111111111': { value: 'test' } },
+      history: {},
       hashes: { 'node-111111111111111111111111': 'hash' },
     });
 
@@ -135,45 +168,58 @@ describe('PathRunExecutor', () => {
       meta: { aiPathsValidation: { enabled: false } },
     });
 
-    await executePathRun(run as AiPathRunRecord);
+    await executePathRun(run);
     expect(evaluateGraphWithIteratorAutoContinue).toHaveBeenCalledTimes(1);
 
     const updatedRun = await mockRepo.findRunById(run.id);
-    expect(updatedRun.status).toBe('completed');
+    expect(updatedRun?.status).toBe('completed');
   });
 
   it('should fail the run if graph is invalid', async () => {
     const run = await mockRepo.createRun({
       pathId: 'test',
-      graph: null as any, // Invalid graph
+      graph: null, // Invalid graph
     });
 
-    await executePathRun(run as AiPathRunRecord);
+    await executePathRun(run);
 
     const updatedRun = await mockRepo.findRunById(run.id);
-    expect(updatedRun.status).toBe('failed');
-    expect(updatedRun.errorMessage).toContain('Run graph is missing or invalid.');
+    expect(updatedRun?.status).toBe('failed');
+    expect(updatedRun?.errorMessage).toContain('Run graph is missing or invalid.');
   });
 
   it('should update node records during execution', async () => {
-    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
-      const runStartedAt = options.runStartedAt;
-      await options.onNodeStart({
-        node: options.nodes[0],
-        nodeInputs: {},
-        prevOutputs: {},
-        iteration: 0,
-        runStartedAt,
-      });
-      await options.onNodeFinish({
-        node: options.nodes[0],
-        nodeInputs: {},
-        nextOutputs: { value: 'done' },
-        iteration: 0,
-        runStartedAt,
-      });
-      return { outputs: { [options.nodes[0].id]: { value: 'done' } } };
-    });
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (options: EvaluateGraphArgs) => {
+        const runStartedAt = new Date().toISOString();
+        if (options.onNodeStart) {
+          await options.onNodeStart({
+            runId: options.runId!,
+            runStartedAt,
+            node: options.nodes[0]!,
+            nodeInputs: {},
+            prevOutputs: {},
+            iteration: 0,
+          });
+        }
+        if (options.onNodeFinish) {
+          await options.onNodeFinish({
+            runId: options.runId!,
+            runStartedAt,
+            node: options.nodes[0]!,
+            nodeInputs: {},
+            prevOutputs: {},
+            nextOutputs: { value: 'done' },
+            iteration: 0,
+            changed: true,
+          });
+        }
+        return {
+          status: 'completed',
+          outputs: { [options.nodes[0]!.id]: { value: 'done' } },
+        } as any;
+      }
+    );
 
     const run = await mockRepo.createRun({
       pathId: 'test',
@@ -181,23 +227,33 @@ describe('PathRunExecutor', () => {
       meta: { aiPathsValidation: { enabled: false } },
     });
 
-    await executePathRun(run as AiPathRunRecord);
+    await executePathRun(run);
 
     expect(mockRepo.upsertRunNode).toHaveBeenCalled();
   });
 
   it('should persist cached node finishes as cached status', async () => {
-    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
-      await options.onNodeFinish({
-        node: options.nodes[0],
-        nodeInputs: {},
-        prevOutputs: {},
-        nextOutputs: { value: 'cached' },
-        iteration: 0,
-        cached: true,
-      });
-      return { outputs: { [options.nodes[0].id]: { value: 'cached' } } };
-    });
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (options: EvaluateGraphArgs) => {
+        if (options.onNodeFinish) {
+          await options.onNodeFinish({
+            runId: options.runId!,
+            runStartedAt: new Date().toISOString(),
+            node: options.nodes[0]!,
+            nodeInputs: {},
+            prevOutputs: {},
+            nextOutputs: { value: 'cached' },
+            iteration: 0,
+            changed: false,
+            cached: true,
+          });
+        }
+        return {
+          status: 'completed',
+          outputs: { [options.nodes[0]!.id]: { value: 'cached' } },
+        } as any;
+      }
+    );
 
     const run = await mockRepo.createRun({
       pathId: 'test',
@@ -205,7 +261,7 @@ describe('PathRunExecutor', () => {
       meta: { aiPathsValidation: { enabled: false } },
     });
 
-    await executePathRun(run as AiPathRunRecord);
+    await executePathRun(run);
 
     expect(mockRepo.upsertRunNode).toHaveBeenCalledWith(
       expect.anything(),
@@ -215,14 +271,22 @@ describe('PathRunExecutor', () => {
   });
 
   it('should persist blocked node finishes as blocked status', async () => {
-    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
-      await options.onNodeBlocked({
-        node: options.nodes[0],
-        reason: 'missing_inputs',
-        waitingOnPorts: ['trigger'],
-      });
-      return { outputs: { [options.nodes[0].id]: { waitingOnPorts: ['trigger'] } } };
-    });
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (options: EvaluateGraphArgs) => {
+        if (options.onNodeBlocked) {
+          await options.onNodeBlocked({
+            runId: options.runId!,
+            node: options.nodes[0]!,
+            reason: 'missing_inputs',
+            waitingOnPorts: ['trigger'],
+          });
+        }
+        return {
+          status: 'blocked',
+          outputs: { [options.nodes[0]!.id]: { waitingOnPorts: ['trigger'] } },
+        } as any;
+      }
+    );
 
     const run = await mockRepo.createRun({
       pathId: 'test',
@@ -230,7 +294,7 @@ describe('PathRunExecutor', () => {
       meta: { aiPathsValidation: { enabled: false } },
     });
 
-    await executePathRun(run as AiPathRunRecord);
+    await executePathRun(run);
 
     expect(mockRepo.upsertRunNode).toHaveBeenCalledWith(
       expect.anything(),
@@ -240,17 +304,23 @@ describe('PathRunExecutor', () => {
   });
 
   it('should handle node errors correctly', async () => {
-    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
-      const error = new Error('Execution failed');
-      await options.onNodeError({
-        node: options.nodes[0],
-        nodeInputs: {},
-        prevOutputs: {},
-        error,
-        iteration: 0,
-      });
-      throw error;
-    });
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (options: EvaluateGraphArgs) => {
+        const error = new Error('Execution failed');
+        if (options.onNodeError) {
+          await options.onNodeError({
+            runId: options.runId!,
+            runStartedAt: new Date().toISOString(),
+            node: options.nodes[0]!,
+            nodeInputs: {},
+            prevOutputs: {},
+            error,
+            iteration: 0,
+          });
+        }
+        throw error;
+      }
+    );
 
     const run = await mockRepo.createRun({
       pathId: 'test',
@@ -258,7 +328,7 @@ describe('PathRunExecutor', () => {
       meta: { aiPathsValidation: { enabled: false } },
     });
 
-    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow('Execution failed');
+    await expect(executePathRun(run)).rejects.toThrow('Execution failed');
 
     expect(mockRepo.upsertRunNode).toHaveBeenCalledWith(
       expect.anything(),
@@ -268,9 +338,11 @@ describe('PathRunExecutor', () => {
   });
 
   it('should propagate cancellation to runtime evaluation via abort signal', async () => {
-    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (_options: any) => {
-      return new Promise(() => {});
-    });
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (_options: EvaluateGraphArgs) => {
+        return new Promise(() => {});
+      }
+    );
 
     const run = await mockRepo.createRun({
       pathId: 'test',
@@ -278,9 +350,9 @@ describe('PathRunExecutor', () => {
       meta: { aiPathsValidation: { enabled: false } },
     });
 
-    const executionPromise = executePathRun(run as AiPathRunRecord);
+    const executionPromise = executePathRun(run);
 
-    runStore[run.id].status = 'canceled';
+    runStore[run.id]!.status = 'canceled';
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -289,27 +361,32 @@ describe('PathRunExecutor', () => {
     } catch (e) {
       expect(e).toBeInstanceOf(GraphExecutionCancelled);
 
-      const callArgs = (evaluateGraphWithIteratorAutoContinue as any).mock.calls[0]?.[0];
-      expect(callArgs?.control?.signal).toBeDefined();
-      expect(callArgs?.control?.signal).toBeInstanceOf(AbortSignal);
+      const callArgs = vi.mocked(evaluateGraphWithIteratorAutoContinue).mock.calls[0]?.[0];
+      expect(callArgs?.abortSignal).toBeDefined();
+      expect(callArgs?.abortSignal).toBeInstanceOf(AbortSignal);
     }
   });
 
   it('should persist runtime trace profile summary for completed runs', async () => {
-    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
-      if (options.profile?.onSummary) {
-        options.profile.onSummary({
-          runId: 'mock-run-id',
-          durationMs: 1200,
-          iterationCount: 1,
-          nodeCount: 1,
-          edgeCount: 0,
-          nodes: [],
-          hottestNodes: [],
-        });
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (options: EvaluateGraphArgs) => {
+        if (options.profile?.onSummary) {
+          options.profile.onSummary({
+            runId: 'mock-run-id',
+            durationMs: 1200,
+            iterationCount: 1,
+            nodeCount: 1,
+            edgeCount: 0,
+            nodes: [],
+            hottestNodes: [],
+          });
+        }
+        return {
+          status: 'completed',
+          outputs: { 'node-111111111111111111111111': { value: 'trace-ok' } },
+        } as any;
       }
-      return { outputs: { 'node-111111111111111111111111': { value: 'trace-ok' } } };
-    });
+    );
 
     const run = await mockRepo.createRun({
       pathId: 'test',
@@ -317,7 +394,7 @@ describe('PathRunExecutor', () => {
       meta: { aiPathsValidation: { enabled: false } },
     });
 
-    await executePathRun(run as AiPathRunRecord);
+    await executePathRun(run);
 
     expect(mockRepo.updateRunIfStatus).toHaveBeenCalledWith(
       run.id,
@@ -337,19 +414,38 @@ describe('PathRunExecutor', () => {
   });
 
   it('should persist structured node spans in runtime trace metadata', async () => {
-    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
-      const node = options.nodes[0];
-      await options.onNodeStart({ node, nodeInputs: {}, prevOutputs: {}, iteration: 1 });
-      await options.onNodeFinish({
-        node,
-        nodeInputs: {},
-        prevOutputs: {},
-        nextOutputs: { value: 'span-ok' },
-        iteration: 1,
-      });
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (options: EvaluateGraphArgs) => {
+        const node = options.nodes[0]!;
+        if (options.onNodeStart) {
+          await options.onNodeStart({
+            runId: options.runId!,
+            runStartedAt: new Date().toISOString(),
+            node,
+            nodeInputs: {},
+            prevOutputs: {},
+            iteration: 1,
+          });
+        }
+        if (options.onNodeFinish) {
+          await options.onNodeFinish({
+            runId: options.runId!,
+            runStartedAt: new Date().toISOString(),
+            node,
+            nodeInputs: {},
+            prevOutputs: {},
+            nextOutputs: { value: 'span-ok' },
+            iteration: 1,
+            changed: true,
+          });
+        }
 
-      return { outputs: { [node.id]: { value: 'span-ok' } } };
-    });
+        return {
+          status: 'completed',
+          outputs: { [node.id]: { value: 'span-ok' } },
+        } as any;
+      }
+    );
 
     const run = await mockRepo.createRun({
       pathId: 'test',
@@ -357,12 +453,12 @@ describe('PathRunExecutor', () => {
       meta: { aiPathsValidation: { enabled: false } },
     });
 
-    await executePathRun(run as AiPathRunRecord);
+    await executePathRun(run);
 
-    const updateCall = mockRepo.updateRunIfStatus.mock.calls.find(
-      (c: any) => c[2].meta?.runtimeTrace
-    );
-    const runtimeTrace = updateCall?.[2].meta.runtimeTrace;
+    const updateCall = vi
+      .mocked(mockRepo.updateRunIfStatus)
+      .mock.calls.find((c) => (c[2] as any).meta?.runtimeTrace);
+    const runtimeTrace = (updateCall?.[2] as any).meta.runtimeTrace;
     const nodeSpans = runtimeTrace?.profile?.nodeSpans ?? [];
     expect(nodeSpans.length).toBeGreaterThan(0);
     expect(nodeSpans[0]).toMatchObject({
@@ -380,11 +476,9 @@ describe('PathRunExecutor', () => {
         pathId: 'test',
         graph: { nodes: mockNodes, edges: mockEdges },
         meta: { aiPathsValidation: { enabled: false } },
-      } as any);
+      });
 
-      await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(
-        'Path blocked by node policy'
-      );
+      await expect(executePathRun(run)).rejects.toThrow('Path blocked by node policy');
     } finally {
       if (previous === undefined) {
         delete process.env['AI_PATHS_DISABLED_NODE_TYPES'];
@@ -402,15 +496,18 @@ describe('PathRunExecutor', () => {
         strictFlowMode: true,
         aiPathsValidation: { enabled: true },
       },
-    } as any);
+    });
 
-    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(
+    await expect(executePathRun(run)).rejects.toThrow(
       /is missing required input wiring for port "prompt"/
     );
   });
 
   it('should bypass strict-flow preflight when node validation is disabled', async () => {
-    (evaluateGraphWithIteratorAutoContinue as any).mockResolvedValue({ outputs: {} });
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockResolvedValue({
+      status: 'completed',
+      outputs: {},
+    } as any);
 
     const run = await mockRepo.createRun({
       pathId: 'test',
@@ -419,14 +516,17 @@ describe('PathRunExecutor', () => {
         strictFlowMode: true,
         aiPathsValidation: { enabled: false },
       },
-    } as any);
+    });
 
-    await executePathRun(run as AiPathRunRecord);
+    await executePathRun(run);
     expect(evaluateGraphWithIteratorAutoContinue).toHaveBeenCalledTimes(1);
   });
 
   it('should bypass compile blockers when node validation is disabled', async () => {
-    (evaluateGraphWithIteratorAutoContinue as any).mockResolvedValue({ outputs: {} });
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockResolvedValue({
+      status: 'completed',
+      outputs: {},
+    } as any);
 
     const run = await mockRepo.createRun({
       pathId: 'test',
@@ -435,9 +535,9 @@ describe('PathRunExecutor', () => {
         strictFlowMode: false,
         aiPathsValidation: { enabled: false },
       },
-    } as any);
+    });
 
-    await executePathRun(run as AiPathRunRecord);
+    await executePathRun(run);
     expect(evaluateGraphWithIteratorAutoContinue).toHaveBeenCalledTimes(1);
   });
 
@@ -449,9 +549,9 @@ describe('PathRunExecutor', () => {
         strictFlowMode: false,
         aiPathsValidation: { enabled: true },
       },
-    } as any);
+    });
 
-    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(
+    await expect(executePathRun(run)).rejects.toThrow(
       /is missing required input wiring for port "prompt"/
     );
     expect(evaluateGraphWithIteratorAutoContinue).not.toHaveBeenCalled();
@@ -518,8 +618,8 @@ describe('PathRunExecutor', () => {
           blockThreshold: 80,
         },
       },
-    } as any);
+    });
 
-    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow('Validation blocked run');
+    await expect(executePathRun(run)).rejects.toThrow('Validation blocked run');
   });
 });

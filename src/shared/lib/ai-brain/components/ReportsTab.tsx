@@ -4,7 +4,7 @@ import {
   DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
-} from '@/features/ai/insights/settings';
+} from '@/shared/lib/ai/insights/settings';
 import {
   Checkbox,
   Input,

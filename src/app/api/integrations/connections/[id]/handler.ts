@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth, findAuthUserById } from '@/features/auth/server';
-import { getIntegrationRepository } from '@/features/integrations/server';
-import { encryptSecret } from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/shared/lib/integrations/server';
+import { encryptSecret } from '@/shared/lib/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError } from '@/shared/errors/app-error';
@@ -143,8 +143,8 @@ export async function PUT_handler(
       : {}),
     ...(typeof data.playwrightProxyPassword === 'string' && data.playwrightProxyPassword.trim()
       ? {
-          playwrightProxyPassword: encryptSecret(data.playwrightProxyPassword.trim()),
-        }
+        playwrightProxyPassword: encryptSecret(data.playwrightProxyPassword.trim()),
+      }
       : {}),
     ...(typeof data.playwrightEmulateDevice === 'boolean'
       ? { playwrightEmulateDevice: data.playwrightEmulateDevice }
@@ -173,8 +173,8 @@ export async function PUT_handler(
     ...(typeof data.traderaApiAppId === 'number' ? { traderaApiAppId: data.traderaApiAppId } : {}),
     ...(typeof data.traderaApiAppKey === 'string' && data.traderaApiAppKey.trim()
       ? {
-          traderaApiAppKey: encryptSecret(data.traderaApiAppKey.trim()),
-        }
+        traderaApiAppKey: encryptSecret(data.traderaApiAppKey.trim()),
+      }
       : {}),
     ...(typeof data.traderaApiPublicKey === 'string' || data.traderaApiPublicKey === null
       ? { traderaApiPublicKey: data.traderaApiPublicKey ?? null }
@@ -184,9 +184,9 @@ export async function PUT_handler(
       : {}),
     ...(typeof data.traderaApiToken === 'string' && data.traderaApiToken.trim()
       ? {
-          traderaApiToken: encryptSecret(data.traderaApiToken.trim()),
-          traderaApiTokenUpdatedAt: new Date(),
-        }
+        traderaApiToken: encryptSecret(data.traderaApiToken.trim()),
+        traderaApiTokenUpdatedAt: new Date(),
+      }
       : {}),
     ...(typeof data.traderaApiSandbox === 'boolean'
       ? { traderaApiSandbox: data.traderaApiSandbox }

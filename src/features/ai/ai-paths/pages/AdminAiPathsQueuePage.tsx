@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { FileUploadEventsPanel } from '@/features/files/components/FileUploadEventsPanel';
-import ProductListingJobsPanel from '@/features/jobs/components/ProductListingJobsPanel';
+import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
 import {
   Badge,
   Button,

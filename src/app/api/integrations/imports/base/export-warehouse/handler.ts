@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getExportWarehouseId, setExportWarehouseId } from '@/features/integrations/server';
+import { getExportWarehouseId, setExportWarehouseId } from '@/shared/lib/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

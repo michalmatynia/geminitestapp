@@ -3,7 +3,7 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 
-import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
 

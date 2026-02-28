@@ -66,8 +66,8 @@ export function GenerationPreviewModal({
             onSave={
               selectedGenerationPreview
                 ? (): void => {
-                    void onApplyLinkedVariantToCard(selectedGenerationPreview);
-                  }
+                  void onApplyLinkedVariantToCard(selectedGenerationPreview);
+                }
                 : undefined
             }
             saveText='Apply to Card'

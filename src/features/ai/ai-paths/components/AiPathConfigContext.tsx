@@ -102,7 +102,6 @@ export const useAiPathPresets = (): AiPathPresetsData => {
 
 // --- Orchestrator/Actions Context ---
 export interface AiPathOrchestratorData {
-  modelOptions: string[];
   updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   clearNodeHistory: (nodeId: string) => void | Promise<void>;
@@ -238,14 +237,19 @@ const useAiPathConfigDefaults = () => {
 
   const orchestratorValue = useMemo<AiPathOrchestratorData>(
     () => ({
-      modelOptions: orchestrator.modelOptions,
       updateSelectedNode: orchestrator.updateSelectedNode,
       updateSelectedNodeConfig: orchestrator.updateSelectedNodeConfig,
       clearNodeHistory: orchestrator.handleClearNodeHistory,
       savePathConfig: persistenceActions.savePathConfig,
       toast,
     }),
-    [orchestrator, persistenceActions.savePathConfig, toast]
+    [
+      orchestrator.updateSelectedNode,
+      orchestrator.updateSelectedNodeConfig,
+      orchestrator.handleClearNodeHistory,
+      persistenceActions.savePathConfig,
+      toast,
+    ]
   );
 
   return {

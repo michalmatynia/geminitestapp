@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/features/app-embeds/lib/constants';
+import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/shared/lib/app-embeds/lib/constants';
 import type { PickerOption } from '@/shared/contracts/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
@@ -43,8 +43,8 @@ export function ColumnBlockPicker({
   const resolvedTypes = useMemo(() => {
     const defs = allowedBlockTypes
       ? allowedBlockTypes
-          .map((type: string) => getBlockDefinition(type))
-          .filter((def: BlockDefinition | undefined): def is BlockDefinition => Boolean(def))
+        .map((type: string) => getBlockDefinition(type))
+        .filter((def: BlockDefinition | undefined): def is BlockDefinition => Boolean(def))
       : getColumnAllowedBlockTypes();
     return defs.filter((def: BlockDefinition) => def.type !== 'AppEmbed' || hasAppEmbeds);
   }, [allowedBlockTypes, hasAppEmbeds]);

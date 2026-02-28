@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PUT } from '@/app/api/products/validator-patterns/[id]/route';
 import { POST } from '@/app/api/products/validator-patterns/route';
-import { encodeDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 
 const repositoryMock = vi.hoisted(() => ({
   listPatterns: vi.fn(),

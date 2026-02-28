@@ -1,8 +1,8 @@
 import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText, Palette } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { DocumentSearchPage } from '@/features/document-search';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { DocumentSearchPage } from '@/shared/lib/document-search';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type {
   NoteWithRelationsDto as NoteWithRelations,
@@ -116,8 +116,8 @@ export function NoteListView(): React.JSX.Element {
               <span className='text-xs'>
                 {selectedFolderThemeId
                   ? themeGroups
-                      .flatMap((g) => g.options)
-                      .find((o) => o.key === selectedFolderThemeId)?.label
+                    .flatMap((g) => g.options)
+                    .find((o) => o.key === selectedFolderThemeId)?.label
                   : 'Select theme'}
               </span>
             }

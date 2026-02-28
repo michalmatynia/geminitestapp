@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getIntegrationRepository } from '@/features/integrations/server';
-import { decryptSecret } from '@/features/integrations/server';
-import { callBaseApi } from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/shared/lib/integrations/server';
+import { decryptSecret } from '@/shared/lib/integrations/server';
+import { callBaseApi } from '@/shared/lib/integrations/server';
 import {
   getImportSampleInventoryId,
   getImportSampleProductId,
   setImportSampleInventoryId,
   setImportSampleProductId,
-} from '@/features/integrations/server';
+} from '@/shared/lib/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -117,11 +117,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     const normalizedConnectionId = data.connectionId?.trim();
     const connection = normalizedConnectionId
       ? connections.find(
-          (entry: (typeof connections)[number]) => entry.id === normalizedConnectionId
-        )
+        (entry: (typeof connections)[number]) => entry.id === normalizedConnectionId
+      )
       : connections.find(
-          (entry: (typeof connections)[number]) => entry.baseApiToken || entry.password
-        );
+        (entry: (typeof connections)[number]) => entry.baseApiToken || entry.password
+      );
     if (!connection?.baseApiToken && !connection?.password) {
       throw badRequestError('No Base API token configured.');
     }

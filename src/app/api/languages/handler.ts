@@ -237,12 +237,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       ...(data.nativeName !== undefined && { nativeName: data.nativeName }),
       ...(validIds.length
         ? {
-            countries: {
-              createMany: {
-                data: validIds.map((countryId: string) => ({ countryId })),
-              },
+          countries: {
+            createMany: {
+              data: validIds.map((countryId: string) => ({ countryId })),
             },
-          }
+          },
+        }
         : {}),
     },
     include: {

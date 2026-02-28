@@ -1,6 +1,8 @@
+import { ProductParameter } from '@prisma/client';
 import { NextRequest } from 'next/server';
 import { vi, beforeEach, afterAll } from 'vitest';
 import { describe, it, expect } from 'vitest';
+import type { ZodSchema } from 'zod';
 
 import { GET } from '@/app/api/products/parameters/route';
 import prisma from '@/shared/lib/db/prisma';
@@ -19,11 +21,11 @@ vi.mock('@/shared/lib/db/prisma', () => ({
 
 // Mock data provider
 vi.mock('@/features/products/server', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
+  const actual = await importOriginal<typeof import('@/features/products/server')>();
   return {
     ...actual,
     getProductDataProvider: vi.fn().mockResolvedValue('prisma'),
-    parseJsonBody: async (req: any, schema: any) => {
+    parseJsonBody: async (req: NextRequest, schema: ZodSchema) => {
       try {
         const body = await req.json();
         const result = schema.safeParse(body);
@@ -55,10 +57,10 @@ describe('Product Parameters API', () => {
   describe('GET /api/products/parameters', () => {
     it('should return parameters for a given catalogId', async () => {
       const now = new Date();
-      const mockParams = [
-        { id: '1', name_en: 'Param 1', catalogId: 'cat1', createdAt: now, updatedAt: now },
+      const mockParams: ProductParameter[] = [
+        { id: '1', name_en: 'Param 1', catalogId: 'cat1', createdAt: now, updatedAt: now } as any,
       ];
-      vi.mocked(prisma.productParameter.findMany).mockResolvedValue(mockParams as any);
+      vi.mocked(prisma.productParameter.findMany).mockResolvedValue(mockParams);
 
       const res = await GET(
         new NextRequest('http://localhost/api/products/parameters?catalogId=cat1')

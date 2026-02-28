@@ -2,10 +2,10 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import {
   MAX_PLAN_STEPS,
   MAX_STEP_ATTEMPTS,
-  OLLAMA_BASE_URL,
   clampInt,
 } from '@/features/ai/agent-runtime/core/config';
 import {
@@ -63,6 +63,30 @@ type BuildPlanWithLLMResult = {
       }>;
     }>;
   } | null;
+};
+
+const runPlannerTask = async (input: {
+  model: string;
+  systemPrompt: string;
+  userContent: string;
+  temperature?: number;
+}): Promise<string> => {
+  const response = await runBrainChatCompletion({
+    modelId: input.model,
+    temperature: input.temperature ?? 0.2,
+    jsonMode: true,
+    messages: [
+      {
+        role: 'system',
+        content: input.systemPrompt,
+      },
+      {
+        role: 'user',
+        content: input.userContent,
+      },
+    ],
+  });
+  return response.text.trim();
 };
 
 export async function buildPlanWithLLM({
@@ -130,45 +154,22 @@ export async function buildPlanWithLLM({
   try {
     const systemPrompt =
       mode === 'branch'
-        ? "You are an agent planner. Output only JSON with keys: decision, branchSteps, critique, alternatives, taskType, summary, constraints, successSignals. decision: {action, reason, toolName}. branchSteps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. taskType is 'web_task' or 'extract_info'. summary is a 1-2 sentence plan summary. constraints is an array of key constraints. successSignals is a list of observable success indicators. Provide 1-4 alternate steps to recover from the failed step. tool is 'playwright' or 'none'."
+        ? 'You are an agent planner. Output only JSON with keys: decision, branchSteps, critique, alternatives, taskType, summary, constraints, successSignals. decision: {action, reason, toolName}. branchSteps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. taskType is \'web_task\' or \'extract_info\'. summary is a 1-2 sentence plan summary. constraints is an array of key constraints. successSignals is a list of observable success indicators. Provide 1-4 alternate steps to recover from the failed step. tool is \'playwright\' or \'none\'.'
         : `You are an agent planner. Output only JSON with keys: decision, goals, critique, alternatives, taskType, summary, constraints, successSignals. decision: {action, reason, toolName}. goals: array of {title, successCriteria, priority, dependsOn, subgoals:[{title, successCriteria, priority, dependsOn, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}]}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. taskType is 'web_task' or 'extract_info'. summary is a 1-2 sentence plan summary. constraints is an array of key constraints. successSignals is a list of observable success indicators. Use 2-4 goals, 1-3 subgoals each, and max ${maxSteps} total steps. tool is 'playwright' or 'none'. If you cannot provide goals, you may include steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.`;
-
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              previousPlan,
-              lastError,
-              browserContext,
-              maxSteps,
-              mode,
-              failedStep,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlannerTask({
+      model,
+      systemPrompt,
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        previousPlan,
+        lastError,
+        browserContext,
+        maxSteps,
+        mode,
+        failedStep,
       }),
     });
-
-    if (!response.ok) {
-      throw new Error(`Planner LLM failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       decision?: Partial<AgentDecision>;
       steps?: Array<{
@@ -396,45 +397,27 @@ export async function buildAdaptivePlanReview({
 }> {
   try {
     const systemPrompt =
-      "You are an agent replanner. Output only JSON with keys: shouldReplan, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldReplan is boolean. taskType is 'web_task' or 'extract_info'. If shouldReplan is true, include goals (same schema as planner with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is a short plan summary. constraints and successSignals are arrays. The user input includes trigger and signals fields; use them to focus the replan.";
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              trigger,
-              signals,
-              browserContext,
-              completedStepIndex: completedIndex,
-              currentPlan: currentPlan.map((step: PlanStep) => ({
-                title: step.title,
-                status: step.status,
-                tool: step.tool,
-                expectedObservation: step.expectedObservation,
-                successCriteria: step.successCriteria,
-              })),
-              maxSteps,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+      'You are an agent replanner. Output only JSON with keys: shouldReplan, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldReplan is boolean. taskType is \'web_task\' or \'extract_info\'. If shouldReplan is true, include goals (same schema as planner with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is a short plan summary. constraints and successSignals are arrays. The user input includes trigger and signals fields; use them to focus the replan.';
+    const content = await runPlannerTask({
+      model,
+      systemPrompt,
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        trigger,
+        signals,
+        browserContext,
+        completedStepIndex: completedIndex,
+        currentPlan: currentPlan.map((step: PlanStep) => ({
+          title: step.title,
+          status: step.status,
+          tool: step.tool,
+          expectedObservation: step.expectedObservation,
+          successCriteria: step.successCriteria,
+        })),
+        maxSteps,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Planner review failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       shouldReplan?: boolean;
       reason?: string;
@@ -591,52 +574,34 @@ export async function buildSelfCheckReview({
 }> {
   try {
     const systemPrompt =
-      "You are an agent self-checker. Output only JSON with keys: action, reason, notes, questions, evidence, confidence, missingInfo, blockers, hypotheses, verificationSteps, toolSwitch, abortSignals, finishSignals, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is 'continue', 'replan', or 'wait_human'. Provide 5-8 self-questions that test assumptions, evidence quality, tool choice, and completion criteria. evidence is a list of observable facts from the context. confidence is 0-100. If action is 'replan', include goals (planner schema with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. toolSwitch is a short suggestion like 'use search' or 'use playwright'. abortSignals are conditions that should stop the run. finishSignals are conditions that indicate the goal is satisfied. summary is a short plan summary. constraints and successSignals are arrays.";
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              browserContext,
-              ...(taskType && { taskType }),
-              ...(lastError && { lastError }),
-              ...(completedCount !== undefined && { completedCount }),
-              ...(previousUrl && { previousUrl }),
-              ...(lastContextUrl && { lastContextUrl }),
-              ...(stagnationCount !== undefined && { stagnationCount }),
-              ...(noContextCount !== undefined && { noContextCount }),
-              ...(replanCount !== undefined && { replanCount }),
-              step: {
-                id: step.id,
-                title: step.title,
-                status: step.status,
-                tool: step.tool,
-                expectedObservation: step.expectedObservation,
-                successCriteria: step.successCriteria,
-              },
-              stepIndex,
-              maxSteps,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+      'You are an agent self-checker. Output only JSON with keys: action, reason, notes, questions, evidence, confidence, missingInfo, blockers, hypotheses, verificationSteps, toolSwitch, abortSignals, finishSignals, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is \'continue\', \'replan\', or \'wait_human\'. Provide 5-8 self-questions that test assumptions, evidence quality, tool choice, and completion criteria. evidence is a list of observable facts from the context. confidence is 0-100. If action is \'replan\', include goals (planner schema with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. toolSwitch is a short suggestion like \'use search\' or \'use playwright\'. abortSignals are conditions that should stop the run. finishSignals are conditions that indicate the goal is satisfied. summary is a short plan summary. constraints and successSignals are arrays.';
+    const content = await runPlannerTask({
+      model,
+      systemPrompt,
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        browserContext,
+        ...(taskType && { taskType }),
+        ...(lastError && { lastError }),
+        ...(completedCount !== undefined && { completedCount }),
+        ...(previousUrl && { previousUrl }),
+        ...(lastContextUrl && { lastContextUrl }),
+        ...(stagnationCount !== undefined && { stagnationCount }),
+        ...(noContextCount !== undefined && { noContextCount }),
+        ...(replanCount !== undefined && { replanCount }),
+        step: {
+          id: step.id,
+          title: step.title,
+          status: step.status,
+          tool: step.tool,
+          expectedObservation: step.expectedObservation,
+          successCriteria: step.successCriteria,
+        },
+        stepIndex,
+        maxSteps,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Self-check failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       action?: string;
       reason?: string;
@@ -697,9 +662,9 @@ export async function buildSelfCheckReview({
     let steps =
       action === 'replan'
         ? buildPlanStepsFromSpecs(normalizedStepSpecs, meta, true, maxStepAttempts).slice(
-            0,
-            maxSteps
-          )
+          0,
+          maxSteps
+        )
         : [];
     if (action === 'replan' && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(
@@ -801,44 +766,26 @@ export async function buildResumePlanReview({
 }> {
   try {
     const systemPrompt =
-      "You are an agent resume planner. Output only JSON with keys: shouldReplan, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldReplan is boolean. taskType is 'web_task' or 'extract_info'. If shouldReplan is true, include goals (same schema as planner with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is a short plan summary. constraints and successSignals are arrays.";
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              browserContext,
-              lastError,
-              completedStepIndex: completedIndex,
-              currentPlan: currentPlan.map((step: PlanStep) => ({
-                title: step.title,
-                status: step.status,
-                tool: step.tool,
-                expectedObservation: step.expectedObservation,
-                successCriteria: step.successCriteria,
-              })),
-              maxSteps,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+      'You are an agent resume planner. Output only JSON with keys: shouldReplan, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldReplan is boolean. taskType is \'web_task\' or \'extract_info\'. If shouldReplan is true, include goals (same schema as planner with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is a short plan summary. constraints and successSignals are arrays.';
+    const content = await runPlannerTask({
+      model,
+      systemPrompt,
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        browserContext,
+        lastError,
+        completedStepIndex: completedIndex,
+        currentPlan: currentPlan.map((step: PlanStep) => ({
+          title: step.title,
+          status: step.status,
+          tool: step.tool,
+          expectedObservation: step.expectedObservation,
+          successCriteria: step.successCriteria,
+        })),
+        maxSteps,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Resume review failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       shouldReplan?: boolean;
       reason?: string;

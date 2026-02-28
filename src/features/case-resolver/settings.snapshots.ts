@@ -99,12 +99,12 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
       const legacyNodeFileMeta: CaseResolverNodeFileSnapshot['nodeFileMeta'] =
         sourceFileId && resolvedLegacyNodeId
           ? {
-              [resolvedLegacyNodeId]: {
-                fileId: sourceFileId,
-                fileType: sourceFileType,
-                fileName: sourceFileName,
-              },
-            }
+            [resolvedLegacyNodeId]: {
+              fileId: sourceFileId,
+              fileType: sourceFileType,
+              fileName: sourceFileName,
+            },
+          }
           : {};
 
       return {

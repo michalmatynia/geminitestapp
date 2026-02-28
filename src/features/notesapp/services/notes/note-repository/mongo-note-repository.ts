@@ -70,22 +70,22 @@ export const mongoNoteRepository: NoteRepository = {
     const notebook = existing[0]
       ? toNotebookResponse(existing[0])
       : toNotebookResponse(
-          await (async (): Promise<WithId<NotebookDocument>> => {
-            const id = randomUUID();
-            const now = new Date();
-            const doc: NotebookDocument = {
-              _id: id,
-              id,
-              name: 'Default',
-              color: '#3b82f6',
-              defaultThemeId: null,
-              createdAt: now.toISOString(),
-              updatedAt: now.toISOString(),
-            };
-            await collection.insertOne(doc);
-            return doc;
-          })()
-        );
+        await (async (): Promise<WithId<NotebookDocument>> => {
+          const id = randomUUID();
+          const now = new Date();
+          const doc: NotebookDocument = {
+            _id: id,
+            id,
+            name: 'Default',
+            color: '#3b82f6',
+            defaultThemeId: null,
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          };
+          await collection.insertOne(doc);
+          return doc;
+        })()
+      );
 
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
     const tagCollection = db.collection<TagDocument>(tagCollectionName);
@@ -131,9 +131,9 @@ export const mongoNoteRepository: NoteRepository = {
     const noteFileCollection = db.collection<NoteFileDocument>(noteFileCollectionName);
     const noteFiles = noteIds.length
       ? await noteFileCollection
-          .find({ noteId: { $in: noteIds } } as Filter<NoteFileDocument>)
-          .sort({ slotIndex: 1 })
-          .toArray()
+        .find({ noteId: { $in: noteIds } } as Filter<NoteFileDocument>)
+        .sort({ slotIndex: 1 })
+        .toArray()
       : [];
     const filesByNoteId = new Map<string, NoteFileRecord[]>();
     noteFiles.forEach((fileDoc: WithId<NoteFileDocument>): void => {
@@ -144,10 +144,10 @@ export const mongoNoteRepository: NoteRepository = {
     });
     const incomingDocs = noteIds.length
       ? await collection
-          .find({
-            'relationsFrom.targetNoteId': { $in: noteIds },
-          } as Filter<NoteDocument>)
-          .toArray()
+        .find({
+          'relationsFrom.targetNoteId': { $in: noteIds },
+        } as Filter<NoteDocument>)
+        .toArray()
       : [];
     const incomingMap = buildIncomingRelationsMap(incomingDocs, noteIdSet);
 

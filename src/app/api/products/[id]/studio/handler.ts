@@ -4,8 +4,8 @@ import { z } from 'zod';
 import {
   getProductStudioConfig,
   setProductStudioConfig,
-} from '@/features/products/services/product-studio-config';
-import { productService } from '@/features/products/services/productService';
+} from '@/shared/lib/products/services/product-studio-config';
+import { productService } from '@/shared/lib/products/services/productService';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

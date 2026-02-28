@@ -3,41 +3,42 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { GET as GET_themes, POST as POST_themes } from '@/app/api/cms/themes/route';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import type { CmsTheme } from '@/shared/contracts/cms';
+import type { CmsTheme, CmsRepository } from '@/shared/contracts/cms';
 
 vi.mock('@/features/cms/services/cms-repository', () => ({
   getCmsRepository: vi.fn(),
 }));
 
 describe('CMS Themes API', () => {
-  let cmsRepository: any;
+  let cmsRepository: CmsRepository;
   let themesStore: CmsTheme[] = [];
   let idCounter = 0;
 
   const mockRepo = {
-    getThemes: vi.fn(() => themesStore),
+    getThemes: vi.fn(() => Promise.resolve(themesStore)),
     createTheme: vi.fn((data: Omit<CmsTheme, 'id'>) => {
       const theme = { id: `theme-${++idCounter}`, ...data } as CmsTheme;
       themesStore = [...themesStore, theme];
-      return theme;
+      return Promise.resolve(theme);
     }),
     deleteTheme: vi.fn((id: string) => {
       const existing = themesStore.find((theme) => theme.id === id) ?? null;
       themesStore = themesStore.filter((theme) => theme.id !== id);
-      return existing;
+      return Promise.resolve(existing);
     }),
-  };
+  } as unknown as CmsRepository;
 
   beforeEach(async () => {
     themesStore = [];
     idCounter = 0;
     vi.clearAllMocks();
-    (getCmsRepository as any).mockResolvedValue(mockRepo);
+    vi.mocked(getCmsRepository).mockResolvedValue(mockRepo);
     cmsRepository = await getCmsRepository();
   });
 
   const validTheme = {
     name: 'Default Theme',
+    isDefault: true,
     colors: {
       primary: '#000000',
       secondary: '#ffffff',

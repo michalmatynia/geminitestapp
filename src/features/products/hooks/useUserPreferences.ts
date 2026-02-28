@@ -87,7 +87,7 @@ export function useUpdateUserPreferences(): UseMutationResult<
   void,
   Error,
   Partial<ProductListPreferences>
-> {
+  > {
   const queryClient = useQueryClient();
   return useOfflineMutation<void, Error, Partial<ProductListPreferences>>(updateUserPreferences, {
     queryKey: userPreferencesQueryKey,

@@ -75,19 +75,19 @@ export function useSettingsHydration({
     const hydratedBase =
       openaiModelFallback && !hasStoredStudioSettings
         ? {
-            ...stored,
-            targetAi: {
-              ...stored.targetAi,
-              openai: {
-                ...stored.targetAi.openai,
-                model: openaiModelFallback,
-                modelPresets: normalizeImageStudioModelPresets(
-                  stored.targetAi.openai.modelPresets,
-                  openaiModelFallback
-                ),
-              },
+          ...stored,
+          targetAi: {
+            ...stored.targetAi,
+            openai: {
+              ...stored.targetAi.openai,
+              model: openaiModelFallback,
+              modelPresets: normalizeImageStudioModelPresets(
+                stored.targetAi.openai.modelPresets,
+                openaiModelFallback
+              ),
             },
-          }
+          },
+        }
         : stored;
     const mergedModelPresets = normalizeImageStudioModelPresets(
       [

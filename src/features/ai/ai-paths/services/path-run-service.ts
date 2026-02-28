@@ -26,7 +26,7 @@ import {
 import {
   enqueuePathRunJob,
   removePathRunQueueEntries,
-} from '@/features/jobs/workers/aiPathRunQueue';
+} from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiNode,
@@ -247,20 +247,20 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       ...(requestId ? { requestId } : {}),
       ...(identityRepair.warnings.length > 0
         ? {
-            identityRepair: {
-              warnings: identityRepair.warnings,
-              repairedAt: new Date().toISOString(),
-            },
-          }
+          identityRepair: {
+            warnings: identityRepair.warnings,
+            repairedAt: new Date().toISOString(),
+          },
+        }
         : {}),
       backoffMs: input.backoffMs ?? undefined,
       backoffMaxMs: input.backoffMaxMs ?? undefined,
       nodePolicy:
         policyReport.disabledNodeTypes.length > 0
           ? {
-              disabledNodeTypes: policyReport.disabledNodeTypes,
-              blockedCount: policyReport.violations.length,
-            }
+            disabledNodeTypes: policyReport.disabledNodeTypes,
+            blockedCount: policyReport.violations.length,
+          }
           : undefined,
       graphCompile: {
         errors: runPreflight.compileReport.errors,
@@ -273,10 +273,10 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         validation: runPreflight.validationReport,
         dependency: runPreflight.dependencyReport
           ? {
-              errors: runPreflight.dependencyReport.errors,
-              warnings: runPreflight.dependencyReport.warnings,
-              strictReady: runPreflight.dependencyReport.strictReady,
-            }
+            errors: runPreflight.dependencyReport.errors,
+            warnings: runPreflight.dependencyReport.warnings,
+            strictReady: runPreflight.dependencyReport.strictReady,
+          }
           : null,
         dataContract: {
           errors: runPreflight.dataContractReport.errors,

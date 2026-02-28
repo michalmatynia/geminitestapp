@@ -6,7 +6,10 @@ import { NextRequest } from 'next/server';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { POST } from '@/app/api/generate-description/route';
-import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import {
+  resolveBrainExecutionConfigForCapability,
+  type BrainExecutionConfig,
+} from '@/shared/lib/ai-brain/server';
 import { runChatbotModel } from '@/features/ai/chatbot/server-model-runtime';
 
 // Mock AI Brain functions
@@ -28,8 +31,12 @@ describe('AI Description Generation API', () => {
       temperature: 0.7,
       maxTokens: 800,
       systemPrompt: 'You are a helpful assistant.',
-      brainApplied: {},
-    } as any);
+      brainApplied: {
+        modelId: 'test-model',
+        temperature: 0.7,
+        maxTokens: 800,
+      },
+    } as unknown as BrainExecutionConfig);
   });
 
   it('should return a generated description', async () => {

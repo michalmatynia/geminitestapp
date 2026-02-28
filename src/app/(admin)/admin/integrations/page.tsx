@@ -1,6 +1,6 @@
 import { JSX, Suspense } from 'react';
 
-import { ConnectionsPage } from '@/features/integrations/public';
+import { ConnectionsPage } from '@/shared/lib/integrations/public';
 
 export const dynamic = 'force-dynamic';
 

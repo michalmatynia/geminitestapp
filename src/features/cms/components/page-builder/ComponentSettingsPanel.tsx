@@ -70,7 +70,6 @@ function ComponentSettingsPanelInner(): React.JSX.Element {
       onUpdateSettings={handleApplyAiSettings}
       onUpdateCustomCssAiConfig={handleCustomCssAiChange}
       contentAiAllowedKeys={contentAiAllowedKeys}
-      aiQueriesEnabled={activeTab === 'ai' || activeTab === 'customCss'}
     >
       <SidePanel
         position='right'

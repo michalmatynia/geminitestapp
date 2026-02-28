@@ -42,7 +42,7 @@ import { getImageFileRepository, getDiskPathFromPublicPath } from '@/shared/lib/
 import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,
-} from '@/features/jobs/workers/imageStudioRunQueue';
+} from '@/features/ai/image-studio/workers/imageStudioRunQueue';
 
 import type {
   ImageStudioSequenceMaskContext,

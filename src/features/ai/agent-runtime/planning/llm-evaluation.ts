@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { OLLAMA_BASE_URL } from '@/features/ai/agent-runtime/core/config';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import {
   buildBranchStepsFromAlternatives,
   buildPlanStepsFromSpecs,
@@ -20,6 +20,30 @@ import type {
 import prisma from '@/shared/lib/db/prisma';
 
 import { normalizePlanStepSpecs } from './llm-step-specs';
+
+const runPlanningEvaluationTask = async (input: {
+  model: string;
+  systemPrompt: string;
+  userContent: string;
+  temperature?: number;
+}): Promise<string> => {
+  const response = await runBrainChatCompletion({
+    modelId: input.model,
+    temperature: input.temperature ?? 0.2,
+    jsonMode: true,
+    messages: [
+      {
+        role: 'system',
+        content: input.systemPrompt,
+      },
+      {
+        role: 'user',
+        content: input.userContent,
+      },
+    ],
+  });
+  return response.text.trim();
+};
 
 export async function evaluatePlanWithLLM({
   prompt,
@@ -43,48 +67,27 @@ export async function evaluatePlanWithLLM({
   maxStepAttempts: number;
 }): Promise<{ score: number; revisedSteps: PlanStep[] } | null> {
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You evaluate plans. Return only JSON with keys: score (0-100), issues[], revisedGoals, revisedSteps. revisedGoals uses planner schema with goal/subgoal priority and dependsOn; revisedSteps is array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              steps: steps.map((step: PlanStep) => ({
-                title: step.title,
-                tool: step.tool,
-                expectedObservation: step.expectedObservation,
-                successCriteria: step.successCriteria,
-                phase: step.phase,
-                priority: step.priority,
-                dependsOn: step.dependsOn,
-              })),
-              hierarchy,
-              meta,
-              maxSteps,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlanningEvaluationTask({
+      model,
+      systemPrompt:
+        'You evaluate plans. Return only JSON with keys: score (0-100), issues[], revisedGoals, revisedSteps. revisedGoals uses planner schema with goal/subgoal priority and dependsOn; revisedSteps is array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        steps: steps.map((step: PlanStep) => ({
+          title: step.title,
+          tool: step.tool,
+          expectedObservation: step.expectedObservation,
+          successCriteria: step.successCriteria,
+          phase: step.phase,
+          priority: step.priority,
+          dependsOn: step.dependsOn,
+        })),
+        hierarchy,
+        meta,
+        maxSteps,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Planner evaluation failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       score?: number;
       issues?: string[];
@@ -125,11 +128,11 @@ export async function evaluatePlanWithLLM({
       : (parsed.revisedSteps ?? []);
     const revisedSteps = revisedSpecs.length
       ? buildPlanStepsFromSpecs(
-          normalizePlanStepSpecs(revisedSpecs),
-          meta,
-          true,
-          maxStepAttempts
-        ).slice(0, maxSteps)
+        normalizePlanStepSpecs(revisedSpecs),
+        meta,
+        true,
+        maxStepAttempts
+      ).slice(0, maxSteps)
       : [];
     if ('agentAuditLog' in prisma && runId) {
       await prisma.agentAuditLog.create({
@@ -187,44 +190,23 @@ export async function verifyPlanWithLLM({
 } | null> {
   if (steps.length === 0) return null;
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              "You verify task completion. Return only JSON with keys: verdict ('pass'|'partial'|'fail'), evidence[], missing[], followUp. Evidence must reference observable facts from the context.",
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              steps: steps.map((step: PlanStep) => ({
-                title: step.title,
-                status: step.status,
-                expectedObservation: step.expectedObservation,
-                successCriteria: step.successCriteria,
-                phase: step.phase,
-              })),
-              browserContext,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlanningEvaluationTask({
+      model,
+      systemPrompt:
+        'You verify task completion. Return only JSON with keys: verdict (\'pass\'|\'partial\'|\'fail\'), evidence[], missing[], followUp. Evidence must reference observable facts from the context.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        steps: steps.map((step: PlanStep) => ({
+          title: step.title,
+          status: step.status,
+          expectedObservation: step.expectedObservation,
+          successCriteria: step.successCriteria,
+          phase: step.phase,
+        })),
+        browserContext,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Plan verification failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       verdict?: 'pass' | 'partial' | 'fail';
       evidence?: string[];
@@ -298,46 +280,25 @@ export async function buildSelfImprovementReviewWithLLM({
   confidence: number | undefined;
 } | null> {
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are an agent self-improvement reviewer. Return only JSON with keys: summary, mistakes, improvements, guardrails, toolAdjustments, confidence. summary is a 1-2 sentence learning summary. mistakes, improvements, guardrails, toolAdjustments are short bullet strings. confidence is 0-100.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              steps: steps.map((step: PlanStep) => ({
-                title: step.title,
-                status: step.status,
-                phase: step.phase,
-                successCriteria: step.successCriteria,
-              })),
-              taskType,
-              lastError,
-              verification,
-              browserContext,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlanningEvaluationTask({
+      model,
+      systemPrompt:
+        'You are an agent self-improvement reviewer. Return only JSON with keys: summary, mistakes, improvements, guardrails, toolAdjustments, confidence. summary is a 1-2 sentence learning summary. mistakes, improvements, guardrails, toolAdjustments are short bullet strings. confidence is 0-100.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        steps: steps.map((step: PlanStep) => ({
+          title: step.title,
+          status: step.status,
+          phase: step.phase,
+          successCriteria: step.successCriteria,
+        })),
+        taskType,
+        lastError,
+        verification,
+        browserContext,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Self-improvement review failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       summary?: string;
       mistakes?: string[];
@@ -386,42 +347,21 @@ export async function summarizePlannerMemoryWithLLM({
   runId?: string;
 }): Promise<string | null> {
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You summarize progress for long-running plans. Return only JSON with keys: summary, keyDecisions[], risks[]. Keep summary under 80 words.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              steps: steps.map((step: PlanStep) => ({
-                title: step.title,
-                status: step.status,
-                phase: step.phase,
-              })),
-              browserContext,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlanningEvaluationTask({
+      model,
+      systemPrompt:
+        'You summarize progress for long-running plans. Return only JSON with keys: summary, keyDecisions[], risks[]. Keep summary under 80 words.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        steps: steps.map((step: PlanStep) => ({
+          title: step.title,
+          status: step.status,
+          phase: step.phase,
+        })),
+        browserContext,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Planner summary failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       summary?: string;
       keyDecisions?: string[];
@@ -498,45 +438,24 @@ export async function buildMidRunAdaptationWithLLM({
   meta?: PlannerMeta | null;
 }> {
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a mid-run adaptation planner. Return only JSON with keys: shouldAdapt, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldAdapt is boolean. If shouldAdapt is true, include goals (planner schema with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is short. constraints and successSignals are arrays.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              steps: steps.map((step: PlanStep) => ({
-                title: step.title,
-                status: step.status,
-                tool: step.tool,
-                expectedObservation: step.expectedObservation,
-                successCriteria: step.successCriteria,
-              })),
-              browserContext,
-              maxSteps,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlanningEvaluationTask({
+      model,
+      systemPrompt:
+        'You are a mid-run adaptation planner. Return only JSON with keys: shouldAdapt, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldAdapt is boolean. If shouldAdapt is true, include goals (planner schema with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is short. constraints and successSignals are arrays.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        steps: steps.map((step: PlanStep) => ({
+          title: step.title,
+          status: step.status,
+          tool: step.tool,
+          expectedObservation: step.expectedObservation,
+          successCriteria: step.successCriteria,
+        })),
+        browserContext,
+        maxSteps,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Mid-run adaptation failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       shouldAdapt?: boolean;
       reason?: string;

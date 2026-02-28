@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeNodes, sanitizeEdges, aiJobsApi } from '@/shared/lib/ai-paths';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 
 import { useAiPathsLocalExecution } from './runtime/useAiPathsLocalExecution';
 import { useAiPathsRuntimeState } from './runtime/useAiPathsRuntimeState';
@@ -15,6 +16,9 @@ import type { UseAiPathsRuntimeArgs, UseAiPathsRuntimeResult, QueuedRun } from '
 
 export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntimeResult {
   const [sendingToAi, setSendingToAi] = useState(false);
+  const brainAssignment = useBrainAssignment({
+    capability: 'ai_paths.model',
+  });
 
   // Shared refs
   const runtimeStateRef = useRef<RuntimeState>(args.runtimeState);
@@ -31,7 +35,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const currentRunStartedAtMsRef = useRef<number | null>(null);
   const fetchEntityByTypeRef = useRef<
     (entityType: string, entityId: string) => Promise<Record<string, unknown> | null>
-  >(async () => null);
+      >(async () => null);
 
   // 1. Centralized State
   const state = useAiPathsRuntimeState();
@@ -141,9 +145,9 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       args.toast('No AI Model found in path.', { variant: 'error' });
       return;
     }
-    const modelConfig = aiNode.config?.model;
-    if (!modelConfig?.modelId) {
-      args.toast('AI Model node is not configured.', { variant: 'error' });
+    const aiModelId = brainAssignment.effectiveModelId.trim();
+    if (!brainAssignment.assignment.enabled || brainAssignment.assignment.provider !== 'model' || !aiModelId) {
+      args.toast('Configure AI Paths in AI Brain first.', { variant: 'error' });
       return;
     }
 
@@ -155,7 +159,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       const sourceOutputs = args.runtimeState.outputs?.[sourceNodeId] ?? {};
       const payload = {
         prompt,
-        model: modelConfig.modelId,
+        model: aiModelId,
         context: sourceOutputs,
       };
 

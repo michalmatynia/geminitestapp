@@ -11,7 +11,7 @@ import {
   parseImageStudioSettings,
 } from '@/shared/lib/ai/image-studio/studio-settings';
 import { auth } from '@/features/auth/server';
-import { getSettingValue } from '@/features/products/services/aiDescriptionService';
+import { getSettingValue } from '@/shared/lib/products/services/aiDescriptionService';
 import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 import { type PromptValidationIssue, validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
@@ -112,15 +112,15 @@ function runProgrammaticAttempt(
 
   const formatted = applyAutofix
     ? formatProgrammaticPrompt(
-        prompt,
-        promptValidationSettings,
-        {
-          scope: 'image_studio_extraction',
-        },
-        {
-          precomputedIssuesBefore: validationBefore,
-        }
-      )
+      prompt,
+      promptValidationSettings,
+      {
+        scope: 'image_studio_extraction',
+      },
+      {
+        precomputedIssuesBefore: validationBefore,
+      }
+    )
     : { prompt, changed: false };
   const candidatePrompt = formatted.prompt;
   const direct = extractParamsFromPrompt(candidatePrompt);

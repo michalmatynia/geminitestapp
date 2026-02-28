@@ -40,7 +40,7 @@ describe('postgres utils', () => {
       expect(getDatabaseName(url)).toBe('my_awesome_db');
     });
 
-    it("should return 'database' if no pathname", () => {
+    it('should return \'database\' if no pathname', () => {
       expect(getDatabaseName('postgresql://localhost')).toBe('database');
     });
   });

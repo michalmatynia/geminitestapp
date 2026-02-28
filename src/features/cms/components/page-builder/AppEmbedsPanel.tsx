@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import React from 'react';
 
-import { APP_EMBED_OPTIONS } from '@/features/app-embeds/lib/constants';
-import { AppEmbedsProvider, useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
+import { APP_EMBED_OPTIONS } from '@/shared/lib/app-embeds/lib/constants';
+import { AppEmbedsProvider, useAppEmbeds } from '@/shared/lib/app-embeds/providers/AppEmbedsProvider';
 import { Button, Checkbox, SectionHeader, SimpleSettingsList, LoadingState } from '@/shared/ui';
 
 export function AppEmbedsPanel({

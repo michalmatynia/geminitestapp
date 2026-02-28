@@ -9,6 +9,11 @@ import { useCmsPages, useCmsPage, useCmsSlugs } from '@/features/cms/hooks/useCm
 import { initialState } from '@/features/cms/hooks/usePageBuilderContext';
 import { server } from '@/mocks/server';
 import { ToastProvider } from '@/shared/ui/toast';
+import type {
+  MasterTreeNode,
+  MasterTreeViewNodeDto as MasterTreeViewNode,
+} from '@/shared/contracts/master-folder-tree';
+import type { Page, PageSummary } from '@/shared/contracts/cms';
 
 // Mock dependencies
 vi.mock('next/navigation', () => ({
@@ -22,16 +27,35 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/shared/lib/foldertree', () => ({
-  MasterFolderTree: ({ controller, renderNode }: any) => (
+  MasterFolderTree: ({
+    controller,
+    renderNode,
+  }: {
+    controller: { roots: MasterTreeViewNode[] };
+    renderNode: (args: {
+      node: MasterTreeViewNode;
+      isExpanded: boolean;
+      toggleExpand: () => void;
+      depth: number;
+      hasChildren: boolean;
+      isSelected: boolean;
+      isRenaming: boolean;
+      isDragging: boolean;
+      isDropTarget: boolean;
+      dropPosition: 'inside' | 'before' | 'after' | null;
+      select: () => void;
+      startRename: () => void;
+    }) => React.ReactNode;
+  }) => (
     <div>
-      {controller.roots.map((node: any) => (
+      {controller.roots.map((node) => (
         <div key={node.id}>
           {renderNode({
             node,
             isExpanded: true,
             toggleExpand: vi.fn(),
             depth: 0,
-            hasChildren: node.children?.length > 0,
+            hasChildren: (node.children?.length ?? 0) > 0,
             isSelected: false,
             isRenaming: false,
             isDragging: false,
@@ -40,7 +64,7 @@ vi.mock('@/shared/lib/foldertree', () => ({
             select: vi.fn(),
             startRename: vi.fn(),
           })}
-          {node.children?.map((child: any) => (
+          {node.children?.map((child) => (
             <div key={child.id}>
               {renderNode({
                 node: child,
@@ -62,11 +86,17 @@ vi.mock('@/shared/lib/foldertree', () => ({
       ))}
     </div>
   ),
-  useMasterFolderTreeInstance: ({ nodes, initiallyExpandedNodeIds }: any) => {
-    const buildTree = (parentId: string | null) =>
+  useMasterFolderTreeInstance: ({
+    nodes,
+    initiallyExpandedNodeIds,
+  }: {
+    nodes: MasterTreeNode[];
+    initiallyExpandedNodeIds?: string[];
+  }) => {
+    const buildTree = (parentId: string | null): MasterTreeViewNode[] =>
       nodes
-        .filter((n: any) => n.parentId === parentId)
-        .map((node: any) => ({
+        .filter((n) => n.parentId === parentId)
+        .map((node) => ({
           ...node,
           children: buildTree(node.id),
         }));
@@ -95,7 +125,7 @@ vi.mock('@/shared/lib/foldertree', () => ({
 }));
 
 vi.mock('@/features/admin/context/AdminLayoutContext', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
+  const actual = await importOriginal<typeof import('@/features/admin/context/AdminLayoutContext')>();
   return {
     ...actual,
     useAdminLayout: () => ({
@@ -105,7 +135,7 @@ vi.mock('@/features/admin/context/AdminLayoutContext', async (importOriginal) =>
 });
 
 vi.mock('@/features/cms/hooks/useCmsQueries', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
+  const actual = await importOriginal<typeof import('@/features/cms/hooks/useCmsQueries')>();
   return {
     ...actual,
     useCmsPages: vi.fn(),
@@ -122,7 +152,7 @@ vi.mock('@/features/cms/hooks/useCmsQueries', async (importOriginal) => {
 });
 
 vi.mock('@/features/cms/hooks/useDragStateContext', () => ({
-  DragStateProvider: ({ children }: any) => <div>{children}</div>,
+  DragStateProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   useDragState: vi.fn(() => ({
     state: {
       block: {
@@ -150,7 +180,7 @@ vi.mock('@/shared/hooks/useUserPreferences', () => ({
 }));
 
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
+  const actual = await importOriginal<typeof import('@/shared/ui')>();
   return {
     ...actual,
     useToast: () => ({
@@ -191,12 +221,24 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 describe('PageBuilder UI Integration', () => {
-  const mockPages = [{ id: '1', name: 'Home', status: 'published', components: [] }];
+  const mockPages: PageSummary[] = [{ id: '1', name: 'Home', status: 'published', slugs: [] }];
+  const mockFullPage: Page = {
+    id: '1',
+    name: 'Home',
+    status: 'published',
+    components: [],
+    slugs: [],
+    showMenu: true,
+    themeId: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   const testInitialState = {
     ...initialState,
-    currentPage: mockPages[0],
+    currentPage: mockFullPage,
     pages: mockPages,
-  } as any;
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -206,12 +248,12 @@ describe('PageBuilder UI Integration', () => {
       http.patch('/api/user/preferences', () => HttpResponse.json({})),
       http.post('/api/client-errors', () => HttpResponse.json({ success: true }))
     );
-    (useCmsPages as any).mockReturnValue({ data: mockPages, isLoading: false });
-    (useCmsPage as any).mockImplementation((id: string) => {
-      if (id === '1') return { data: mockPages[0], isLoading: false };
-      return { data: null, isLoading: false };
+    vi.mocked(useCmsPages).mockReturnValue({ data: mockPages, isLoading: false } as any);
+    vi.mocked(useCmsPage).mockImplementation((id?: string) => {
+      if (id === '1') return { data: mockFullPage, isLoading: false } as any;
+      return { data: null, isLoading: false } as any;
     });
-    (useCmsSlugs as any).mockReturnValue({ data: [], isLoading: false });
+    vi.mocked(useCmsSlugs).mockReturnValue({ data: [], isLoading: false } as any);
   });
 
   it('should allow adding a section and see it in the preview', async () => {

@@ -212,10 +212,10 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                   templateTargetId:
                     previous.templateMergeMode === 'target'
                       ? (effectiveLearnedTemplates.find(
-                          (template) =>
-                            template.id === previous.templateTargetId &&
+                        (template) =>
+                          template.id === previous.templateTargetId &&
                             template.segmentType === nextSegmentType
-                        )?.id ??
+                      )?.id ??
                         effectiveLearnedTemplates.find(
                           (template) => template.segmentType === nextSegmentType
                         )?.id ??

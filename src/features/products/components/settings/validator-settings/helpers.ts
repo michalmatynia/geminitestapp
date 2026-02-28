@@ -3,7 +3,7 @@ import {
   encodeDynamicReplacementRecipe,
   parseDynamicReplacementRecipe,
   type DynamicReplacementRecipe,
-} from '@/features/products/utils/validator-replacement-recipe';
+} from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type {
   ProductValidationPattern,
   ProductValidationPatternFormDataDto as PatternFormData,

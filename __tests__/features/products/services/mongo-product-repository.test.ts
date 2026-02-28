@@ -20,8 +20,8 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: mocks.getMongoDb,
 }));
 
-import { mongoProductRepository } from '@/features/products/services/product-repository/mongo-product-repository';
-import { invalidateMongoBaseExportLookupContextCache } from '@/features/products/services/product-repository/mongo-product-repository.helpers';
+import { mongoProductRepository } from '@/shared/lib/products/services/product-repository/mongo-product-repository';
+import { invalidateMongoBaseExportLookupContextCache } from '@/shared/lib/products/services/product-repository/mongo-product-repository.helpers';
 
 describe('mongoProductRepository.replaceProductCategory', () => {
   beforeEach(() => {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { buildImageBase64Slots } from '@/features/products/services/image-base64';
+import { buildImageBase64Slots } from '@/shared/lib/products/services/image-base64';
 
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {

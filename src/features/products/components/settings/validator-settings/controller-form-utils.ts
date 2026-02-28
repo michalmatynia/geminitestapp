@@ -4,11 +4,11 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
   normalizeProductValidationSkipNoopReplacementProposal,
-} from '@/features/products/utils/validator-instance-behavior';
+} from '@/shared/lib/products/utils/validator-instance-behavior';
 import {
   getStaticReplacementValue,
   parseDynamicReplacementRecipe,
-} from '@/features/products/utils/validator-replacement-recipe';
+} from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 import type { PatternFormData } from '@/shared/contracts/products';
 

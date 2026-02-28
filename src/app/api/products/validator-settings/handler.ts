@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getValidationPatternRepository } from '@/features/products/server';
-import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/features/products/utils/validator-instance-behavior';
+import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/products/utils/validator-instance-behavior';
 import type { ProductValidationInstanceDenyBehaviorMapDto as ProductValidationInstanceDenyBehaviorMap } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

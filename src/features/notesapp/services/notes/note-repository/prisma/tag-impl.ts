@@ -26,10 +26,10 @@ export const getTagById = async (id: string): Promise<TagRecord | null> => {
   const tag = await prisma.tag.findUnique({ where: { id } });
   return tag
     ? {
-        ...tag,
-        createdAt: tag.createdAt.toISOString(),
-        updatedAt: tag.updatedAt.toISOString(),
-      }
+      ...tag,
+      createdAt: tag.createdAt.toISOString(),
+      updatedAt: tag.updatedAt.toISOString(),
+    }
     : null;
 };
 

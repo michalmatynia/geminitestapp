@@ -181,52 +181,52 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       logLines: [`[${new Date().toISOString()}] Run queued.`],
       ...(shouldAttachPlanState
         ? {
-            planState: {
-              ...(planSettings ? { settings: planSettings } : {}),
-              preferences: {
-                ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
-                requireHumanApproval: Boolean(body.requireHumanApproval),
-                ...(body.memoryValidationModel?.trim()
-                  ? {
-                      memoryValidationModel: body.memoryValidationModel.trim(),
-                    }
-                  : {}),
-                ...(body.plannerModel?.trim() ? { plannerModel: body.plannerModel.trim() } : {}),
-                ...(body.selfCheckModel?.trim()
-                  ? { selfCheckModel: body.selfCheckModel.trim() }
-                  : {}),
-                ...(body.extractionValidationModel?.trim()
-                  ? {
-                      extractionValidationModel: body.extractionValidationModel.trim(),
-                    }
-                  : {}),
-                ...(body.toolRouterModel?.trim()
-                  ? { toolRouterModel: body.toolRouterModel.trim() }
-                  : {}),
-                ...(body.loopGuardModel?.trim()
-                  ? { loopGuardModel: body.loopGuardModel.trim() }
-                  : {}),
-                ...(body.approvalGateModel?.trim()
-                  ? { approvalGateModel: body.approvalGateModel.trim() }
-                  : {}),
-                ...(body.memorySummarizationModel?.trim()
-                  ? {
-                      memorySummarizationModel: body.memorySummarizationModel.trim(),
-                    }
-                  : {}),
-                ...(body.selectorInferenceModel?.trim()
-                  ? {
-                      selectorInferenceModel: body.selectorInferenceModel.trim(),
-                    }
-                  : {}),
-                ...(body.outputNormalizationModel?.trim()
-                  ? {
-                      outputNormalizationModel: body.outputNormalizationModel.trim(),
-                    }
-                  : {}),
-              },
+          planState: {
+            ...(planSettings ? { settings: planSettings } : {}),
+            preferences: {
+              ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
+              requireHumanApproval: Boolean(body.requireHumanApproval),
+              ...(body.memoryValidationModel?.trim()
+                ? {
+                  memoryValidationModel: body.memoryValidationModel.trim(),
+                }
+                : {}),
+              ...(body.plannerModel?.trim() ? { plannerModel: body.plannerModel.trim() } : {}),
+              ...(body.selfCheckModel?.trim()
+                ? { selfCheckModel: body.selfCheckModel.trim() }
+                : {}),
+              ...(body.extractionValidationModel?.trim()
+                ? {
+                  extractionValidationModel: body.extractionValidationModel.trim(),
+                }
+                : {}),
+              ...(body.toolRouterModel?.trim()
+                ? { toolRouterModel: body.toolRouterModel.trim() }
+                : {}),
+              ...(body.loopGuardModel?.trim()
+                ? { loopGuardModel: body.loopGuardModel.trim() }
+                : {}),
+              ...(body.approvalGateModel?.trim()
+                ? { approvalGateModel: body.approvalGateModel.trim() }
+                : {}),
+              ...(body.memorySummarizationModel?.trim()
+                ? {
+                  memorySummarizationModel: body.memorySummarizationModel.trim(),
+                }
+                : {}),
+              ...(body.selectorInferenceModel?.trim()
+                ? {
+                  selectorInferenceModel: body.selectorInferenceModel.trim(),
+                }
+                : {}),
+              ...(body.outputNormalizationModel?.trim()
+                ? {
+                  outputNormalizationModel: body.outputNormalizationModel.trim(),
+                }
+                : {}),
             },
-          }
+          },
+        }
         : {}),
     },
   });

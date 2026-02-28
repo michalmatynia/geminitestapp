@@ -436,9 +436,9 @@ async function processCropPayload(input: {
       throw sourceLoadError instanceof Error
         ? sourceLoadError
         : cropBadRequest(
-            IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_MISSING,
-            'Server polygon crop requires a resolvable source image.'
-          );
+          IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_MISSING,
+          'Server polygon crop requires a resolvable source image.'
+        );
     }
 
     const polygonResult = await cropByPolygonMask(
@@ -541,9 +541,9 @@ async function processCropPayload(input: {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : cropBadRequest(
-          IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_MISSING,
-          'Server crop requires a resolvable source image.'
-        );
+        IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_MISSING,
+        'Server crop requires a resolvable source image.'
+      );
   }
 
   if (uploadedClientImage) {

@@ -9,6 +9,7 @@ import {
   useDeleteChatbotSession,
   useSaveChatbotSettings,
 } from '@/features/ai/chatbot/hooks/useChatbotMutations';
+import type { ChatbotSessionListItem, CreateChatbotSettingsDto } from '@/shared/contracts/chatbot';
 
 vi.mock('@/features/ai/chatbot/api', () => ({
   chatbotQueryKeys: {
@@ -58,7 +59,10 @@ describe('Chatbot Mutation Hooks', () => {
   });
   describe('useUpdateSessionTitle', () => {
     it('calls updateChatbotSessionTitle', async () => {
-      vi.mocked(chatbotApi.updateChatbotSessionTitle).mockResolvedValue({ success: true } as any);
+      vi.mocked(chatbotApi.updateChatbotSessionTitle).mockResolvedValue({
+        id: 's1',
+        title: 'Updated',
+      } as unknown as ChatbotSessionListItem);
 
       const { result } = renderHook(() => useUpdateSessionTitle(), { wrapper });
 
@@ -71,7 +75,7 @@ describe('Chatbot Mutation Hooks', () => {
 
   describe('useDeleteChatbotSession', () => {
     it('calls deleteChatbotSession', async () => {
-      vi.mocked(chatbotApi.deleteChatbotSession).mockResolvedValue({ success: true } as any);
+      vi.mocked(chatbotApi.deleteChatbotSession).mockResolvedValue(undefined);
 
       const { result } = renderHook(() => useDeleteChatbotSession(), { wrapper });
 
@@ -83,11 +87,16 @@ describe('Chatbot Mutation Hooks', () => {
   });
   describe('useSaveChatbotSettings', () => {
     it('calls saveChatbotSettings', async () => {
-      vi.mocked(chatbotApi.saveChatbotSettings).mockResolvedValue({ success: true } as any);
+      vi.mocked(chatbotApi.saveChatbotSettings).mockResolvedValue({
+        settings: { settings: { model: 'm1' } },
+      } as any);
 
       const { result } = renderHook(() => useSaveChatbotSettings(), { wrapper });
 
-      result.current.mutate({ key: 'general', settings: { model: 'm1' } as any });
+      result.current.mutate({
+        key: 'general',
+        settings: { model: 'm1' } as unknown as CreateChatbotSettingsDto,
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(chatbotApi.saveChatbotSettings).toHaveBeenCalledWith('general', { model: 'm1' });

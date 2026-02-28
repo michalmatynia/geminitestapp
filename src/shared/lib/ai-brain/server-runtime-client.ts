@@ -9,9 +9,14 @@ import type {
 import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/lib/ai/image-studio/studio-settings';
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 
+import {
+  inferBrainModelVendor,
+  normalizeBrainModelId,
+  type BrainModelVendor,
+} from './model-vendor';
 import { readStoredSettingValue } from './server';
 
-export type BrainRuntimeVendor = 'openai' | 'ollama' | 'anthropic' | 'gemini';
+export type BrainRuntimeVendor = BrainModelVendor;
 
 export type BrainChatMessage = {
   role: 'system' | 'user' | 'assistant';
@@ -34,62 +39,11 @@ const stringifyMessageContent = (value: string | ChatCompletionContentPart[]): s
     .trim();
 };
 
-const normalizeModelPrefix = (
-  modelId: string
-): { vendor: BrainRuntimeVendor | null; modelId: string } => {
-  const trimmed = modelId.trim();
-  const match = trimmed.match(/^(openai|ollama|anthropic|gemini)\s*[:/]\s*(.+)$/i);
-  if (!match) {
-    return {
-      vendor: null,
-      modelId: trimmed,
-    };
-  }
-  const vendorRaw = match[1]?.toLowerCase() ?? '';
-  const normalizedModelId = match[2]?.trim() ?? '';
-  if (
-    vendorRaw !== 'openai' &&
-    vendorRaw !== 'ollama' &&
-    vendorRaw !== 'anthropic' &&
-    vendorRaw !== 'gemini'
-  ) {
-    return {
-      vendor: null,
-      modelId: trimmed,
-    };
-  }
-  return {
-    vendor: vendorRaw,
-    modelId: normalizedModelId,
-  };
-};
-
-export const inferBrainRuntimeVendor = (modelId: string): BrainRuntimeVendor => {
-  const prefixed = normalizeModelPrefix(modelId);
-  if (prefixed.vendor) return prefixed.vendor;
-
-  const normalized = prefixed.modelId.toLowerCase();
-  if (
-    (normalized.startsWith('gpt-') && !normalized.includes('oss')) ||
-    normalized.startsWith('ft:gpt-') ||
-    normalized.startsWith('o1-') ||
-    normalized.startsWith('o3-') ||
-    normalized.startsWith('o4-') ||
-    normalized.startsWith('chatgpt-')
-  ) {
-    return 'openai';
-  }
-  if (normalized.startsWith('claude-')) {
-    return 'anthropic';
-  }
-  if (normalized.startsWith('gemini-') || normalized.startsWith('models/gemini-')) {
-    return 'gemini';
-  }
-  return 'ollama';
-};
+export const inferBrainRuntimeVendor = (modelId: string): BrainRuntimeVendor =>
+  inferBrainModelVendor(modelId);
 
 export const normalizeBrainRuntimeModelId = (modelId: string): string =>
-  normalizeModelPrefix(modelId).modelId;
+  normalizeBrainModelId(modelId);
 
 const resolveOpenAiApiKey = async (): Promise<string> => {
   const apiKey =
@@ -305,10 +259,10 @@ export const runBrainChatCompletion = async (input: {
       body: JSON.stringify({
         ...(systemPrompt
           ? {
-              systemInstruction: {
-                parts: [{ text: systemPrompt }],
-              },
-            }
+            systemInstruction: {
+              parts: [{ text: systemPrompt }],
+            },
+          }
           : {}),
         contents,
         generationConfig: {

@@ -1,38 +1,11 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
-import { Button, Label, Textarea, SelectSimple } from '@/shared/ui';
+import React, { useMemo } from 'react';
+import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
 import { usePageAiAssistant } from './usePageAiAssistant';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
-import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 
-export function PageAiTabContent({ activeTab }: { activeTab: string }): React.JSX.Element {
+export function PageAiTabContent({ activeTab: _activeTab }: { activeTab: string }): React.JSX.Element {
   const ai = usePageAiAssistant();
-
-  const brainModelOptions = useBrainModelOptions({
-    feature: 'cms_builder',
-    enabled: activeTab === 'ai' && ai.pageAiProvider === 'model',
-  });
-  const teachingAgentsQuery = useTeachingAgents({
-    enabled: activeTab === 'ai' && ai.pageAiProvider === 'agent',
-  });
-
-  const modelOptions = useMemo((): string[] => {
-    const fromApi = brainModelOptions.models
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      .map((value) => value.trim());
-    return Array.from(new Set(fromApi));
-  }, [brainModelOptions.models]);
-
-  const agentOptions = useMemo(
-    () =>
-      (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({
-        label: agent.name,
-        value: agent.id,
-      })),
-    [teachingAgentsQuery.data]
-  );
 
   const pageAiTaskOptions = useMemo(
     () => [
@@ -41,22 +14,13 @@ export function PageAiTabContent({ activeTab }: { activeTab: string }): React.JS
     ],
     []
   );
-  const pageAiProviderOptions = useMemo(
-    () => [
-      { label: 'AI model', value: 'model' },
-      { label: 'Deepthinking agent', value: 'agent' },
-    ],
-    []
-  );
-
-  useEffect((): void => {
-    if (ai.pageAiProvider !== 'model') return;
-    if (ai.pageAiModelId.trim().length) return;
-    if (!modelOptions.length) return;
-    ai.setPageAiModelId(modelOptions[0]!);
-  }, [ai.pageAiProvider, ai.pageAiModelId, modelOptions]);
 
   const pageAiPlaceholder = '{{page_context}}\\n{{available_templates}}';
+  const providerLabel = ai.pageAiProvider === 'agent' ? 'Deepthinking agent' : 'AI model';
+  const targetValue =
+    ai.pageAiProvider === 'agent'
+      ? ai.pageAiAgentId.trim() || 'Not configured in AI Brain'
+      : ai.pageAiModelId.trim() || 'Not configured in AI Brain';
 
   return (
     <div className='space-y-4'>
@@ -75,39 +39,30 @@ export function PageAiTabContent({ activeTab }: { activeTab: string }): React.JS
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Provider</Label>
-        <SelectSimple
+        <Input
           size='sm'
-          value={ai.pageAiProvider}
-          onValueChange={(value: string): void => ai.setPageAiProvider(value as 'model' | 'agent')}
-          options={pageAiProviderOptions}
-          placeholder='Select provider'
+          value={providerLabel}
+          readOnly
+          disabled
+          className='cursor-not-allowed'
         />
       </div>
-      {ai.pageAiProvider !== 'agent' ? (
-        <div className='space-y-2'>
-          <Label className='text-xs text-gray-400'>Model</Label>
-          <SelectSimple
-            size='sm'
-            value={ai.pageAiModelId}
-            onValueChange={(value: string): void => ai.setPageAiModelId(value)}
-            options={modelOptions.map((model: string) => ({ value: model, label: model }))}
-            placeholder={modelOptions.length ? 'Select model' : 'No models available'}
-          />
-        </div>
-      ) : (
-        <div className='space-y-2'>
-          <Label className='text-xs text-gray-400'>Deepthinking agent</Label>
-          <SelectSimple
-            size='sm'
-            value={ai.pageAiAgentId}
-            onValueChange={(value: string): void => ai.setPageAiAgentId(value)}
-            options={
-              agentOptions.length ? agentOptions : [{ label: 'No agents configured', value: '' }]
-            }
-            placeholder={agentOptions.length ? 'Select agent' : 'No agents configured'}
-          />
-        </div>
-      )}
+      <div className='space-y-2'>
+        <Label className='text-xs text-gray-400'>
+          {ai.pageAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}
+        </Label>
+        <Input
+          size='sm'
+          value={targetValue}
+          readOnly
+          disabled
+          className='cursor-not-allowed'
+        />
+      </div>
+      <div className='rounded border border-border/40 bg-gray-800/20 px-3 py-2 text-[11px] text-gray-400'>
+        Routing for this assistant is managed in AI Brain via the CMS CSS Stream capability. Local
+        provider and model selection is no longer used for execution.
+      </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Prompt</Label>
         <Textarea
@@ -162,7 +117,18 @@ export function PageAiTabContent({ activeTab }: { activeTab: string }): React.JS
         <div className='space-y-2'>
           <div className='flex items-center justify-between'>
             <Label className='text-xs text-gray-400'>AI output</Label>
-            <Button type='button' size='sm' variant='outline' onClick={ai.handleApplyPageAi}>
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              onClick={ai.handleApplyPageAi}
+              disabled={ai.pageAiTask !== 'layout'}
+              title={
+                ai.pageAiTask === 'layout'
+                  ? 'Apply generated sections'
+                  : 'Apply is only available for layout output'
+              }
+            >
               Apply
             </Button>
           </div>

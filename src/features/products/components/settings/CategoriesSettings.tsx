@@ -516,8 +516,8 @@ export function CategoriesSettings(): React.JSX.Element {
                                 onToggle={
                                   hasChildren
                                     ? (): void => {
-                                        toggleExpand();
-                                      }
+                                      toggleExpand();
+                                    }
                                     : undefined
                                 }
                                 ariaLabel={

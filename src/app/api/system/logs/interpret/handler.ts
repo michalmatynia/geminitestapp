@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { generateLogInterpretation } from '@/features/ai/insights/generator';
+import { generateLogInterpretation } from '@/shared/lib/ai/insights/generator';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import { getSystemLogById } from '@/features/observability/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

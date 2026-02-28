@@ -3,7 +3,7 @@ import type {
   CreateValidationPatternPayload,
   UpdateValidationPatternPayload,
 } from '@/features/products/api/settings';
-import { encodeDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';

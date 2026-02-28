@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { OLLAMA_BASE_URL } from '@/features/ai/agent-runtime/core/config';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import {
   buildPlanStepsFromSpecs,
   flattenPlanHierarchy,
@@ -12,6 +12,30 @@ import type { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
 
 import { normalizePlanStepSpecs } from './llm-step-specs';
+
+const runPlanningPostprocessTask = async (input: {
+  model: string;
+  systemPrompt: string;
+  userContent: string;
+  temperature?: number;
+}): Promise<string> => {
+  const response = await runBrainChatCompletion({
+    modelId: input.model,
+    temperature: input.temperature ?? 0.2,
+    jsonMode: true,
+    messages: [
+      {
+        role: 'system',
+        content: input.systemPrompt,
+      },
+      {
+        role: 'user',
+        content: input.userContent,
+      },
+    ],
+  });
+  return response.text.trim();
+};
 
 export async function dedupePlanStepsWithLLM({
   prompt,
@@ -34,47 +58,26 @@ export async function dedupePlanStepsWithLLM({
 }): Promise<PlanStep[]> {
   if (steps.length < 2) return steps;
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You remove redundant plan steps. Return only JSON with keys: steps. steps is array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. Remove duplicates and steps already covered.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              steps: steps.map((step: PlanStep) => ({
-                title: step.title,
-                tool: step.tool,
-                expectedObservation: step.expectedObservation,
-                successCriteria: step.successCriteria,
-                phase: step.phase,
-                priority: step.priority,
-                dependsOn: step.dependsOn,
-              })),
-              meta,
-              maxSteps,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlanningPostprocessTask({
+      model,
+      systemPrompt:
+        'You remove redundant plan steps. Return only JSON with keys: steps. steps is array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. Remove duplicates and steps already covered.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        steps: steps.map((step: PlanStep) => ({
+          title: step.title,
+          tool: step.tool,
+          expectedObservation: step.expectedObservation,
+          successCriteria: step.successCriteria,
+          phase: step.phase,
+          priority: step.priority,
+          dependsOn: step.dependsOn,
+        })),
+        meta,
+        maxSteps,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Plan dedupe failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       steps?: Array<{
         title?: string;
@@ -135,51 +138,30 @@ export async function guardRepetitionWithLLM({
 }): Promise<PlanStep[]> {
   if (candidateSteps.length < 2) return candidateSteps;
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You remove unnecessary repetition from plan steps. Return only JSON with keys: steps. steps is an array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. Remove duplicates or redundant steps already covered.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              recentSteps: currentPlan.map((step: PlanStep) => ({
-                title: step.title,
-                status: step.status,
-                phase: step.phase,
-              })),
-              candidateSteps: candidateSteps.map((step: PlanStep) => ({
-                title: step.title,
-                tool: step.tool,
-                expectedObservation: step.expectedObservation,
-                successCriteria: step.successCriteria,
-                phase: step.phase,
-                priority: step.priority,
-                dependsOn: step.dependsOn,
-              })),
-              maxSteps,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlanningPostprocessTask({
+      model,
+      systemPrompt:
+        'You remove unnecessary repetition from plan steps. Return only JSON with keys: steps. steps is an array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. Remove duplicates or redundant steps already covered.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        recentSteps: currentPlan.map((step: PlanStep) => ({
+          title: step.title,
+          status: step.status,
+          phase: step.phase,
+        })),
+        candidateSteps: candidateSteps.map((step: PlanStep) => ({
+          title: step.title,
+          tool: step.tool,
+          expectedObservation: step.expectedObservation,
+          successCriteria: step.successCriteria,
+          phase: step.phase,
+          priority: step.priority,
+          dependsOn: step.dependsOn,
+        })),
+        maxSteps,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Repetition guard failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       steps?: Array<{
         title?: string;
@@ -245,45 +227,24 @@ export async function buildCheckpointBriefWithLLM({
   runId?: string;
 }): Promise<{ summary: string; nextActions: string[]; risks: string[] } | null> {
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You generate checkpoint briefs. Return only JSON with keys: summary, nextActions[], risks[]. summary should be 1-2 sentences. nextActions are concrete next steps.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              activeStepId,
-              lastError,
-              steps: steps.map((step: PlanStep) => ({
-                id: step.id,
-                title: step.title,
-                status: step.status,
-                phase: step.phase,
-              })),
-              browserContext,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlanningPostprocessTask({
+      model,
+      systemPrompt:
+        'You generate checkpoint briefs. Return only JSON with keys: summary, nextActions[], risks[]. summary should be 1-2 sentences. nextActions are concrete next steps.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        activeStepId,
+        lastError,
+        steps: steps.map((step: PlanStep) => ({
+          id: step.id,
+          title: step.title,
+          status: step.status,
+          phase: step.phase,
+        })),
+        browserContext,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Checkpoint brief failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       summary?: string;
       nextActions?: string[];
@@ -347,48 +308,27 @@ export async function optimizePlanWithLLM({
 } | null> {
   if (steps.length < 2) return null;
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You optimize action plans. Return only JSON with keys: reason, optimizedGoals, optimizedSteps. optimizedGoals uses planner schema with goal/subgoal priority and dependsOn; optimizedSteps is array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. Keep steps concise, remove redundancy, and preserve constraints.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              steps: steps.map((step: PlanStep) => ({
-                title: step.title,
-                tool: step.tool,
-                expectedObservation: step.expectedObservation,
-                successCriteria: step.successCriteria,
-                phase: step.phase,
-                priority: step.priority,
-                dependsOn: step.dependsOn,
-              })),
-              hierarchy,
-              meta,
-              maxSteps,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlanningPostprocessTask({
+      model,
+      systemPrompt:
+        'You optimize action plans. Return only JSON with keys: reason, optimizedGoals, optimizedSteps. optimizedGoals uses planner schema with goal/subgoal priority and dependsOn; optimizedSteps is array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. Keep steps concise, remove redundancy, and preserve constraints.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        steps: steps.map((step: PlanStep) => ({
+          title: step.title,
+          tool: step.tool,
+          expectedObservation: step.expectedObservation,
+          successCriteria: step.successCriteria,
+          phase: step.phase,
+          priority: step.priority,
+          dependsOn: step.dependsOn,
+        })),
+        hierarchy,
+        meta,
+        maxSteps,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Plan optimization failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       reason?: string;
       optimizedGoals?: Array<{
@@ -427,11 +367,11 @@ export async function optimizePlanWithLLM({
       : (parsed.optimizedSteps ?? []);
     const optimizedSteps = optimizedSpecs.length
       ? buildPlanStepsFromSpecs(
-          normalizePlanStepSpecs(optimizedSpecs),
-          meta,
-          true,
-          maxStepAttempts
-        ).slice(0, maxSteps)
+        normalizePlanStepSpecs(optimizedSpecs),
+        meta,
+        true,
+        maxStepAttempts
+      ).slice(0, maxSteps)
       : [];
     return {
       reason: parsed.reason ?? null,
@@ -462,38 +402,17 @@ export async function enrichPlanHierarchyWithLLM({
   runId?: string;
 }): Promise<ReturnType<typeof normalizePlanHierarchy> | null> {
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              "You enrich goal hierarchies for execution. Return only JSON with keys: goals. goals is array of {title, successCriteria, priority, dependsOn, subgoals:[{title, successCriteria, priority, dependsOn, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}]}. Keep the same number of goals/subgoals but refine titles and steps. tool is 'playwright' or 'none'.",
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              hierarchy,
-              meta,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlanningPostprocessTask({
+      model,
+      systemPrompt:
+        'You enrich goal hierarchies for execution. Return only JSON with keys: goals. goals is array of {title, successCriteria, priority, dependsOn, subgoals:[{title, successCriteria, priority, dependsOn, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}]}. Keep the same number of goals/subgoals but refine titles and steps. tool is \'playwright\' or \'none\'.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        hierarchy,
+        meta,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Hierarchy enrichment failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       goals?: Array<{
         title?: string;
@@ -563,38 +482,17 @@ export async function expandHierarchyFromStepsWithLLM({
 }): Promise<ReturnType<typeof normalizePlanHierarchy> | null> {
   if (!steps.length) return null;
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You convert flat steps into a goal hierarchy. Return only JSON with keys: goals. goals is array of {title, successCriteria, priority, dependsOn, subgoals:[{title, successCriteria, priority, dependsOn, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}]}. Keep 2-4 goals and keep steps unchanged where possible.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              memory,
-              steps,
-              meta,
-            }),
-          },
-        ],
-        options: { temperature: 0.2 },
+    const content = await runPlanningPostprocessTask({
+      model,
+      systemPrompt:
+        'You convert flat steps into a goal hierarchy. Return only JSON with keys: goals. goals is array of {title, successCriteria, priority, dependsOn, subgoals:[{title, successCriteria, priority, dependsOn, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}]}. Keep 2-4 goals and keep steps unchanged where possible.',
+      userContent: JSON.stringify({
+        prompt,
+        memory,
+        steps,
+        meta,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Hierarchy expansion failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       goals?: Array<{
         title?: string;

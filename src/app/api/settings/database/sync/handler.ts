@@ -5,7 +5,7 @@ import { auth } from '@/features/auth/server';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import {
   enqueueProductAiJob,
-  processSingleJob,
+  processProductAiJob,
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import { logActivity, logSystemError } from '@/features/observability/server';
@@ -70,7 +70,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const inlineJobs = env.AI_JOBS_INLINE || env.NODE_ENV !== 'production';
 
   if (inlineJobs) {
-    processSingleJob(job.id).catch(async (error: unknown) => {
+    processProductAiJob(job.id).catch(async (error: unknown) => {
       await logSystemError({
         message: '[settings.database.sync] Failed to run db sync job',
         error,

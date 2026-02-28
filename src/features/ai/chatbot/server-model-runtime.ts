@@ -28,9 +28,9 @@ const buildMessageContent = (
 ): string | ChatCompletionContentPart[] => {
   const imageValues = Array.isArray(message.images)
     ? message.images
-        .filter((value): value is string => typeof value === 'string')
-        .map((value) => value.trim())
-        .filter(Boolean)
+      .filter((value): value is string => typeof value === 'string')
+      .map((value) => value.trim())
+      .filter(Boolean)
     : [];
   if (imageValues.length === 0) {
     return message.content;

@@ -1,11 +1,11 @@
 'use client';
 
-import { BaseCategoryMapper } from '@/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper';
-import { MarketplaceSelector } from '@/features/integrations/components/marketplaces/category-mapper/MarketplaceSelector';
+import { BaseCategoryMapper } from '@/shared/lib/integrations/components/marketplaces/category-mapper/BaseCategoryMapper';
+import { MarketplaceSelector } from '@/shared/lib/integrations/components/marketplaces/category-mapper/MarketplaceSelector';
 import {
   CategoryMapperPageProvider,
   useCategoryMapperPageContext,
-} from '@/features/integrations/context/CategoryMapperPageContext';
+} from '@/shared/lib/integrations/context/CategoryMapperPageContext';
 import { SectionHeader, Card } from '@/shared/ui';
 
 function CategoryMapperPageContent(): React.JSX.Element {

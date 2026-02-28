@@ -77,10 +77,10 @@ export const useCaseResolverStateSelectionActions = ({
           assets: current.assets.map((asset: CaseResolverAssetFile) =>
             asset.id === selectedAssetId
               ? {
-                  ...asset,
-                  ...patch,
-                  updatedAt: new Date().toISOString(),
-                }
+                ...asset,
+                ...patch,
+                updatedAt: new Date().toISOString(),
+              }
               : asset
           ),
         }),

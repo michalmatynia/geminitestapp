@@ -8,7 +8,7 @@ import { AdminLayoutProvider } from '@/features/admin/context/AdminLayoutContext
 
 import { render, screen, fireEvent } from '../../../test-utils';
 
-vi.mock('@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
+vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
   TriggerButtonBar: () => null,
 }));
 

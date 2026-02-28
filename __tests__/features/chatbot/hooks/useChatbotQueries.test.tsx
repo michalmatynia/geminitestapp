@@ -9,6 +9,7 @@ import {
   useChatbotSettings,
   useChatbotModels,
 } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
 
 vi.mock('@/features/ai/chatbot/api', () => ({
   chatbotQueryKeys: {
@@ -61,8 +62,8 @@ describe('Chatbot Queries Hooks', () => {
 
   describe('useChatbotSession', () => {
     it('fetches and returns a single session', async () => {
-      const mockSession = { id: 's1', title: 'Session 1', messages: [] };
-      vi.mocked(chatbotApi.fetchChatbotSession).mockResolvedValue(mockSession as any);
+      const mockSession = { id: 's1', title: 'Session 1', messages: [] } as unknown as ChatSession;
+      vi.mocked(chatbotApi.fetchChatbotSession).mockResolvedValue(mockSession);
 
       const { result } = renderHook(() => useChatbotSession('s1'), { wrapper });
 
@@ -74,7 +75,7 @@ describe('Chatbot Queries Hooks', () => {
   describe('useChatbotSettings', () => {
     it('fetches and returns settings', async () => {
       const mockSettings = { settings: { settings: { model: 'gpt-4' } } };
-      vi.mocked(chatbotApi.fetchChatbotSettings).mockResolvedValue(mockSettings as any);
+      vi.mocked(chatbotApi.fetchChatbotSettings).mockResolvedValue(mockSettings);
 
       const { result } = renderHook(() => useChatbotSettings('general'), { wrapper });
 

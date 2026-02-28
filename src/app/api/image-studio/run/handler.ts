@@ -13,7 +13,7 @@ import {
 import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,
-} from '@/features/jobs/workers/imageStudioRunQueue';
+} from '@/features/ai/image-studio/workers/imageStudioRunQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 

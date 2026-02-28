@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Db } from 'mongodb';
 
 import {
   findAuthUserByEmail,
@@ -33,7 +34,7 @@ describe('Auth User Repository', () => {
       const mockDb = {
         collection: vi.fn().mockReturnValue(mockCollection),
       };
-      vi.mocked(getMongoDb).mockResolvedValue(mockDb as any);
+      vi.mocked(getMongoDb).mockResolvedValue(mockDb as unknown as Db);
 
       const result = await findAuthUserByEmail('test@example.com');
 
@@ -50,7 +51,7 @@ describe('Auth User Repository', () => {
       const mockDb = {
         collection: vi.fn().mockReturnValue(mockCollection),
       };
-      vi.mocked(getMongoDb).mockResolvedValue(mockDb as any);
+      vi.mocked(getMongoDb).mockResolvedValue(mockDb as unknown as Db);
 
       const result = await findAuthUserByEmail('unknown@example.com');
       expect(result).toBeNull();
@@ -70,7 +71,7 @@ describe('Auth User Repository', () => {
       const mockDb = {
         collection: vi.fn().mockReturnValue(mockCollection),
       };
-      vi.mocked(getMongoDb).mockResolvedValue(mockDb as any);
+      vi.mocked(getMongoDb).mockResolvedValue(mockDb as unknown as Db);
 
       // We need to mock ObjectId if the implementation imports it dynamically or uses a global
       // The implementation does: const { ObjectId } = await import("mongodb");

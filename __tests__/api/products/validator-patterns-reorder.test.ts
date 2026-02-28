@@ -15,7 +15,7 @@ vi.mock('@/features/products/server', () => ({
   getValidationPatternRepository: vi.fn(async () => repositoryMock),
 }));
 
-vi.mock('@/features/products/services/validation-pattern-runtime-cache', () => ({
+vi.mock('@/shared/lib/products/services/validation-pattern-runtime-cache', () => ({
   invalidateValidationPatternRuntimeCache: invalidateRuntimeCacheMock,
 }));
 

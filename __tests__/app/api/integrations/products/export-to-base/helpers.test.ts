@@ -5,7 +5,7 @@ const { listExportTemplatesMock, getParameterByIdMock } = vi.hoisted(() => ({
   getParameterByIdMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/shared/lib/integrations/server', () => ({
   collectProductImageDiagnostics: vi.fn(),
   fetchBaseWarehouses: vi.fn(),
   getExportActiveTemplateId: vi.fn(async () => null),

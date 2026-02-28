@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiPathRunQueueSloStatus } from '@/features/jobs/workers/aiPathRunQueue';
+import type { AiPathRunQueueSloStatus } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { notifyAiPathsSloBreach } from '@/features/observability/lib/ai-paths-slo-notifier';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getRedisConnection } from '@/shared/lib/queue';
@@ -107,7 +107,7 @@ describe('ai-paths-slo-notifier', () => {
     delete process.env['AI_PATHS_SLO_MIN_LEVEL'];
     delete process.env['AI_PATHS_SLO_COOLDOWN_SECONDS'];
 
-    const globalAny = globalThis as any;
+    const globalAny = globalThis as unknown as { __aiPathsSloNotificationCache?: Map<string, number> };
     if (globalAny.__aiPathsSloNotificationCache) {
       globalAny.__aiPathsSloNotificationCache.clear();
     }

@@ -6,7 +6,7 @@ vi.unmock('@/shared/lib/db/prisma');
 
 import { GET as GET_COUNT } from '@/app/api/products/count/route';
 import { GET as GET_LIST } from '@/app/api/products/route';
-import { createMockProduct } from '@/features/products/utils/productUtils';
+import { createMockProduct } from '@/shared/lib/products/utils/productUtils';
 import prisma from '@/shared/lib/db/prisma';
 
 describe('Products API - Pagination and Count', () => {

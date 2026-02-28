@@ -182,11 +182,11 @@ const toV3Adapter = (
   return {
     ...(legacy.loadNodes
       ? {
-          fetchState: async (_instanceId?: string) => ({
-            nodes: (await legacy.loadNodes?.()) ?? [],
-            version: 0,
-          }),
-        }
+        fetchState: async (_instanceId?: string) => ({
+          nodes: (await legacy.loadNodes?.()) ?? [],
+          version: 0,
+        }),
+      }
       : {}),
     prepare: async (tx: FolderTreeTransaction): Promise<FolderTreePreparedTransaction> =>
       createPreparedTx(tx),
@@ -528,9 +528,9 @@ export function useFolderTreeInstanceV2(
       const optimisticNodes = current.nodes.map((node) =>
         node.id === nodeId
           ? {
-              ...node,
-              name: rawName,
-            }
+            ...node,
+            name: rawName,
+          }
           : node
       );
 

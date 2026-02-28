@@ -3,18 +3,23 @@ import { vi } from 'vitest';
 
 import { RunHistoryPanel } from '@/features/ai/ai-paths/components/run-history-panel';
 import { RunHistoryProvider } from '@/features/ai/ai-paths/context';
+import type { AiPathsSettingsState } from '@/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
-const orchestratorMock = vi.hoisted(() => ({
-  runList: [] as unknown[],
-  runsQuery: {
-    isFetching: false,
-    refetch: vi.fn().mockResolvedValue(undefined),
-  },
-  handleOpenRunDetail: vi.fn().mockResolvedValue(undefined),
-  handleResumeRun: vi.fn().mockResolvedValue(undefined),
-  handleCancelRun: vi.fn().mockResolvedValue(undefined),
-  handleRequeueDeadLetter: vi.fn().mockResolvedValue(undefined),
-}));
+const orchestratorMock = vi.hoisted(() => {
+  const mock: Partial<AiPathsSettingsState> = {
+    runList: [] as AiPathRunRecord[],
+    runsQuery: {
+      isFetching: false,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    } as any,
+    handleOpenRunDetail: vi.fn().mockResolvedValue(undefined),
+    handleResumeRun: vi.fn().mockResolvedValue(undefined),
+    handleCancelRun: vi.fn().mockResolvedValue(undefined),
+    handleRequeueDeadLetter: vi.fn().mockResolvedValue(undefined),
+  };
+  return mock as AiPathsSettingsState;
+});
 
 // Mock child components/utils
 vi.mock('@/features/ai/ai-paths/components/RunHistoryEntries', () => ({
@@ -41,11 +46,11 @@ describe('RunHistoryPanel Component', () => {
   beforeEach(() => {
     orchestratorMock.runList = [];
     orchestratorMock.runsQuery.isFetching = false;
-    orchestratorMock.runsQuery.refetch.mockClear();
-    orchestratorMock.handleOpenRunDetail.mockClear();
-    orchestratorMock.handleResumeRun.mockClear();
-    orchestratorMock.handleCancelRun.mockClear();
-    orchestratorMock.handleRequeueDeadLetter.mockClear();
+    (orchestratorMock.runsQuery.refetch as any).mockClear();
+    (orchestratorMock.handleOpenRunDetail as any).mockClear();
+    (orchestratorMock.handleResumeRun as any).mockClear();
+    (orchestratorMock.handleCancelRun as any).mockClear();
+    (orchestratorMock.handleRequeueDeadLetter as any).mockClear();
   });
 
   it('should render empty state', () => {
@@ -57,8 +62,8 @@ describe('RunHistoryPanel Component', () => {
     const runs = [
       { id: 'run-1', status: 'completed', createdAt: new Date().toISOString() },
       { id: 'run-2', status: 'failed', createdAt: new Date().toISOString() },
-    ];
-    orchestratorMock.runList = runs as unknown[];
+    ] as AiPathRunRecord[];
+    orchestratorMock.runList = runs;
     renderPanel();
 
     expect(screen.getByText(/completed/i)).toBeInTheDocument();
@@ -70,8 +75,8 @@ describe('RunHistoryPanel Component', () => {
     const runs = [
       { id: 'run-completed', status: 'completed', createdAt: new Date().toISOString() },
       { id: 'run-running', status: 'running', createdAt: new Date().toISOString() },
-    ];
-    orchestratorMock.runList = runs as unknown[];
+    ] as AiPathRunRecord[];
+    orchestratorMock.runList = runs;
     renderPanel();
 
     const activeFilter = screen.getByText('Active');
@@ -81,12 +86,12 @@ describe('RunHistoryPanel Component', () => {
     expect(screen.getByText(/running/i)).toBeInTheDocument();
   });
 
-  it("should show 'Resume' button only for failed/paused runs", () => {
+  it('should show \'Resume\' button only for failed/paused runs', () => {
     const runs = [
       { id: 'run-failed', status: 'failed', createdAt: new Date().toISOString() },
       { id: 'run-running', status: 'running', createdAt: new Date().toISOString() },
-    ];
-    orchestratorMock.runList = runs as unknown[];
+    ] as AiPathRunRecord[];
+    orchestratorMock.runList = runs;
     renderPanel();
 
     expect(screen.getByText('Resume')).toBeInTheDocument();
@@ -96,8 +101,10 @@ describe('RunHistoryPanel Component', () => {
   });
 
   it('should call onResumeRun when Resume is clicked', () => {
-    const runs = [{ id: 'run-failed', status: 'failed', createdAt: new Date().toISOString() }];
-    orchestratorMock.runList = runs as unknown[];
+    const runs = [
+      { id: 'run-failed', status: 'failed', createdAt: new Date().toISOString() },
+    ] as AiPathRunRecord[];
+    orchestratorMock.runList = runs;
     renderPanel();
 
     fireEvent.click(screen.getByText('Resume'));
@@ -105,8 +112,10 @@ describe('RunHistoryPanel Component', () => {
   });
 
   it('should call onCancelRun when Cancel is clicked for active runs', () => {
-    const runs = [{ id: 'run-active', status: 'running', createdAt: new Date().toISOString() }];
-    orchestratorMock.runList = runs as unknown[];
+    const runs = [
+      { id: 'run-active', status: 'running', createdAt: new Date().toISOString() },
+    ] as AiPathRunRecord[];
+    orchestratorMock.runList = runs;
     renderPanel();
 
     fireEvent.click(screen.getByText('Cancel'));

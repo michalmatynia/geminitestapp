@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest';
 
-import { prismaProductRepository } from '@/features/products/services/product-repository/prisma-product-repository';
+import { prismaProductRepository } from '@/shared/lib/products/services/product-repository/prisma-product-repository';
 
 describe('Debug getProducts', () => {
   it('should list products', async () => {

@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { AiNode, Edge } from '@/shared/lib/ai-paths';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { Button } from '@/shared/ui';
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -17,6 +18,7 @@ export function DatabaseAiPromptConnectionStatus({
 }: DatabaseAiPromptConnectionStatusProps): React.JSX.Element {
   const { edges, nodes, selectedNode, runtimeState, sendingToAi, onSendToAi, toast } =
     useAiPathConfig();
+  const brainModelId = useBrainAssignment({ capability: 'ai_paths.model' }).effectiveModelId.trim();
 
   if (!selectedNode) return <></>;
   const selectedNodeId = selectedNode.id;
@@ -31,11 +33,10 @@ export function DatabaseAiPromptConnectionStatus({
   const aiNode =
     aiPromptEdges.length > 0
       ? nodes.find(
-          (node: AiNode): boolean => node.id === aiPromptEdges[0]?.to && node.type === 'model'
-        )
+        (node: AiNode): boolean => node.id === aiPromptEdges[0]?.to && node.type === 'model'
+      )
       : null;
 
-  const aiModelId = aiNode?.config?.['model']?.['modelId'];
   const hasValidConnection = aiNode && callbackEdges.length > 0;
 
   const callbackValue =
@@ -51,7 +52,9 @@ export function DatabaseAiPromptConnectionStatus({
             <div className='h-2 w-2 rounded-full bg-emerald-400'></div>
             <span className='text-[11px] text-emerald-100'>
               Connected to AI Model:{' '}
-              <span className='font-medium text-emerald-200'>{aiModelId || 'Unknown'}</span>
+              <span className='font-medium text-emerald-200'>
+                {brainModelId || 'Not configured in AI Brain'}
+              </span>
             </span>
           </div>
           {hasAiResponse && (

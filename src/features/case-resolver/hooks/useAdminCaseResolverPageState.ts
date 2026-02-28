@@ -4,8 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 
 import { stableStringify } from '@/shared/lib/ai-paths';
-import type { FilemakerPartyKind } from '@/features/filemaker';
-import { resolveFilemakerPartyLabel } from '@/features/filemaker/settings';
+import type { FilemakerPartyKind } from '@/shared/lib/filemaker';
+import { resolveFilemakerPartyLabel } from '@/shared/lib/filemaker/settings';
 import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver';
 import type {
   AiNode,
@@ -399,10 +399,10 @@ export function useAdminCaseResolverPageState() {
           const nextFiles = current.files.map((file) =>
             file.id === fileId
               ? {
-                  ...file,
-                  isLocked: nextLocked,
-                  updatedAt: now,
-                }
+                ...file,
+                isLocked: nextLocked,
+                updatedAt: now,
+              }
               : file
           );
           return {

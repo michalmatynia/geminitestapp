@@ -206,7 +206,7 @@ export function useCreateStudioProject(): CreateMutation<string, CreateStudioPro
 export function useRenameStudioProject(): UpdateMutation<
   RenameStudioProjectResult,
   RenameStudioProjectPayload
-> {
+  > {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2({
@@ -254,7 +254,7 @@ export function useRenameStudioProject(): UpdateMutation<
 export function useResizeStudioProjectCanvas(): UpdateMutation<
   ResizeStudioProjectCanvasResult,
   ResizeStudioProjectCanvasPayload
-> {
+  > {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2({
@@ -598,9 +598,9 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
         );
         const deletedSlotIds = Array.isArray(response?.deletedSlotIds)
           ? response.deletedSlotIds
-              .filter((value: unknown): value is string => typeof value === 'string')
-              .map((value: string) => normalizeStudioSlotId(value))
-              .filter((value: string) => value.length > 0)
+            .filter((value: unknown): value is string => typeof value === 'string')
+            .map((value: string) => normalizeStudioSlotId(value))
+            .filter((value: string) => value.length > 0)
           : [];
         deletedIdsByRequestRef.current.set(slotId, deletedSlotIds);
         deleteTimingsByRequestRef.current.set(slotId, response?.timingsMs ?? null);

@@ -23,7 +23,7 @@ import {
 } from '@/features/auth/services/auth-security-profile';
 import { getAuthUserPageSettings } from '@/features/auth/services/auth-settings';
 import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/services/totp';
-import { decryptAuthSecret } from '@/features/auth/utils/auth-encryption';
+import { decryptAuthSecret } from '@/shared/lib/security/encryption';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ActivityTypes } from '@/shared/constants/observability';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -68,8 +68,8 @@ const credentialsProvider = Credentials({
         checkLoginAllowed({ email, ip }),
         challengeId
           ? consumeLoginChallenge({ id: challengeId, email, ip }).then((c) =>
-              c ? findAuthUserById(c.userId) : null
-            )
+            c ? findAuthUserById(c.userId) : null
+          )
           : findAuthUserByEmail(email),
       ]);
 

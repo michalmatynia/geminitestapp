@@ -1064,9 +1064,9 @@ export function useAiPathsLocalExecutionLogic(args: LocalExecutionArgs) {
             },
             dependency: dependencyReport
               ? {
-                  errors: dependencyReport.errors,
-                  warnings: dependencyReport.warnings,
-                }
+                errors: dependencyReport.errors,
+                warnings: dependencyReport.warnings,
+              }
               : undefined,
             dataContract: {
               errors: dataContractReport.errors,

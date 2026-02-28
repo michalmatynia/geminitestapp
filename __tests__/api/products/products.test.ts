@@ -62,7 +62,13 @@ vi.mock('@/shared/lib/db/prisma', () => {
       findUnique: vi.fn(),
     },
     systemLog: {
-      create: vi.fn().mockResolvedValue({}),
+      create: vi.fn().mockImplementation((args) =>
+        Promise.resolve({
+          id: 'mock-log-id',
+          createdAt: new Date(),
+          ...args.data,
+        })
+      ),
     },
     setting: {
       findUnique: vi.fn().mockResolvedValue(null),
@@ -124,9 +130,9 @@ describe('Products API', () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValue(null);
 
     // Using any-casts to satisfy Prisma client return types which are complex
-    (prisma.product.create as any).mockImplementation((args: any) => {
-      const data = args.data;
-      return {
+    vi.mocked(prisma.product.create).mockImplementation(((args: any) => {
+      const data = args.data as any;
+      return Promise.resolve({
         id: `created-${Date.now()}`,
         ...data,
         createdAt: new Date(),
@@ -135,12 +141,12 @@ describe('Products API', () => {
         catalogs: [],
         categories: [],
         tags: [],
-      };
-    });
+      });
+    }) as any);
 
-    (prisma.product.update as any).mockImplementation((args: any) => {
-      return {
-        ...args.data,
+    vi.mocked(prisma.product.update).mockImplementation(((args: any) => {
+      return Promise.resolve({
+        ...(args.data as any),
         id: args.where.id,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -148,10 +154,10 @@ describe('Products API', () => {
         catalogs: [],
         categories: [],
         tags: [],
-      };
-    });
+      });
+    }) as any);
 
-    vi.mocked(prisma.product.delete).mockResolvedValue({} as any);
+    vi.mocked(prisma.product.delete).mockResolvedValue({} as unknown as Product);
     vi.mocked(prisma.product.deleteMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.product.updateMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.product.count).mockResolvedValue(0);
@@ -160,12 +166,14 @@ describe('Products API', () => {
     vi.mocked(prisma.productImage.findMany).mockResolvedValue([]);
     vi.mocked(prisma.productImage.createMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.imageFile.deleteMany).mockResolvedValue({ count: 0 });
-    (prisma.imageFile.create as any).mockImplementation((args: any) => ({
-      id: `image-${Date.now()}`,
-      ...args.data,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }));
+    vi.mocked(prisma.imageFile.create).mockImplementation(((args: any) =>
+      Promise.resolve({
+        id: `image-${Date.now()}`,
+        ...(args.data as any),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })) as any
+    );
     vi.mocked(prisma.imageFile.findMany).mockResolvedValue([]);
     vi.mocked(prisma.productCatalog.deleteMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.productCatalog.createMany).mockResolvedValue({ count: 0 });
@@ -191,8 +199,8 @@ describe('Products API', () => {
       const mockProducts = [
         createMockProductData({ name_en: 'Product 1' }),
         createMockProductData({ name_en: 'Product 2' }),
-      ];
-      vi.mocked(prisma.product.findMany).mockResolvedValue(mockProducts as any);
+      ] as unknown as Product[];
+      vi.mocked(prisma.product.findMany).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(new NextRequest('http://localhost/api/products'));
       const products = (await res.json()) as Product[];
@@ -210,8 +218,8 @@ describe('Products API', () => {
     });
 
     it('should filter products by name_en using the search parameter', async () => {
-      const mockProducts = [createMockProductData({ name_en: 'Laptop' })];
-      vi.mocked(prisma.product.findMany).mockResolvedValue(mockProducts as any);
+      const mockProducts = [createMockProductData({ name_en: 'Laptop' })] as unknown as Product[];
+      vi.mocked(prisma.product.findMany).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(new NextRequest('http://localhost/api/products?search=lap'));
       const products = (await res.json()) as Product[];
@@ -253,6 +261,9 @@ describe('Products API', () => {
         formData: () => Promise.resolve(formData),
         url: 'http://localhost/api/products',
         method: 'POST',
+        clone: function () {
+          return this;
+        },
       } as unknown as NextRequest;
 
       const mockCreatedProduct = createMockProductData({
@@ -267,11 +278,11 @@ describe('Products API', () => {
         stock: 50,
         weight: 1000,
         length: 30,
-      });
-      (prisma.product.create as any).mockResolvedValue(mockCreatedProduct);
+      }) as unknown as Product;
+      vi.mocked(prisma.product.create).mockResolvedValue(mockCreatedProduct);
       vi.mocked(prisma.product.findUnique)
         .mockResolvedValueOnce(null) // SKU check
-        .mockResolvedValue(mockCreatedProduct as any); // getProductById
+        .mockResolvedValue(mockCreatedProduct); // getProductById
 
       const res = await POST(req);
       const json = await res.json();
@@ -328,8 +339,8 @@ describe('Products API', () => {
       const mockProduct = createMockProductData({
         id: productId,
         name_en: 'Product 1 (EN)',
-      });
-      vi.mocked(prisma.product.findUnique).mockResolvedValue(mockProduct as any);
+      }) as unknown as Product;
+      vi.mocked(prisma.product.findUnique).mockResolvedValue(mockProduct);
 
       const req = new NextRequest(`http://localhost/api/products/${productId}`);
       const res = await GET_PUBLIC(req, {

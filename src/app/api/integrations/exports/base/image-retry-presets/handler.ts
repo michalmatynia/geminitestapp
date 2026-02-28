@@ -5,7 +5,7 @@ import { normalizeImageRetryPresets } from '@/features/data-import-export/utils/
 import {
   getExportImageRetryPresets,
   setExportImageRetryPresets,
-} from '@/features/integrations/server';
+} from '@/shared/lib/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { imageRetryPresetSchema, type ImageRetryPreset } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

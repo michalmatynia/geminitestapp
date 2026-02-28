@@ -158,9 +158,9 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     );
     const currencies = currencyIds.length
       ? await db
-          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-          .find({ id: { $in: currencyIds } })
-          .toArray()
+        .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+        .find({ id: { $in: currencyIds } })
+        .toArray()
       : [];
     const currencyMap = new Map(
       currencies.map((currency: WithId<CurrencyDoc>) => [currency.id, currency])
@@ -222,9 +222,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     const requestedCurrencyIds = Array.from(new Set(currencyIds ?? []));
     const currencyDocs = requestedCurrencyIds.length
       ? await db
-          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-          .find({ id: { $in: requestedCurrencyIds } })
-          .toArray()
+        .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+        .find({ id: { $in: requestedCurrencyIds } })
+        .toArray()
       : [];
     const validCurrencyIds = new Set(
       currencyDocs.map((currency: WithId<CurrencyDoc>) => currency.id)
@@ -255,12 +255,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       ...(countryData as unknown as { code: CountryCode; name: string }),
       ...(currencyIds?.length
         ? {
-            currencies: {
-              createMany: {
-                data: currencyIds.map((currencyId: string) => ({ currencyId })),
-              },
+          currencies: {
+            createMany: {
+              data: currencyIds.map((currencyId: string) => ({ currencyId })),
             },
-          }
+          },
+        }
         : {}),
     },
     include: {

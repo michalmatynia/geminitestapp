@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { evaluateGraph } from '@/shared/lib/ai-paths/core/runtime/engine';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 describe('AI Paths Runtime Engine', () => {
   const mockFetchEntityByType = vi.fn();
@@ -15,17 +16,17 @@ describe('AI Paths Runtime Engine', () => {
     toast: mockToast,
     resolveHandler: (type: string) => {
       if (type === 'math')
-        return (ctx: any) => ({
-          result: (ctx.nodeInputs['value'] || 0) + 1,
-          value: (ctx.nodeInputs['value'] || 0) + 1,
+        return (ctx: NodeHandlerContext) => ({
+          result: ((ctx.nodeInputs['value'] as number) || 0) + 1,
+          value: ((ctx.nodeInputs['value'] as number) || 0) + 1,
         });
       if (type === 'prompt')
-        return (_ctx: any) => {
-          const val = _ctx.nodeInputs['value'] ?? 'unknown';
+        return (_ctx: NodeHandlerContext) => {
+          const val = (_ctx.nodeInputs['value'] as string) ?? 'unknown';
           console.log(`[mock-prompt] returning prompt for value: ${val}`);
           return { prompt: 'value is ' + val };
         };
-      if (type === 'bundle') return (_ctx: any) => ({ bundle: _ctx.nodeInputs });
+      if (type === 'bundle') return (_ctx: NodeHandlerContext) => ({ bundle: _ctx.nodeInputs });
       return null;
     },
   };
@@ -445,12 +446,18 @@ describe('AI Paths Runtime Engine', () => {
     const historyEntries = result.history?.['bundle-node'];
     const skipHistory = Array.isArray(historyEntries)
       ? historyEntries.find(
-          (entry) => entry['status'] === 'blocked' && entry['skipReason'] === 'missing_inputs'
-        )
+        (entry) =>
+          (entry as Record<string, unknown>)['status'] === 'blocked' &&
+          (entry as Record<string, unknown>)['skipReason'] === 'missing_inputs'
+      )
       : null;
     expect(skipHistory).toBeDefined();
-    expect(skipHistory?.['requiredPorts'] ?? []).toContain('context');
-    expect(skipHistory?.['waitingOnPorts'] ?? []).toContain('context');
+    expect((skipHistory as Record<string, unknown> | null)?.['requiredPorts'] ?? []).toContain(
+      'context'
+    );
+    expect((skipHistory as Record<string, unknown> | null)?.['waitingOnPorts'] ?? []).toContain(
+      'context'
+    );
   });
 
   it('supports per-activation side-effect policy for notification nodes', async () => {

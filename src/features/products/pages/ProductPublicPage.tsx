@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 
-import { productService } from '@/features/products/services/productService';
+import { productService } from '@/shared/lib/products/services/productService';
 import { MissingImagePlaceholder } from '@/shared/ui';
 
 import type { JSX } from 'react';
@@ -26,9 +26,9 @@ export async function ProductPublicPage({
   const priceLabel =
     typeof product.price === 'number'
       ? new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD',
-        }).format(product.price)
+        style: 'currency',
+        currency: 'USD',
+      }).format(product.price)
       : '—';
 
   const description =

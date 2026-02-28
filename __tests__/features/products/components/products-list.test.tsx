@@ -19,6 +19,8 @@ import { server } from '@/mocks/server';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { DataTable } from '@/shared/ui';
 import { ToastProvider } from '@/shared/ui/toast';
+import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithRelations } from '@/shared/contracts/products';
 
 const createTestQueryClient = (): QueryClient =>
   new QueryClient({
@@ -44,11 +46,11 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
 }));
 
-vi.mock('@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
+vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
   TriggerButtonBar: () => null,
 }));
 
-const mockProducts = [
+const mockProducts: ProductWithRelations[] = [
   {
     id: 'product-1',
     name_en: 'Product Alpha',
@@ -72,6 +74,9 @@ const mockProducts = [
     isPublic: false,
     isArchived: false,
     status: 'active',
+    catalogs: [],
+    categories: [],
+    producers: [],
   },
   {
     id: 'product-2',
@@ -96,6 +101,9 @@ const mockProducts = [
     isPublic: false,
     isArchived: false,
     status: 'active',
+    catalogs: [],
+    categories: [],
+    producers: [],
   },
 ];
 
@@ -150,7 +158,7 @@ const buildContextValue = (
   activeAdvancedFilterPresetId: null,
   setAdvancedFilter: vi.fn(),
   setAdvancedFilterState: vi.fn(),
-  data: mockProducts as any,
+  data: mockProducts,
   isLoading: false,
   loadError: null,
   actionError: null,

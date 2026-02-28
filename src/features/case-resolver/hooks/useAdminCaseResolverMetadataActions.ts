@@ -7,7 +7,7 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
-import { buildFilemakerPartyOptions } from '@/features/filemaker/settings';
+import { buildFilemakerPartyOptions } from '@/shared/lib/filemaker/settings';
 import { buildPathLabelMap } from '../pages/admin-case-resolver-page-helpers';
 
 export function useAdminCaseResolverMetadataActions({
@@ -161,14 +161,14 @@ export function useAdminCaseResolverMetadataActions({
             nextParentCaseId === currentCase.id ? null : nextParentCaseId;
           const nextReferenceCaseIds = hasReferencePatch
             ? Array.from(
-                new Set(
-                  (patch.referenceCaseIds ?? [])
-                    .map((value: string): string => value.trim())
-                    .filter(
-                      (value: string): boolean => value.length > 0 && value !== currentCase.id
-                    )
-                )
+              new Set(
+                (patch.referenceCaseIds ?? [])
+                  .map((value: string): string => value.trim())
+                  .filter(
+                    (value: string): boolean => value.length > 0 && value !== currentCase.id
+                  )
               )
+            )
             : currentCase.referenceCaseIds;
 
           const nextTagId = hasTagPatch ? patch.tagId?.trim() || null : currentCase.tagId;

@@ -6,7 +6,7 @@ import { GET } from '@/app/api/integrations/product-listings/route';
 const listAllListingsMock = vi.hoisted(() => vi.fn());
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/shared/lib/integrations/server', () => ({
   listAllProductListingsAcrossProviders: listAllListingsMock,
   getIntegrationRepository: () => ({
     listIntegrations: listIntegrationsMock,

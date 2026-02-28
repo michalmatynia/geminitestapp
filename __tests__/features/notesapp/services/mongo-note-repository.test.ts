@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Db } from 'mongodb';
 
 vi.mock('crypto', async (importOriginal) => {
   const actual = await importOriginal<typeof import('crypto')>();
@@ -39,7 +40,7 @@ describe('Mongo Note Repository', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getMongoDb).mockResolvedValue(mockDb as any);
+    vi.mocked(getMongoDb).mockResolvedValue(mockDb as unknown as Db);
   });
 
   describe('Notebook Operations', () => {

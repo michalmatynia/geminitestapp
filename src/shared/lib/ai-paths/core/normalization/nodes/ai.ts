@@ -2,7 +2,6 @@ import { type AiNode } from '@/shared/contracts/ai-paths';
 import {
   AGENT_INPUT_PORTS,
   AGENT_OUTPUT_PORTS,
-  DEFAULT_MODELS,
   DESCRIPTION_OUTPUT_PORTS,
   MODEL_OUTPUT_PORTS,
 } from '../../constants';
@@ -38,10 +37,12 @@ export const normalizeModelNode = (node: AiNode): AiNode => {
     config: {
       ...node.config,
       model: {
-        modelId: node.config?.model?.modelId ?? DEFAULT_MODELS[0] ?? 'gpt-4o',
         temperature: node.config?.model?.temperature ?? 0.7,
         maxTokens: node.config?.model?.maxTokens ?? 800,
         vision: node.config?.model?.vision ?? (node.inputs ?? []).includes('images'),
+        ...(node.config?.model?.systemPrompt !== undefined
+          ? { systemPrompt: node.config.model.systemPrompt }
+          : {}),
         ...(node.config?.model?.waitForResult !== undefined
           ? { waitForResult: node.config.model.waitForResult }
           : {}),

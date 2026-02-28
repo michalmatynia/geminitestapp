@@ -4,7 +4,7 @@ vi.mock('@/features/observability/server', () => ({
   withTransientRecovery: vi.fn(async (operation: () => Promise<unknown>) => operation()),
 }));
 
-import { fetchBaseCategories } from '@/features/integrations/services/imports/base-client';
+import { fetchBaseCategories } from '@/shared/lib/integrations/services/imports/base-client';
 
 const jsonResponse = (payload: Record<string, unknown>): Response =>
   new Response(JSON.stringify(payload), {

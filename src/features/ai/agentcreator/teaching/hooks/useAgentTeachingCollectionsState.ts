@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useCallback } from 'react';
 
-import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type {
   AgentTeachingAgentRecord,
   AgentTeachingEmbeddingCollectionRecord,
@@ -15,24 +14,14 @@ import {
   useUpsertEmbeddingCollectionMutation,
 } from '../hooks/useAgentTeachingQueries';
 
-const isEmbeddingModel = (model: string): boolean => Boolean(buildModelProfile(model).isEmbedding);
-
 export function useAgentTeachingQueriesCollectionsState() {
   const { toast } = useToast();
-  const { collections, agents, modelOptions, isLoading } = useAgentTeachingQueriesContext();
-  const normalizedModelOptions = useMemo(
-    () =>
-      (Array.isArray(modelOptions) ? modelOptions : [])
-        .filter((model): model is string => typeof model === 'string')
-        .map((model) => model.trim())
-        .filter((model) => model.length > 0),
-    [modelOptions]
-  );
-
-  const embeddingModels = useMemo(
-    () => normalizedModelOptions.filter((m: string) => isEmbeddingModel(m)),
-    [normalizedModelOptions]
-  );
+  const { collections, agents, embeddingModelId, isLoading } = useAgentTeachingQueriesContext();
+  const embeddingModels = useMemo(() => {
+    const normalized = embeddingModelId.trim();
+    if (normalized) return [normalized];
+    return [];
+  }, [embeddingModelId]);
 
   const { mutateAsync: upsert, isPending: saving } = useUpsertEmbeddingCollectionMutation();
   const { mutateAsync: remove, isPending: deleting } = useDeleteEmbeddingCollectionMutation();

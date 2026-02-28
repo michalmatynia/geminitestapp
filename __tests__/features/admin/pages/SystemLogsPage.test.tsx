@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
 import SystemLogsPage from '@/features/observability/pages/SystemLogsPage';
+import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -121,17 +122,31 @@ vi.mock('@/shared/ui', async (importOriginal) => {
         {children}
       </div>
     ),
-    StandardDataTablePanel: ({ data, columns }: { data: any[]; columns: any[] }) => (
+    StandardDataTablePanel: ({
+      data,
+      columns,
+    }: {
+      data: SystemLogRecord[];
+      columns: Array<{
+        accessorKey?: keyof SystemLogRecord | string;
+        id?: string;
+        cell?: (props: { row: { original: SystemLogRecord } }) => React.ReactNode;
+      }>;
+    }) => (
       <div>
-        {data.map((row: any, i: number) => (
+        {data.map((row, i) => (
           <div key={i}>
-            {columns.map((col: any) => {
+            {columns.map((col) => {
               if (col.cell && typeof col.cell === 'function') {
                 return (
                   <div key={col.accessorKey || col.id}>{col.cell({ row: { original: row } })}</div>
                 );
               }
-              return <div key={col.accessorKey || col.id}>{row[col.accessorKey]}</div>;
+              return (
+                <div key={col.accessorKey || col.id}>
+                  {String(row[col.accessorKey as keyof SystemLogRecord] ?? '')}
+                </div>
+              );
             })}
           </div>
         ))}

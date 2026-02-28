@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { productService } from '@/features/products/server';
-import { ProductFiltersParsed } from '@/features/products/validations';
+import { ProductFiltersParsed } from '@/shared/lib/products/validations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 /**

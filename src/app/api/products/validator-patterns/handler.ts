@@ -6,7 +6,7 @@ import { getValidationPatternRepository } from '@/features/products/server';
 import {
   invalidateValidationPatternRuntimeCache,
   listValidationPatternsCached,
-} from '@/features/products/services/validation-pattern-runtime-cache';
+} from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
   normalizeProductValidationLaunchScopeBehavior,
@@ -14,9 +14,9 @@ import {
   normalizeProductValidationPatternLaunchScopes,
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
-} from '@/features/products/utils/validator-instance-behavior';
+} from '@/shared/lib/products/utils/validator-instance-behavior';
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
-import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { validateAndNormalizeRuntimeConfig } from '@/features/products/validations/validator-runtime-config';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -219,20 +219,20 @@ export async function getValidatorPatternsHandler(
   const mirrorWindow =
     mirrorEntries.length > 1
       ? {
-          min: Math.min(
-            ...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))
-          ),
-          max: Math.max(
-            ...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))
-          ),
-        }
+        min: Math.min(
+          ...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))
+        ),
+        max: Math.max(
+          ...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))
+        ),
+      }
       : null;
 
   const interleavedDimensionEntries = mirrorWindow
     ? dimensionEntries.filter(({ pattern, index }) => {
-        const sequence = getPatternSequence(pattern, index);
-        return sequence > mirrorWindow.min && sequence < mirrorWindow.max;
-      })
+      const sequence = getPatternSequence(pattern, index);
+      return sequence > mirrorWindow.min && sequence < mirrorWindow.max;
+    })
     : [];
 
   if (staleDimensionEntries.length === 0 && interleavedDimensionEntries.length === 0) {

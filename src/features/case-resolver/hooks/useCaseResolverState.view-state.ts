@@ -73,9 +73,9 @@ export function useCaseResolverStateViewState({
           current.activeFileId === fileId
             ? current
             : {
-                ...current,
-                activeFileId: fileId,
-              }
+              ...current,
+              activeFileId: fileId,
+            }
       );
       setSelectedFolderPath(null);
       setSelectedAssetId(null);

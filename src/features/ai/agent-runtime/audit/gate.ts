@@ -1,4 +1,5 @@
-import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from '@/features/ai/agent-runtime/core/config';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
+import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { PlanStep } from '@/shared/contracts/agent-runtime';
 
@@ -17,6 +18,30 @@ const parseJsonObject = (content: string): unknown => {
       return null;
     }
   }
+};
+
+const runApprovalGateTask = async (input: {
+  model: string;
+  systemPrompt: string;
+  userContent: string;
+  temperature?: number;
+}): Promise<string> => {
+  const response = await runBrainChatCompletion({
+    modelId: input.model,
+    temperature: input.temperature ?? 0.1,
+    jsonMode: true,
+    messages: [
+      {
+        role: 'system',
+        content: input.systemPrompt,
+      },
+      {
+        role: 'user',
+        content: input.userContent,
+      },
+    ],
+  });
+  return response.text.trim();
 };
 
 export function requiresHumanApproval(step: PlanStep, prompt: string): boolean {
@@ -48,44 +73,23 @@ export async function evaluateApprovalGateWithLLM({
   riskLevel?: string | null;
 } | null> {
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You decide whether a planned web action requires human approval. Return only JSON with keys: requiresApproval (boolean), reason (string), riskLevel (low|medium|high), riskySignals (array). Flag any step that involves login, payments, deletions, account changes, admin actions, or irreversible changes.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              prompt,
-              step: {
-                title: step.title,
-                tool: step.tool ?? null,
-                expectedObservation: step.expectedObservation ?? null,
-                successCriteria: step.successCriteria ?? null,
-              },
-              browserContext: browserContext
-                ? { url: browserContext.url, title: browserContext.title }
-                : null,
-            }),
-          },
-        ],
-        options: { temperature: 0.1 },
+    const content = await runApprovalGateTask({
+      model,
+      systemPrompt:
+        'You decide whether a planned web action requires human approval. Return only JSON with keys: requiresApproval (boolean), reason (string), riskLevel (low|medium|high), riskySignals (array). Flag any step that involves login, payments, deletions, account changes, admin actions, or irreversible changes.',
+      userContent: JSON.stringify({
+        prompt,
+        step: {
+          title: step.title,
+          tool: step.tool ?? null,
+          expectedObservation: step.expectedObservation ?? null,
+          successCriteria: step.successCriteria ?? null,
+        },
+        browserContext: browserContext
+          ? { url: browserContext.url, title: browserContext.title }
+          : null,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Approval gate model failed (${response.status}).`);
-    }
-    const payload = (await response.json()) as {
-      message?: { content?: string };
-    };
-    const content = payload.message?.content?.trim() ?? '';
     const parsed = parseJsonObject(content) as {
       requiresApproval?: boolean;
       reason?: string;

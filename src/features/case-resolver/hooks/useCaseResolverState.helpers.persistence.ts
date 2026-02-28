@@ -51,11 +51,11 @@ const buildStoredEditorDraftPatch = (
   const primaryContentPatch: Partial<CaseResolverFileEditDraft> =
     draft.editorType === 'wysiwyg'
       ? {
-          documentContentHtml: draft.documentContentHtml ?? '',
-        }
+        documentContentHtml: draft.documentContentHtml ?? '',
+      }
       : {
-          documentContentMarkdown: draft.documentContentMarkdown ?? '',
-        };
+        documentContentMarkdown: draft.documentContentMarkdown ?? '',
+      };
 
   const patch = Object.fromEntries(
     Object.entries({

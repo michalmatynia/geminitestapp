@@ -63,7 +63,7 @@ vi.mock('@/features/products/server', () => ({
   getProductRepository: getProductRepositoryMock,
 }));
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/shared/lib/integrations/server', () => ({
   getIntegrationRepository: getIntegrationRepositoryMock,
   findProductListingByProductAndConnectionAcrossProviders: findListingAcrossProvidersMock,
   getProductListingRepository: getProductListingRepositoryMock,

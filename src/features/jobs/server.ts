@@ -1,46 +1,48 @@
 import 'server-only';
 
-export * from './services/productAiService';
-export { startAgentQueue, stopAgentQueue, enqueueAgentRun } from './workers/agentQueue';
-export { startAiInsightsQueue } from './workers/aiInsightsQueue';
-export {
-  startDatabaseBackupSchedulerQueue,
-  getDatabaseBackupSchedulerQueueStatus,
-  DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
-} from './workers/databaseBackupSchedulerQueue';
-export {
-  startAiPathRunQueue,
-  getAiPathRunQueueStatus,
-  processSingleRun,
-  enqueuePathRunJob,
-} from './workers/aiPathRunQueue';
-export {
-  startChatbotJobQueue,
-  stopChatbotJobQueue,
-  enqueueChatbotJob,
-} from './workers/chatbotJobQueue';
+export * from '@/shared/lib/products/services/productAiService';
+export { startAgentQueue, stopAgentQueue, enqueueAgentRun } from '@/features/ai/agent-runtime/workers/agentQueue';
+export { startAiInsightsQueue } from '@/shared/lib/ai/insights/workers/aiInsightsQueue';
+export { 
+  startAiPathRunQueue, 
+  enqueuePathRunJob, 
+  getAiPathRunQueueStatus, 
+  removePathRunQueueEntries 
+} from '@/features/ai/ai-paths/workers/aiPathRunQueue';
+export { 
+  startChatbotJobQueue, 
+  stopChatbotJobQueue, 
+  enqueueChatbotJob 
+} from '@/features/ai/chatbot/workers/chatbotJobQueue';
+export { startDatabaseBackupSchedulerQueue } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
+export { 
+  startImageStudioRunQueue, 
+  enqueueImageStudioRunJob 
+} from '@/features/ai/image-studio/workers/imageStudioRunQueue';
+export { 
+  startImageStudioSequenceQueue, 
+  enqueueImageStudioSequenceJob 
+} from '@/features/ai/image-studio/workers/imageStudioSequenceQueue';
+export { 
+  startTraderaListingQueue, 
+  enqueueTraderaListingJob 
+} from '@/shared/lib/integrations/workers/traderaListingQueue';
+export { startTraderaRelistSchedulerQueue } from '@/shared/lib/integrations/workers/traderaRelistSchedulerQueue';
+
 export {
   startProductAiJobQueue,
   getQueueStatus,
-  processSingleJob,
-  resetProductAiJobQueue,
-  stopProductAiJobQueue,
+  processSingleJob as processGenericQueueJob,
+} from '@/shared/lib/queue';
+
+export { 
   enqueueProductAiJobToQueue,
-} from './workers/productAiQueue';
-export {
-  startTraderaListingQueue,
-  stopTraderaListingQueue,
-  enqueueTraderaListingJob,
-} from './workers/traderaListingQueue';
-export { startTraderaRelistSchedulerQueue } from './workers/traderaRelistSchedulerQueue';
-export {
-  startProductSyncQueue,
-  stopProductSyncQueue,
-  enqueueProductSyncRunJob,
-} from './workers/productSyncQueue';
-export { startProductSyncSchedulerQueue } from './workers/productSyncSchedulerQueue';
+  processProductAiJob
+} from '@/features/products/workers/productAiQueue';
+
+export { startProductSyncSchedulerQueue } from '@/shared/lib/product-sync/workers/productSyncSchedulerQueue';
 export {
   startProductSyncBackfillQueue,
   stopProductSyncBackfillQueue,
   enqueueProductSyncBackfillJob,
-} from './workers/productSyncBackfillQueue';
+} from '@/shared/lib/product-sync/workers/productSyncBackfillQueue';

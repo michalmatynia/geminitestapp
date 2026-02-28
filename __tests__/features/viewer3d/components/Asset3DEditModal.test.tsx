@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { updateAsset3D } from '@/shared/lib/viewer3d/api';
 import { Asset3DEditModal } from '@/shared/lib/viewer3d/components/Asset3DEditModal';
 import { useAdmin3DAssetsContext } from '@/shared/lib/viewer3d/context/Admin3DAssetsContext';
+import { useAdmin3DAssetsState } from '@/shared/lib/viewer3d/hooks/useAdmin3DAssetsState';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 const { logClientErrorMock } = vi.hoisted(() => ({
@@ -14,7 +15,7 @@ vi.mock('@/shared/lib/viewer3d/api', () => ({
   updateAsset3D: vi.fn(),
 }));
 
-vi.mock('@/features/observability', () => ({
+vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
 }));
 
@@ -42,6 +43,8 @@ const mockAsset: Asset3DRecord = {
   metadata: {},
 };
 
+type Admin3DAssetsContextValue = ReturnType<typeof useAdmin3DAssetsState>;
+
 describe('Asset3DEditModal', () => {
   const defaultProps = {
     isOpen: true,
@@ -63,7 +66,7 @@ describe('Asset3DEditModal', () => {
       setPreviewAsset: vi.fn(),
       setEditAsset: vi.fn(),
       isDeleting: vi.fn(() => false),
-    } as any);
+    } as unknown as Admin3DAssetsContextValue);
   });
 
   it('should render with initial asset data', () => {

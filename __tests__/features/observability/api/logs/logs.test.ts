@@ -1,21 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { GET, POST, DELETE } from '@/app/api/system/logs/route';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
-
-// Mock apiHandler to bypass CSRF
-vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => async (req: any) => {
-    try {
-      const body = req.body ? await req.json().catch(() => ({})) : {};
-      return await handler(req, { requestId: 'test', body });
-    } catch (error: any) {
-      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
-    }
-  },
-}));
 
 // Mock Prisma
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -37,13 +25,13 @@ vi.mock('@/shared/lib/db/app-db-provider', () => ({
 describe('System Logs API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (getAppDbProvider as any).mockResolvedValue('prisma');
+    vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
   });
 
   it('GET /api/system/logs should list logs with pagination', async () => {
-    (prisma.systemLog.count as any).mockResolvedValue(100);
-    (prisma.systemLog.findMany as any).mockResolvedValue([
-      { id: '1', level: 'error', message: 'Err 1', createdAt: new Date() },
+    vi.mocked(prisma.systemLog.count).mockResolvedValue(100);
+    vi.mocked(prisma.systemLog.findMany).mockResolvedValue([
+      { id: '1', level: 'error', message: 'Err 1', createdAt: new Date() } as any,
     ]);
 
     const req = new NextRequest('http://localhost/api/system/logs?page=1&pageSize=10');
@@ -62,8 +50,8 @@ describe('System Logs API', () => {
   });
 
   it('GET /api/system/logs should support advanced triage filters', async () => {
-    (prisma.systemLog.count as any).mockResolvedValue(0);
-    (prisma.systemLog.findMany as any).mockResolvedValue([]);
+    vi.mocked(prisma.systemLog.count).mockResolvedValue(0);
+    vi.mocked(prisma.systemLog.findMany).mockResolvedValue([]);
 
     const req = new NextRequest(
       'http://localhost/api/system/logs?requestId=req-1&statusCode=500&method=GET&userId=user-1&fingerprint=fp-123&category=DATABASE'
@@ -71,8 +59,8 @@ describe('System Logs API', () => {
     const res = await GET(req);
 
     expect(res.status).toBe(200);
-    const call = (prisma.systemLog.findMany as any).mock.calls[0]?.[0];
-    const where = call?.where;
+    const call = vi.mocked(prisma.systemLog.findMany).mock.calls[0]?.[0];
+    const where = call?.where as any;
     expect(where).toBeTruthy();
     expect(where.AND).toEqual(
       expect.arrayContaining([
@@ -97,11 +85,11 @@ describe('System Logs API', () => {
       message: 'Test message',
       source: 'test-source',
     };
-    (prisma.systemLog.create as any).mockResolvedValue({
+    vi.mocked(prisma.systemLog.create).mockResolvedValue({
       id: 'new-id',
       ...logData,
       createdAt: new Date(),
-    });
+    } as any);
 
     const req = new NextRequest('http://localhost/api/system/logs', {
       method: 'POST',
@@ -116,7 +104,7 @@ describe('System Logs API', () => {
   });
 
   it('DELETE /api/system/logs should clear logs', async () => {
-    (prisma.systemLog.deleteMany as any).mockResolvedValue({ count: 5 });
+    vi.mocked(prisma.systemLog.deleteMany).mockResolvedValue({ count: 5 });
 
     const req = new NextRequest('http://localhost/api/system/logs', {
       method: 'DELETE',

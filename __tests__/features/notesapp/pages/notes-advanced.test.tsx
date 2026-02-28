@@ -86,7 +86,7 @@ describe('Notes Advanced UI', () => {
           : HttpResponse.json({ error: 'Not found' }, { status: 404 });
       }),
       http.patch('/api/notes/:id', async ({ params, request }) => {
-        const body = (await request.json()) as any;
+        const body = (await request.json()) as Partial<NoteWithRelations>;
         const index = notes.findIndex((n) => n.id === params['id']);
         if (index !== -1) {
           notes[index] = { ...notes[index], ...body };

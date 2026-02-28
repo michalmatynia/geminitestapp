@@ -191,15 +191,15 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                   !filteredTags.find(
                     (t: TagRecord) => (t.name || '').toLowerCase() === tagInput.toLowerCase()
                   ) && (
-                    <li
-                      onClick={(): void => {
-                        void handleCreateTag();
-                      }}
-                      className='cursor-pointer px-4 py-2 text-blue-400 hover:bg-muted/50'
-                    >
+                  <li
+                    onClick={(): void => {
+                      void handleCreateTag();
+                    }}
+                    className='cursor-pointer px-4 py-2 text-blue-400 hover:bg-muted/50'
+                  >
                       Create &quot;{tagInput}&quot;
-                    </li>
-                  )}
+                  </li>
+                )}
               </ul>
             </Card>
           )}

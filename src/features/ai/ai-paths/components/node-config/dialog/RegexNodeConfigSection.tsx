@@ -29,6 +29,7 @@ import {
   normalizeRegexFlags,
   parseRegexCandidate,
 } from './regex-node-config-preview';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { RegexPendingAiProposal } from './RegexPendingAiProposal';
 import { RegexTemplatesTabContent } from './RegexTemplatesTabContent';
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -49,6 +50,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     sendingToAi,
     toast,
   } = useAiPathConfig();
+  const brainModelId = useBrainAssignment({ capability: 'ai_paths.model' }).effectiveModelId.trim();
 
   if (selectedNode?.type !== 'regex') return null;
 
@@ -398,14 +400,14 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
         ? callbackValue
         : callbackValue !== undefined && callbackValue !== null
           ? ((): string => {
-              try {
-                return JSON.stringify(callbackValue, null, 2);
-              } catch {
-                return typeof callbackValue === 'object'
-                  ? '[Object]'
-                  : String(callbackValue as string | number | boolean);
-              }
-            })()
+            try {
+              return JSON.stringify(callbackValue, null, 2);
+            } catch {
+              return typeof callbackValue === 'object'
+                ? '[Object]'
+                : String(callbackValue as string | number | boolean);
+            }
+          })()
           : '';
     if (resolvedCallbackValue.trim().length === 0) return;
     if (resolvedCallbackValue === lastInjectedResponseRef.current) return;
@@ -474,10 +476,10 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     const nextManual = regexConfig.manual?.pattern
       ? regexConfig.manual
       : {
-          pattern: regexConfig.pattern ?? '',
-          flags: regexConfig.flags ?? '',
-          groupBy: regexConfig.groupBy ?? 'match',
-        };
+        pattern: regexConfig.pattern ?? '',
+        flags: regexConfig.flags ?? '',
+        groupBy: regexConfig.groupBy ?? 'match',
+      };
     addAiProposal(candidate);
     updateRegex({
       pattern: candidate.pattern,
@@ -529,9 +531,9 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     return {
       aiEdge,
       modelNode,
-      modelId: modelNode?.config?.model?.modelId,
+      modelLabel: modelNode ? brainModelId : undefined,
     };
-  }, [edges, nodes, selectedNode.id]);
+  }, [brainModelId, edges, nodes, selectedNode.id]);
 
   const sampleTextForAi = React.useMemo((): string => {
     if (typeof sampleSource === 'string') return sampleSource;
@@ -574,10 +576,10 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
             const nextManual = regexConfig.manual?.pattern
               ? regexConfig.manual
               : {
-                  pattern: regexConfig.pattern ?? '',
-                  flags: regexConfig.flags ?? '',
-                  groupBy: regexConfig.groupBy ?? 'match',
-                };
+                pattern: regexConfig.pattern ?? '',
+                flags: regexConfig.flags ?? '',
+                groupBy: regexConfig.groupBy ?? 'match',
+              };
             updateRegex({
               pattern: proposal.pattern,
               ...((proposal.flags ?? normalizedFlags)

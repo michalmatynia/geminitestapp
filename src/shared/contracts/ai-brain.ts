@@ -39,6 +39,7 @@ export type AiBrainFeature = z.infer<typeof aiBrainFeatureSchema>;
 export const aiBrainCapabilityKeySchema = z.enum([
   'ai_paths.model',
   'chatbot.reply',
+  'prompt_engine.prompt_exploder',
   'product.description.vision',
   'product.description.generation',
   'product.translation',

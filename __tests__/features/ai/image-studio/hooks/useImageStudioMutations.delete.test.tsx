@@ -93,7 +93,7 @@ describe('useDeleteStudioSlot', () => {
     );
 
     const cached = queryClient.getQueryData<StudioSlotsResponse>(slotsKey);
-    expect(cached?.slots.map((slot: any) => slot.id)).toEqual(['slot-keep']);
+    expect(cached?.slots.map((slot: ImageStudioSlotRecord) => slot.id)).toEqual(['slot-keep']);
     await waitFor(() => {
       expect(invalidateImageStudioSlots).toHaveBeenCalledWith(queryClient, projectId);
     });
@@ -129,7 +129,7 @@ describe('useDeleteStudioSlot', () => {
     });
 
     const cached = queryClient.getQueryData<StudioSlotsResponse>(slotsKey);
-    expect(cached?.slots.map((slot: any) => slot.id)).toEqual(['slot-keep']);
+    expect(cached?.slots.map((slot: ImageStudioSlotRecord) => slot.id)).toEqual(['slot-keep']);
     await waitFor(() => {
       expect(invalidateImageStudioSlots).toHaveBeenCalledWith(queryClient, projectId);
     });

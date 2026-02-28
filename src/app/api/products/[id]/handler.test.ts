@@ -17,7 +17,7 @@ const {
   invalidateProductMock: vi.fn(),
 }));
 
-vi.mock('@/features/products/services/productService', () => ({
+vi.mock('@/shared/lib/products/services/productService', () => ({
   productService: {
     updateProduct: updateProductMock,
     deleteProduct: deleteProductMock,

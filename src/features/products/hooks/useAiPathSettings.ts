@@ -159,8 +159,8 @@ export async function fetchPathSettings(queryClient: QueryClient): Promise<PathS
   const configsList: PathConfig[] = Object.values(configs);
   const orderedConfigs: PathConfig[] = settingsPathOrder.length
     ? settingsPathOrder
-        .map((id: string) => configs[id])
-        .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
+      .map((id: string) => configs[id])
+      .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
     : configsList;
 
   return {
@@ -210,10 +210,10 @@ export function findTriggerPath(
   const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
     Array.isArray(config?.nodes)
       ? config.nodes.some(
-          (node: AiNode) =>
-            node.type === 'trigger' &&
+        (node: AiNode) =>
+          node.type === 'trigger' &&
             (node.config?.trigger?.event ?? fallbackTriggerEventId) === triggerEvent
-        )
+      )
       : false
   );
   const serverTriggerCandidates = triggerCandidates.filter(

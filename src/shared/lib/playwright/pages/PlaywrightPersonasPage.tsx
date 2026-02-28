@@ -41,8 +41,8 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
 
     const next = existing
       ? personas.map((persona: PlaywrightPersona) =>
-          persona.id === existing.id ? nextPersona : persona
-        )
+        persona.id === existing.id ? nextPersona : persona
+      )
       : [...personas, nextPersona];
 
     try {

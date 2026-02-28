@@ -29,19 +29,23 @@ vi.mock('@/features/cms/components/page-builder/section-templates', () => ({
 
 // Mock Dialog components
 vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual('@/shared/ui');
+  const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
   return {
     ...actual,
-    Dialog: ({ children, open }: any) => (
+    Dialog: ({ children, open }: { children: React.ReactNode; open?: boolean }) => (
       <div data-testid='dialog'>
         {children}
         {open && <div data-testid='dialog-content' />}
       </div>
     ),
-    DialogContent: ({ children }: any) => <div data-testid='dialog-content'>{children}</div>,
-    DialogHeader: ({ children }: any) => <div>{children}</div>,
-    DialogTitle: ({ children }: any) => <div>{children}</div>,
-    DialogTrigger: ({ children }: any) => <div data-testid='dialog-trigger'>{children}</div>,
+    DialogContent: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid='dialog-content'>{children}</div>
+    ),
+    DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DialogTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DialogTrigger: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid='dialog-trigger'>{children}</div>
+    ),
   };
 });
 
@@ -55,7 +59,7 @@ describe('SectionPicker Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (usePageBuilder as any).mockImplementation(() => ({ dispatch: mockDispatch }));
+    vi.mocked(usePageBuilder).mockImplementation(() => ({ dispatch: mockDispatch } as any));
   });
 
   it('should render the add section button', () => {

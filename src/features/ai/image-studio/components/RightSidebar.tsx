@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { Button, DetailModal, useToast } from '@/shared/ui';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { cn } from '@/shared/utils';
 
 import { ImageStudioAnalysisTab } from './ImageStudioAnalysisTab';
@@ -108,7 +108,7 @@ export function RightSidebar(): React.JSX.Element {
   const { runMutation, isRunInFlight, activeRunStatus } = useGenerationState();
   const { handleRunGeneration } = useGenerationActions();
   const { setStudioSettings } = useSettingsActions();
-  const brainGenerationModel = useBrainModelOptions({
+  const brainGenerationModel = useBrainAssignment({
     capability: 'image_studio.general',
   });
 

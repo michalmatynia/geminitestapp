@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getIntegrationRepository } from '@/features/integrations/server';
-import { decryptSecret, encryptSecret } from '@/features/integrations/server';
-import { fetchBaseInventories } from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/shared/lib/integrations/server';
+import { decryptSecret, encryptSecret } from '@/shared/lib/integrations/server';
+import { fetchBaseInventories } from '@/shared/lib/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 

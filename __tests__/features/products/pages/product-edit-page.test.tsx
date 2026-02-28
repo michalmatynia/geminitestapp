@@ -10,6 +10,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import EditProductPage from '@/features/products/components/EditProductForm';
 import { server } from '@/mocks/server';
 import { ToastProvider } from '@/shared/ui/toast';
+import type { ProductWithImages } from '@/shared/contracts/products';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,8 +32,10 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '',
 }));
 
-const mockProduct = {
+const mockProduct: ProductWithImages = {
   id: '1',
+  name: { en: 'Test Product' },
+  description: { en: '' },
   name_en: 'Test Product',
   name_pl: 'Produkt Testowy',
   name_de: 'Testprodukt',
@@ -40,10 +43,15 @@ const mockProduct = {
   price: 100,
   stock: 10,
   images: [],
-  catalogs: [{ catalogId: 'c1' }],
+  catalogs: [{ catalogId: 'c1', assignedAt: new Date().toISOString(), productId: '1' }],
   categories: [],
   tags: [],
-} as any;
+  producers: [],
+  published: true,
+  catalogId: 'c1',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+} as unknown as ProductWithImages;
 
 describe('EditProductForm', () => {
   beforeEach(() => {

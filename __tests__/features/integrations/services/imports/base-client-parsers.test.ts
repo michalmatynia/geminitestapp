@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { fetchBaseCategoriesFromPayload } from '@/features/integrations/services/imports/base-client-parsers';
+import { fetchBaseCategoriesFromPayload } from '@/shared/lib/integrations/services/imports/base-client-parsers';
 
 describe('base-client-parsers categories', () => {
   it('flattens nested category trees and infers parent IDs from hierarchy', () => {

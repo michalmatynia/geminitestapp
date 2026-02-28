@@ -8,7 +8,7 @@ import { GET } from '@/app/api/products/migrate/route';
 vi.mock('@/features/products/server', () => ({
   getProductMigrationTotal: vi.fn().mockResolvedValue(100),
   migrateProductBatch: vi.fn().mockResolvedValue({ migrated: 10, nextCursor: 'next' }),
-  parseJsonBody: async (req: any) => {
+  parseJsonBody: async (req: NextRequest) => {
     try {
       const body = await req.json();
       return { ok: true, data: body };

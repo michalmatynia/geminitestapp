@@ -23,6 +23,7 @@ import {
   buildAutoScalerRequestId,
   layoutCanvasImageObject,
   centerCanvasImageObject,
+  centerCanvasImageObjectWhiteBg,
   dataUrlToUploadBlob,
   withCenterRetry,
   withAutoScalerRetry,
@@ -113,6 +114,7 @@ export function useGenerationToolbarHandlers(
     workingSourceSignature,
     projectCanvasSize,
     centerLayoutPayload,
+    centerLayoutWhiteThresholdValue,
     autoScaleLayoutPayload,
     getPreviewCanvasViewportCrop,
     getPreviewCanvasImageFrame,
@@ -326,15 +328,15 @@ export function useGenerationToolbarHandlers(
       const payloadMasks = variants.map(({ variant, inverted }) =>
         maskAttachMode === 'client_canvas_polygon'
           ? {
-              variant,
-              inverted,
-              dataUrl: renderMaskDataUrlFromPolygons(polygons, width, height, variant, inverted),
-            }
+            variant,
+            inverted,
+            dataUrl: renderMaskDataUrlFromPolygons(polygons, width, height, variant, inverted),
+          }
           : {
-              variant,
-              inverted,
-              polygons,
-            }
+            variant,
+            inverted,
+            polygons,
+          }
       );
 
       await api.post<{
@@ -563,7 +565,9 @@ export function useGenerationToolbarHandlers(
       return;
     }
     const isClientCenterMode =
-      centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1';
+      centerMode === 'client_alpha_bbox' ||
+      centerMode === 'client_object_layout_v1' ||
+      centerMode === 'client_white_bg_bbox';
     if (isClientCenterMode && !clientProcessingImageSrc) {
       toast('No client image source is available for centering/layouting.', { variant: 'info' });
       return;
@@ -609,7 +613,12 @@ export function useGenerationToolbarHandlers(
           const centeredDataUrl =
             centerMode === 'client_object_layout_v1'
               ? (await layoutCanvasImageObject(sourceForClientCenter, centerLayoutPayload)).dataUrl
-              : await centerCanvasImageObject(sourceForClientCenter);
+              : centerMode === 'client_white_bg_bbox'
+                ? await centerCanvasImageObjectWhiteBg(
+                  sourceForClientCenter,
+                  centerLayoutWhiteThresholdValue
+                )
+                : await centerCanvasImageObject(sourceForClientCenter);
           let uploadBlob: Blob;
           try {
             uploadBlob = await dataUrlToUploadBlob(centeredDataUrl);
@@ -617,7 +626,9 @@ export function useGenerationToolbarHandlers(
             throw new Error(
               centerMode === 'client_object_layout_v1'
                 ? 'Failed to prepare client layout output for upload.'
-                : 'Failed to prepare client centered image for upload.'
+                : centerMode === 'client_white_bg_bbox'
+                  ? 'Failed to prepare client white-bg centered image for upload.'
+                  : 'Failed to prepare client centered image for upload.'
             );
           }
 
@@ -718,9 +729,9 @@ export function useGenerationToolbarHandlers(
         const createdSlotId = response.slot?.id ?? '';
         const mergedSlots = createdSlotId
           ? [
-              response.slot,
-              ...slotsSnapshot.filter((slot: ImageStudioSlotRecord) => slot.id !== createdSlotId),
-            ]
+            response.slot,
+            ...slotsSnapshot.filter((slot: ImageStudioSlotRecord) => slot.id !== createdSlotId),
+          ]
           : slotsSnapshot;
         queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
           slots: mergedSlots,
@@ -749,6 +760,7 @@ export function useGenerationToolbarHandlers(
     }
   }, [
     centerLayoutPayload,
+    centerLayoutWhiteThresholdValue,
     centerMode,
     clientProcessingImageSrc,
     fetchProjectSlots,
@@ -901,9 +913,9 @@ export function useGenerationToolbarHandlers(
         const createdSlotId = response.slot?.id ?? '';
         const mergedSlots = createdSlotId
           ? [
-              response.slot,
-              ...slotsSnapshot.filter((slot: ImageStudioSlotRecord) => slot.id !== createdSlotId),
-            ]
+            response.slot,
+            ...slotsSnapshot.filter((slot: ImageStudioSlotRecord) => slot.id !== createdSlotId),
+          ]
           : slotsSnapshot;
         queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
           slots: mergedSlots,

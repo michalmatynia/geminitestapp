@@ -4,7 +4,7 @@ import { z } from 'zod';
 import {
   deleteSimpleParameter,
   updateSimpleParameter,
-} from '@/features/products/services/simple-parameter-service';
+} from '@/shared/lib/products/services/simple-parameter-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const productSimpleParameterUpdateSchema = z.object({

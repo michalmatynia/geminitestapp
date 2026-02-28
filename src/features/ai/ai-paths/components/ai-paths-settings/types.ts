@@ -218,7 +218,6 @@ export interface UseAiPathsSettingsStateReturn {
   configOpen: boolean;
   nodeConfigDirty: boolean;
   setNodeConfigDirty: React.Dispatch<React.SetStateAction<boolean>>;
-  modelOptions: string[];
   parserSamples: Record<string, ParserSampleState>;
   setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
   parserSampleLoading: boolean;

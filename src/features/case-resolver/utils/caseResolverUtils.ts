@@ -216,7 +216,7 @@ const stripHtmlToComparablePlainText = (value: string): string =>
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&quot;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#39;|&apos;/gi, '\'')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -225,7 +225,7 @@ const HISTORY_PREVIEW_ENTITY_MAP: Record<string, string> = {
   lt: '<',
   gt: '>',
   quot: '"',
-  apos: "'",
+  apos: '\'',
   nbsp: ' ',
 };
 

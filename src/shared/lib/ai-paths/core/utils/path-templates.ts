@@ -37,7 +37,7 @@ const GEMMA_VISION_MODEL_TEMPLATE: AiPathTemplate = {
   description:
     'Image Studio → Fetcher → Prompt → vision model → bounds extraction → canvas repositioning. ' +
     'Edit detection instructions in the "Vision Prompt" node. ' +
-    'Configure the model (modelId, temperature, systemPrompt) in the "Gemma Vision Analysis" node. ' +
+    'Configure AI Brain routing plus the node temperature and systemPrompt in the "Gemma Vision Analysis" node. ' +
     'Output: { left, top, width, height } consumed by Image Studio automatically.',
   nodes: [
     {
@@ -97,13 +97,12 @@ const GEMMA_VISION_MODEL_TEMPLATE: AiPathTemplate = {
       type: 'model',
       title: 'Gemma Vision Analysis',
       description:
-        'Standard vision model node. Receives the prompt text and image URLs. Change modelId to switch models. Edit systemPrompt for a concise system role.',
+        'Standard vision model node. Receives the prompt text and image URLs. Model selection comes from AI Brain. Edit systemPrompt for a concise system role.',
       inputs: ['prompt', 'images'],
       outputs: ['result', 'jobId'],
       position: { x: 1120, y: 400 },
       config: {
         model: {
-          modelId: 'gemma',
           vision: true,
           temperature: 0.1,
           maxTokens: 256,
@@ -116,7 +115,7 @@ const GEMMA_VISION_MODEL_TEMPLATE: AiPathTemplate = {
       id: 'node-regex',
       type: 'regex',
       title: 'Extract Bounds JSON',
-      description: "Pulls the JSON object out of the model's text response.",
+      description: 'Pulls the JSON object out of the model\'s text response.',
       inputs: ['value'],
       outputs: ['result'],
       position: { x: 1460, y: 400 },

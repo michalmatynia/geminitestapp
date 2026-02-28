@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { generateAnalyticsInsight } from '@/features/ai/insights/generator';
-import { listAiInsights } from '@/features/ai/insights/repository';
+import { generateAnalyticsInsight } from '@/shared/lib/ai/insights/generator';
+import { listAiInsights } from '@/shared/lib/ai/insights/repository';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

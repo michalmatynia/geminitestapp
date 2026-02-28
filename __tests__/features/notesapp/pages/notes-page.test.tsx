@@ -146,7 +146,7 @@ describe('Notes page UI', () => {
           notes: notes
             .filter((note: NoteWithRelations) =>
               note.categories?.some(
-                (cat: any) => (cat as { categoryId: string }).categoryId === category.id
+                (cat) => (cat as { categoryId: string }).categoryId === category.id
               )
             )
             .map((note: NoteWithRelations) => ({

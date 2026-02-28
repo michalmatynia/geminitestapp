@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { enqueueProductAiJob } from '@/features/jobs/server';
-import { startProductAiJobQueue, processSingleJob } from '@/features/jobs/server';
+import { startProductAiJobQueue, processProductAiJob } from '@/features/jobs/server';
 import { logSystemEvent, ErrorSystem } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
@@ -44,12 +44,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     // since setInterval doesn't persist across function invocations
     await logSystemEvent({
       level: 'info',
-      message: `[api/products/ai-jobs/enqueue] About to call processSingleJob for job ${job.id}`,
+      message: `[api/products/ai-jobs/enqueue] About to call processProductAiJob for job ${job.id}`,
       context: { jobId: job.id },
     });
 
     // Process the job asynchronously but log any errors
-    processSingleJob(job.id)
+    processProductAiJob(job.id)
       .then(async (): Promise<void> => {
         await logSystemEvent({
           level: 'info',

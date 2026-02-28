@@ -54,7 +54,7 @@ describe('CMS Domain Service', () => {
   });
 
   describe('resolveCmsDomainByHost', () => {
-    it("creates a new domain if it doesn't exist", async () => {
+    it('creates a new domain if it doesn\'t exist', async () => {
       mockCollection.findOne.mockResolvedValue(null);
       mockCollection.insertOne.mockResolvedValue({ insertedId: 'mock-domain-uuid' });
 

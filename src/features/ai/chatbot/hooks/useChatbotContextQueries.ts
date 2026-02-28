@@ -35,7 +35,7 @@ export function useChatbotContextSettingsQuery(): ListQuery<SettingRecord> {
 export function useSaveChatbotContextMutation(): MutationResult<
   SettingRecord,
   { key: string; value: string; errorLabel: string }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.ai.chatbot.mutation('save-context');
   return createUpdateMutationV2<SettingRecord, { key: string; value: string; errorLabel: string }>({
@@ -60,7 +60,7 @@ export function useSaveChatbotContextMutation(): MutationResult<
 export function useUploadChatbotContextPdfMutation(): MutationResult<
   { segments: ChatbotContextSegmentDto[] },
   { file: File; helpers?: FileUploadHelpers }
-> {
+  > {
   const mutationKey = QUERY_KEYS.ai.chatbot.mutation('upload-context-pdf');
   return createCreateMutationV2({
     mutationFn: ({ file, helpers }) =>

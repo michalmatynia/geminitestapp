@@ -69,6 +69,13 @@ export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabi
     policy: 'model-only',
     modelFamily: 'chat',
   },
+  'prompt_engine.prompt_exploder': {
+    key: 'prompt_engine.prompt_exploder',
+    feature: 'prompt_engine',
+    label: 'Prompt Exploder AI',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
   'product.description.vision': {
     key: 'product.description.vision',
     feature: 'products',
@@ -284,7 +291,7 @@ export const DEFAULT_BRAIN_CAPABILITY_BY_FEATURE: Record<AiBrainFeature, AiBrain
   case_resolver: 'case_resolver.ocr',
   agent_runtime: 'agent_runtime.default',
   agent_teaching: 'agent_teaching.chat',
-  prompt_engine: 'image_studio.prompt_extract',
+  prompt_engine: 'prompt_engine.prompt_exploder',
 };
 
 export const defaultBrainAssignment: AiBrainAssignment = {

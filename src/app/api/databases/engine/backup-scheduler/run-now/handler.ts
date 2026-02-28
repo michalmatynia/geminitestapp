@@ -7,7 +7,7 @@ import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/d
 import {
   enqueueProductAiJob,
   enqueueProductAiJobToQueue,
-  processSingleJob,
+  processProductAiJob,
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import { logSystemError } from '@/features/observability/server';
@@ -84,7 +84,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         context: { jobId: job.id, dbType },
       });
 
-      await processSingleJob(job.id);
+      await processProductAiJob(job.id);
       inlineProcessed.push({ dbType, jobId: job.id });
     }
   }

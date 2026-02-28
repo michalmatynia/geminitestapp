@@ -20,7 +20,6 @@ export default defineConfig({
       '@/__tests__': path.resolve(__dirname, './__tests__'),
       '@': path.resolve(__dirname, './src'),
       'server-only': path.resolve(__dirname, './__tests__/mocks/server-only.js'),
-      'next/server': path.resolve(__dirname, './node_modules/next/server.js'),
     },
   },
 });

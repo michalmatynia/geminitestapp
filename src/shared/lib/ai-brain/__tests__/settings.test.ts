@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   defaultBrainSettings,
+  getDefaultCapabilityForFeature,
   getBrainCapabilityDefinition,
   resolveBrainCapabilityAssignment,
   sanitizeBrainAssignment,
@@ -47,6 +48,13 @@ describe('ai-brain settings helpers', () => {
   it('classifies image studio general as image generation', () => {
     expect(getBrainCapabilityDefinition('image_studio.general').modelFamily).toBe(
       'image_generation'
+    );
+  });
+
+  it('maps prompt engine to the dedicated prompt exploder capability', () => {
+    expect(getDefaultCapabilityForFeature('prompt_engine')).toBe('prompt_engine.prompt_exploder');
+    expect(getBrainCapabilityDefinition('prompt_engine.prompt_exploder').feature).toBe(
+      'prompt_engine'
     );
   });
 

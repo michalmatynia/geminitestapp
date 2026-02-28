@@ -11,22 +11,22 @@ import {
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
   getDatabaseBackupSchedulerQueueStatus,
   startDatabaseBackupSchedulerQueue,
-} from '@/features/jobs/workers/databaseBackupSchedulerQueue';
+} from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
     (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
-    async (req: NextRequest): Promise<Response> =>
-      handler(req, {
-        requestId: 'test-request-id',
-      }),
+      async (req: NextRequest): Promise<Response> =>
+        handler(req, {
+          requestId: 'test-request-id',
+        }),
 }));
 
 vi.mock('@/shared/lib/db/services/database-backup-scheduler', () => ({
   getDatabaseBackupSchedulerStatus: vi.fn(),
 }));
 
-vi.mock('@/features/jobs/workers/databaseBackupSchedulerQueue', () => ({
+vi.mock('@/shared/lib/db/workers/databaseBackupSchedulerQueue', () => ({
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS: 60_000,
   startDatabaseBackupSchedulerQueue: vi.fn(),
   getDatabaseBackupSchedulerQueueStatus: vi.fn(),

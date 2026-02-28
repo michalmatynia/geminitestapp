@@ -23,7 +23,7 @@ vi.mock('next-auth/react', () => ({
     data: { user: { name: 'Test User', email: 'test@example.com' } },
     status: 'authenticated',
   })),
-  SessionProvider: ({ children }: any) => children,
+  SessionProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 // Mock NoteSettingsProvider

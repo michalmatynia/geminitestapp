@@ -21,8 +21,8 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
   normalizeProductValidationInstanceDenyBehaviorMap,
-} from '@/features/products/utils/validator-instance-behavior';
-import { encodeDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+} from '@/shared/lib/products/utils/validator-instance-behavior';
+import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,

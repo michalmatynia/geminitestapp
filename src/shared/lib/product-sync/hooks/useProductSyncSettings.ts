@@ -121,7 +121,7 @@ export function useProductSyncRunDetail(
 export function useCreateProductSyncProfileMutation(): CreateMutation<
   ProductSyncProfile,
   Partial<ProductSyncProfile>
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.syncProfiles();
   return createCreateMutationV2({
@@ -145,7 +145,7 @@ export function useCreateProductSyncProfileMutation(): CreateMutation<
 export function useUpdateProductSyncProfileMutation(): UpdateMutation<
   ProductSyncProfile,
   { id: string; data: Partial<ProductSyncProfile> }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.syncProfiles();
   return createUpdateMutationV2({
@@ -191,7 +191,7 @@ export function useDeleteProductSyncProfileMutation(): DeleteMutation {
 export function useRunProductSyncProfileMutation(): MutationResult<
   ProductSyncRunRecord,
   { profileId: string }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.syncRuns(null);
   return createMutationV2({
@@ -222,7 +222,7 @@ export function useRunProductSyncProfileMutation(): MutationResult<
 export function useRelinkBaseProductsMutation(): MutationResult<
   { status: string; jobId: string },
   { connectionId?: string; inventoryId?: string; catalogId?: string | null; limit?: number }
-> {
+  > {
   const mutationKey = productSettingsKeys.syncProfiles();
   return createMutationV2({
     mutationFn: (payload) =>

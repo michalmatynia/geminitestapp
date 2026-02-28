@@ -313,9 +313,9 @@ export function useGenerationToolbarState(): GenerationToolbarState {
       fillMissingCanvasWhite,
       ...(fillMissingCanvasWhite && projectCanvasSize
         ? {
-            targetCanvasWidth: projectCanvasSize.width,
-            targetCanvasHeight: projectCanvasSize.height,
-          }
+          targetCanvasWidth: projectCanvasSize.width,
+          targetCanvasHeight: projectCanvasSize.height,
+        }
         : {}),
       whiteThreshold: centerLayoutWhiteThresholdValue,
       chromaThreshold: centerLayoutChromaThresholdValue,
@@ -357,9 +357,9 @@ export function useGenerationToolbarState(): GenerationToolbarState {
       fillMissingCanvasWhite,
       ...(fillMissingCanvasWhite && projectCanvasSize
         ? {
-            targetCanvasWidth: projectCanvasSize.width,
-            targetCanvasHeight: projectCanvasSize.height,
-          }
+          targetCanvasWidth: projectCanvasSize.width,
+          targetCanvasHeight: projectCanvasSize.height,
+        }
         : {}),
       whiteThreshold: centerLayoutWhiteThresholdValue,
       chromaThreshold: centerLayoutChromaThresholdValue,

@@ -2,11 +2,11 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
-import { GenericItemMapper } from '@/features/integrations/components/marketplaces/category-mapper/GenericItemMapper';
-import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
+import { GenericItemMapper } from '@/shared/lib/integrations/components/marketplaces/category-mapper/GenericItemMapper';
+import { useCategoryMapper } from '@/shared/lib/integrations/context/CategoryMapperContext';
 
 // Mock the context hook
-vi.mock('@/features/integrations/context/CategoryMapperContext', () => ({
+vi.mock('@/shared/lib/integrations/context/CategoryMapperContext', () => ({
   useCategoryMapper: vi.fn(),
 }));
 

@@ -1,7 +1,7 @@
 import {
   buildCaseResolverCaptureProposalState,
   type CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture/proposals';
+} from '@/shared/lib/case-resolver-capture/proposals';
 import {
   deriveDocumentContentSync,
   ensureSafeDocumentHtml,
@@ -203,12 +203,12 @@ const buildPromptExploderPayloadKey = (payload: PromptExploderBridgePayload): st
   payload.transferId?.trim()
     ? payload.transferId.trim()
     : [
-        normalizePayloadCreatedAt(payload.createdAt),
-        payload.caseResolverContext?.fileId ?? '',
-        payload.prompt,
-        JSON.stringify(payload.caseResolverParties ?? null),
-        JSON.stringify(payload.caseResolverMetadata ?? null),
-      ].join('|');
+      normalizePayloadCreatedAt(payload.createdAt),
+      payload.caseResolverContext?.fileId ?? '',
+      payload.prompt,
+      JSON.stringify(payload.caseResolverParties ?? null),
+      JSON.stringify(payload.caseResolverMetadata ?? null),
+    ].join('|');
 
 export const resolvePromptExploderPendingPayloadIdentity = (
   payload: Pick<

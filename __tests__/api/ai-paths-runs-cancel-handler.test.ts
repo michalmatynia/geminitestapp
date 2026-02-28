@@ -42,7 +42,7 @@ vi.mock('@/features/ai/ai-paths/services/path-run-service', () => ({
   cancelPathRunWithRepository: cancelPathRunWithRepositoryMock,
 }));
 
-vi.mock('@/features/jobs/workers/aiPathRunQueue', () => ({
+vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
   removePathRunQueueEntries: removePathRunQueueEntriesMock,
 }));
 

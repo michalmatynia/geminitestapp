@@ -68,8 +68,8 @@ export function createMasterFolderTreeAdapter<TEntity extends string>({
     fetchState ??
     (loadNodes
       ? async (): Promise<{ nodes: MasterTreeNode[] }> => ({
-          nodes: await loadNodes(),
-        })
+        nodes: await loadNodes(),
+      })
       : undefined);
 
   return createMasterFolderTreeAdapterV3({
@@ -77,48 +77,48 @@ export function createMasterFolderTreeAdapter<TEntity extends string>({
     ...(resolvedFetchState ? { fetchState: resolvedFetchState } : {}),
     handlers: handlers
       ? {
-          onMove: async ({
+        onMove: async ({
+          operation,
+          context,
+          node,
+          targetParent,
+        }): Promise<MasterTreeNode[] | void> =>
+          await handlers.onMove?.({
             operation,
-            context,
+            context: context,
             node,
             targetParent,
-          }): Promise<MasterTreeNode[] | void> =>
-            await handlers.onMove?.({
-              operation,
-              context: context,
-              node,
-              targetParent,
-            }),
-          onReorder: async ({
+          }),
+        onReorder: async ({
+          operation,
+          context,
+          node,
+          target,
+        }): Promise<MasterTreeNode[] | void> =>
+          await handlers.onReorder?.({
             operation,
-            context,
+            context: context,
             node,
             target,
-          }): Promise<MasterTreeNode[] | void> =>
-            await handlers.onReorder?.({
-              operation,
-              context: context,
-              node,
-              target,
-            }),
-          onRename: async ({
+          }),
+        onRename: async ({
+          operation,
+          context,
+          node,
+          nextName,
+        }): Promise<MasterTreeNode[] | void> =>
+          await handlers.onRename?.({
             operation,
-            context,
+            context: context,
             node,
             nextName,
-          }): Promise<MasterTreeNode[] | void> =>
-            await handlers.onRename?.({
-              operation,
-              context: context,
-              node,
-              nextName,
-            }),
-          onReplaceNodes: async ({ operation, context }): Promise<MasterTreeNode[] | void> =>
-            await handlers.onReplaceNodes?.({
-              operation,
-              context: context,
-            }),
-        }
+          }),
+        onReplaceNodes: async ({ operation, context }): Promise<MasterTreeNode[] | void> =>
+          await handlers.onReplaceNodes?.({
+            operation,
+            context: context,
+          }),
+      }
       : undefined,
   });
 }

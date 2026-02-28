@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { listBaseImportRuns } from '@/features/integrations/services/imports/base-import-run-repository';
-import { startBaseImportRunResponse } from '@/features/integrations/services/imports/base-import-run-starter';
+import { listBaseImportRuns } from '@/shared/lib/integrations/services/imports/base-import-run-repository';
+import { startBaseImportRunResponse } from '@/shared/lib/integrations/services/imports/base-import-run-starter';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const startRunSchema = z.object({

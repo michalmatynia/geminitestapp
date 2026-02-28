@@ -8,7 +8,7 @@ import { useProductValidationState } from '@/features/products/context/ProductVa
 import {
   isPatternEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,
-} from '@/features/products/utils/validator-instance-behavior';
+} from '@/shared/lib/products/utils/validator-instance-behavior';
 import {
   applyResolvedReplacement,
   buildSequenceGroupCounts,

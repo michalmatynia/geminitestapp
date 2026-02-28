@@ -13,7 +13,7 @@ import {
 } from './services/storage/file-storage-service';
 import { noteService } from '@/features/notesapp/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { ProductDbProvider } from '@/features/products/services/product-provider';
+import type { ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 

@@ -514,9 +514,9 @@ const readAutoScaleMetadataFromSlot = (
       : null;
     const candidateDetections = candidateDetectionsRaw
       ? {
-          alpha_bbox: alphaCandidate,
-          white_bg_first_colored_pixel: whiteCandidate,
-        }
+        alpha_bbox: alphaCandidate,
+        white_bg_first_colored_pixel: whiteCandidate,
+      }
       : undefined;
 
     return {
@@ -774,9 +774,9 @@ async function processAutoScalerPayload(input: {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : autoScaleBadRequest(
-          IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.SOURCE_IMAGE_MISSING,
-          'Server auto scaler requires a resolvable source image.'
-        );
+        IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.SOURCE_IMAGE_MISSING,
+        'Server auto scaler requires a resolvable source image.'
+      );
   }
 
   if (uploadedClientImage) {
@@ -1275,10 +1275,10 @@ export async function postAutoScaleSlotHandler(
     const normalizedError =
       error instanceof z.ZodError
         ? autoScaleBadRequest(
-            IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.OUTPUT_INVALID,
-            'Auto scaler schema validation failed.',
-            { responseErrors: error.format() }
-          )
+          IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.OUTPUT_INVALID,
+          'Auto scaler schema validation failed.',
+          { responseErrors: error.format() }
+        )
         : error;
 
     void logSystemEvent({

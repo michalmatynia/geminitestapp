@@ -187,7 +187,6 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         updatedAt: timestamp,
         config: {
           model: {
-            modelId: 'gemma3:12b',
             temperature: 0,
             maxTokens: 900,
             vision: false,
@@ -447,7 +446,6 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         updatedAt: timestamp,
         config: {
           model: {
-            modelId: 'gemma3:12b',
             temperature: 0.2,
             maxTokens: 900,
             vision: true,
@@ -784,7 +782,7 @@ export const needsParameterInferenceConfigUpgrade = (raw: string | undefined): b
       typeof (triggerNode['config'] as Record<string, unknown>)['trigger'] === 'object'
         ? (
             (triggerNode['config'] as Record<string, unknown>)['trigger'] as Record<string, unknown>
-          )['event']
+        )['event']
         : null;
     if (triggerEvent !== PARAMETER_INFERENCE_TRIGGER_BUTTON_ID) return true;
 
@@ -907,8 +905,8 @@ export const needsParameterInferenceConfigUpgrade = (raw: string | undefined): b
       (promptNode['config'] as Record<string, unknown>)['prompt'] &&
       typeof (promptNode['config'] as Record<string, unknown>)['prompt'] === 'object'
         ? ((promptNode['config'] as Record<string, unknown>)['prompt'] as Record<string, unknown>)[
-            'template'
-          ]
+          'template'
+        ]
         : null;
     if (
       typeof promptTemplate !== 'string' ||
@@ -931,7 +929,7 @@ export const needsParameterInferenceConfigUpgrade = (raw: string | undefined): b
               string,
               unknown
             >
-          )['template']
+        )['template']
         : null;
     if (
       typeof templatePromptTemplate !== 'string' ||
@@ -954,7 +952,7 @@ export const needsParameterInferenceConfigUpgrade = (raw: string | undefined): b
               string,
               unknown
             >
-          )['mode']
+        )['mode']
         : null;
     if (templateRegexMode !== 'extract') return true;
 
@@ -1087,8 +1085,8 @@ export const needsParameterInferenceConfigUpgrade = (raw: string | undefined): b
       parserNode['config'] !== null &&
       typeof (parserNode['config'] as Record<string, unknown>)['parser'] === 'object'
         ? ((parserNode['config'] as Record<string, unknown>)['parser'] as Record<string, unknown>)[
-            'mappings'
-          ]
+          'mappings'
+        ]
         : null;
     const catalogIdMapping =
       parserMappings && typeof parserMappings === 'object' && 'catalogId' in parserMappings

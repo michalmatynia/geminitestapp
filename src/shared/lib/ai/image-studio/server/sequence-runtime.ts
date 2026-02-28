@@ -21,8 +21,8 @@ import {
   enqueueImageStudioSequenceJob,
   startImageStudioSequenceQueue,
   type ImageStudioSequenceDispatchMode,
-} from '@/features/jobs/workers/imageStudioSequenceQueue';
-import { getSettingValue } from '@/features/products/services/aiDescriptionService';
+} from '@/features/ai/image-studio/workers/imageStudioSequenceQueue';
+import { getSettingValue } from '@/shared/lib/products/services/aiDescriptionService';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 
 type SequenceStepInputLike = {

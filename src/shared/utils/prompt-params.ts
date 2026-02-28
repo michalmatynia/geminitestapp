@@ -75,7 +75,7 @@ function segmentizeJsLikeText(input: string): Segment[] {
 
     if (kind === 'single_string') {
       buf += char;
-      if (!state.escaped && char === "'") {
+      if (!state.escaped && char === '\'') {
         state.inSingle = false;
         flush();
         kind = 'code';
@@ -123,12 +123,12 @@ function segmentizeJsLikeText(input: string): Segment[] {
       index += 1;
       continue;
     }
-    if (char === "'") {
+    if (char === '\'') {
       flush();
       kind = 'single_string';
       state.inSingle = true;
       state.escaped = false;
-      buf = "'";
+      buf = '\'';
       continue;
     }
     if (char === '"') {
@@ -205,7 +205,7 @@ export function findMatchingBrace(input: string, startIndex: number): number {
     }
 
     if (state.inSingle) {
-      if (!state.escaped && char === "'") state.inSingle = false;
+      if (!state.escaped && char === '\'') state.inSingle = false;
       state.escaped = !state.escaped && char === '\\';
       continue;
     }
@@ -231,7 +231,7 @@ export function findMatchingBrace(input: string, startIndex: number): number {
       continue;
     }
 
-    if (char === "'") {
+    if (char === '\'') {
       state.inSingle = true;
       state.escaped = false;
       continue;
@@ -282,7 +282,7 @@ export function stripJsComments(input: string): string {
 
     if (state.inSingle) {
       out.push(char);
-      if (!state.escaped && char === "'") state.inSingle = false;
+      if (!state.escaped && char === '\'') state.inSingle = false;
       state.escaped = !state.escaped && char === '\\';
       continue;
     }
@@ -311,7 +311,7 @@ export function stripJsComments(input: string): string {
     }
 
     out.push(char);
-    if (char === "'") state.inSingle = true;
+    if (char === '\'') state.inSingle = true;
     if (char === '"') state.inDouble = true;
     if (char === '`') state.inTemplate = true;
   }
@@ -329,7 +329,7 @@ export function removeTrailingCommas(input: string): string {
     if (isInString(state)) {
       out.push(char);
       if (state.inSingle) {
-        if (!state.escaped && char === "'") state.inSingle = false;
+        if (!state.escaped && char === '\'') state.inSingle = false;
         state.escaped = !state.escaped && char === '\\';
         continue;
       }
@@ -346,7 +346,7 @@ export function removeTrailingCommas(input: string): string {
       continue;
     }
 
-    if (char === "'") {
+    if (char === '\'') {
       state.inSingle = true;
       out.push(char);
       continue;
@@ -505,7 +505,7 @@ function splitLineCodeAndLineComment(line: string): { code: string; comment: str
     const next = line[index + 1] ?? '';
 
     if (state.inSingle) {
-      if (!state.escaped && char === "'") state.inSingle = false;
+      if (!state.escaped && char === '\'') state.inSingle = false;
       state.escaped = !state.escaped && char === '\\';
       continue;
     }
@@ -524,7 +524,7 @@ function splitLineCodeAndLineComment(line: string): { code: string; comment: str
       return { code: line.slice(0, index), comment: line.slice(index + 2) };
     }
 
-    if (char === "'") {
+    if (char === '\'') {
       state.inSingle = true;
       state.escaped = false;
       continue;

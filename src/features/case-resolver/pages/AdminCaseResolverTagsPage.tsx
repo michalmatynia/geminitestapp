@@ -173,20 +173,20 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       formData.parentId && formData.parentId !== editingTag?.id ? formData.parentId : null;
     const nextTag: CaseResolverTag = editingTag
       ? {
-          ...editingTag,
-          label: normalizedName,
-          parentId: normalizedParentId,
-          color: formData.color.trim() || '#38bdf8',
-          updatedAt: now,
-        }
+        ...editingTag,
+        label: normalizedName,
+        parentId: normalizedParentId,
+        color: formData.color.trim() || '#38bdf8',
+        updatedAt: now,
+      }
       : {
-          id: createTagId(),
-          label: normalizedName,
-          parentId: normalizedParentId,
-          color: formData.color.trim() || '#38bdf8',
-          createdAt: now,
-          updatedAt: now,
-        };
+        id: createTagId(),
+        label: normalizedName,
+        parentId: normalizedParentId,
+        color: formData.color.trim() || '#38bdf8',
+        createdAt: now,
+        updatedAt: now,
+      };
 
     const nextTags = editingTag
       ? tags.map((tag: CaseResolverTag) => (tag.id === editingTag.id ? nextTag : tag))
@@ -216,10 +216,10 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
         (tag: CaseResolverTag): CaseResolverTag =>
           tag.parentId === tagToDelete.id
             ? {
-                ...tag,
-                parentId: null,
-                updatedAt: now,
-              }
+              ...tag,
+              parentId: null,
+              updatedAt: now,
+            }
             : tag
       );
     try {

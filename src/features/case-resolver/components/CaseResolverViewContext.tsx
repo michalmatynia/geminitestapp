@@ -13,8 +13,8 @@ import type {
 import type {
   CaseResolverCaptureProposalState,
   CaseResolverCaptureDocumentDateAction,
-} from '@/features/case-resolver-capture/proposals';
-import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
+} from '@/shared/lib/case-resolver-capture/proposals';
+import type { CaseResolverCaptureAction } from '@/shared/lib/case-resolver-capture/settings';
 
 export type WorkspaceView = 'document' | 'relations';
 export type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';

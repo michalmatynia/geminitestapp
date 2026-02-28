@@ -476,10 +476,10 @@ export const evaluateDataContractPreflight = (
     scopeMode === 'reachable_from_roots'
       ? buildReachableScope(args.nodes, sanitizedEdges, args.scopeRootNodeIds)
       : {
-          nodes: args.nodes,
-          edges: sanitizedEdges,
-          reachableNodeIds: new Set(args.nodes.map((node: AiNode): string => node.id)),
-        };
+        nodes: args.nodes,
+        edges: sanitizedEdges,
+        reachableNodeIds: new Set(args.nodes.map((node: AiNode): string => node.id)),
+      };
 
   const nodes = scoped.nodes;
   const edges = scoped.edges;

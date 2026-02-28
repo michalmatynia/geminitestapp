@@ -4,7 +4,6 @@ import {
   TRIGGER_EVENTS,
   PARSER_PRESETS,
   DEFAULT_DB_QUERY,
-  DEFAULT_MODELS,
   DEFAULT_CONTEXT_ROLE,
 } from '../constants';
 import { palette } from '../definitions';
@@ -448,7 +447,6 @@ export const getDefaultConfigForType = (
   if (type === 'model') {
     return {
       model: {
-        modelId: DEFAULT_MODELS[0] ?? 'gpt-4o',
         temperature: 0.7,
         maxTokens: 800,
         vision: (inputs ?? []).includes('images'),

@@ -152,7 +152,7 @@ export function useUpdateSetting(): MutationResult<SystemSetting, { key: string;
 export function useUpdateSettingsBulk(): MutationResult<
   SystemSetting[],
   Array<{ key: string; value: string }>
-> {
+  > {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2<SystemSetting[], Array<{ key: string; value: string }>>({

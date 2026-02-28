@@ -109,7 +109,7 @@ describe('RegisterPage', () => {
     vi.mocked(useSettingsMap).mockReturnValue({
       isLoading: false,
       data: new Map([['auth_user_pages', JSON.stringify({ allowSignup: false })]]),
-    } as any);
+    } as unknown as ReturnType<typeof useSettingsMap>);
 
     renderPage();
 

@@ -43,17 +43,17 @@ describe('useCmsDomainSelection Hook', () => {
     queryClient = createTestQueryClient();
 
     // Default mock implementations
-    (useCmsDomains as any).mockReturnValue({ data: mockDomains, isLoading: false });
-    (useSettingsMap as any).mockReturnValue({
+    vi.mocked(useCmsDomains).mockReturnValue({ data: mockDomains, isLoading: false } as any);
+    vi.mocked(useSettingsMap).mockReturnValue({
       data: new Map([['cms_domain_settings.v1', JSON.stringify({ zoningEnabled: true })]]),
       isLoading: false,
-    });
-    (useSettingsStore as any).mockReturnValue({
+    } as any);
+    vi.mocked(useSettingsStore).mockReturnValue({
       get: vi.fn((key) => {
         if (key === 'cms_domain_settings.v1') return JSON.stringify({ zoningEnabled: true });
         return null;
       }),
-    });
+    } as any);
 
     server.use(
       http.get('/api/user/preferences', () => {
@@ -104,14 +104,13 @@ describe('useCmsDomainSelection Hook', () => {
   });
 
   it('should handle setting active domain', async () => {
-    let capturedBody: any = null;
-    server.use(
-      http.patch('/api/user/preferences', async ({ request }) => {
-        capturedBody = await request.json();
-        return HttpResponse.json(capturedBody);
-      })
-    );
-
+    let capturedBody: unknown = null;
+          server.use(
+            http.patch('/api/user/preferences', async ({ request }) => {
+              capturedBody = await request.json();
+              return HttpResponse.json(capturedBody as any);
+            })
+          );
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -122,16 +121,16 @@ describe('useCmsDomainSelection Hook', () => {
   });
 
   it('should disable zoning if setting is false', async () => {
-    (useSettingsMap as any).mockReturnValue({
+    vi.mocked(useSettingsMap).mockReturnValue({
       data: new Map([['cms_domain_settings.v1', JSON.stringify({ zoningEnabled: false })]]),
       isLoading: false,
-    });
-    (useSettingsStore as any).mockReturnValue({
+    } as any);
+    vi.mocked(useSettingsStore).mockReturnValue({
       get: vi.fn((key) => {
         if (key === 'cms_domain_settings.v1') return JSON.stringify({ zoningEnabled: false });
         return null;
       }),
-    });
+    } as any);
 
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
@@ -144,7 +143,8 @@ describe('useCmsDomainSelection Hook', () => {
   it('should detect host domain', async () => {
     // Mock window.location.hostname
     const originalLocation = window.location;
-    delete (window as any).location;
+    // @ts-ignore
+    delete window.location;
     Object.defineProperty(window, 'location', {
       value: { ...originalLocation, hostname: 'test.com' } as Location,
       configurable: true,
@@ -164,7 +164,8 @@ describe('useCmsDomainSelection Hook', () => {
     expect(result.current.activeDomainId).toBe('d2');
 
     // Restore window.location
-    delete (window as any).location;
+    // @ts-ignore
+    delete window.location;
     Object.defineProperty(window, 'location', {
       value: originalLocation,
       configurable: true,

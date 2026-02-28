@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { notifyCriticalError } from '@/shared/lib/observability/critical-error-notifier';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 
 vi.mock('@/shared/lib/db/app-db-provider', () => ({
   getAppDbProvider: vi.fn(),
@@ -28,20 +29,21 @@ vi.mock('@/shared/lib/observability/transient-recovery/with-recovery', () => ({
 }));
 
 describe('critical-error-notifier', () => {
-  const mockLog: any = {
+  const mockLog: SystemLogRecord = {
+    id: 'log-1',
     level: 'error',
     message: 'Test critical error',
     source: 'test-source',
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
-    (getAppDbProvider as any).mockResolvedValue('prisma');
+    vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
 
     // Clear global throttle cache
-    const globalAny = globalThis as any;
+    const globalAny = globalThis as unknown as { __criticalErrorNotificationCache?: Map<string, number> };
     if (globalAny.__criticalErrorNotificationCache) {
       globalAny.__criticalErrorNotificationCache.clear();
     }
@@ -94,7 +96,7 @@ describe('critical-error-notifier', () => {
     process.env['CRITICAL_ERROR_MIN_LEVEL'] = 'error';
 
     const infoLog = { ...mockLog, level: 'info' };
-    const result = await notifyCriticalError(infoLog, true);
+    const result = await notifyCriticalError(infoLog as any, true);
 
     expect(result.delivered).toBe(false);
     expect(fetch).not.toHaveBeenCalled();

@@ -16,12 +16,12 @@ export function FileManagerHeader(): React.JSX.Element {
       actions={
         mode === 'select' && onSelectFile && !autoConfirmSelection
           ? [
-              {
-                key: 'confirm',
-                label: `Confirm Selection (${selectedFiles.length})`,
-                onClick: handleConfirmSelection,
-              },
-            ]
+            {
+              key: 'confirm',
+              label: `Confirm Selection (${selectedFiles.length})`,
+              onClick: handleConfirmSelection,
+            },
+          ]
           : []
       }
       className='mb-4'

@@ -183,7 +183,7 @@ export function useDuplicateProduct(): CreateMutation<{ id: string }, { id: stri
 export function useUpdateProductField(): UpdateMutation<
   void,
   { id: string; field: string; value: unknown }
-> {
+  > {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2({

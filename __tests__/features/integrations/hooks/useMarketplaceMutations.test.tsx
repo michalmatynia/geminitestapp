@@ -10,7 +10,7 @@ import {
   useSaveMappingsMutation,
   useSaveProducerMappingsMutation,
   useSaveTagMappingsMutation,
-} from '@/features/integrations/hooks/useMarketplaceMutations';
+} from '@/shared/lib/integrations/hooks/useMarketplaceMutations';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

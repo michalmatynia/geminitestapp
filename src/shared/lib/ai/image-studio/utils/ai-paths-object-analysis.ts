@@ -122,9 +122,9 @@ export const loadCustomTriggerButtons = (
       (item): item is ImageStudioCustomTriggerButton =>
         item !== null &&
         typeof item === 'object' &&
-        typeof item['id'] === 'string' &&
-        typeof item['label'] === 'string' &&
-        typeof item['pathId'] === 'string',
+        typeof (item as Record<string, unknown>)['id'] === 'string' &&
+        typeof (item as Record<string, unknown>)['label'] === 'string' &&
+        typeof (item as Record<string, unknown>)['pathId'] === 'string',
     );
   } catch {
     return [];
@@ -341,7 +341,9 @@ export const parseAiPathMetasFromSettings = (
           typeof (item as Record<string, unknown>)['id'] === 'string' &&
           typeof (item as Record<string, unknown>)['name'] === 'string',
       )
-      .map((item) => ({ id: item['id'] as string, name: item['name'] as string }));
+      .map((item) => {
+        return { id: item['id'] as string, name: item['name'] as string };
+      });
   } catch {
     return [];
   }

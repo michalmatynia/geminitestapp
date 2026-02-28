@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { encryptAuthSecret, decryptAuthSecret } from '@/features/auth/utils/auth-encryption';
+import { encryptAuthSecret, decryptAuthSecret } from '@/shared/lib/security/encryption';
 
 // Mock server-only
 vi.mock('server-only', () => ({}));

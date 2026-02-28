@@ -110,7 +110,7 @@ const decodeHtmlEntities = (value: string): string => {
     lt: '<',
     gt: '>',
     quot: '"',
-    apos: "'",
+    apos: '\'',
     nbsp: ' ',
   };
 
@@ -571,15 +571,15 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
     ) {
       const blockLines = isRequirementsHeading
         ? consumeBlockUntilBoundary(cursor, [
-            studioRelightingBoundary,
-            pipelineBoundary,
-            finalQaBoundary,
-          ])
+          studioRelightingBoundary,
+          pipelineBoundary,
+          finalQaBoundary,
+        ])
         : consumeParagraphBlock(
-            cursor,
-            [studioRelightingBoundary, pipelineBoundary, finalQaBoundary],
-            runtime
-          );
+          cursor,
+          [studioRelightingBoundary, pipelineBoundary, finalQaBoundary],
+          runtime
+        );
       const body = blockLines.slice(1);
       const subsections = parseSequenceSubsections({
         lines: body,
@@ -765,19 +765,19 @@ const applyLearnedTemplateTypes = (
     }
     const nextPatternLabels = inferred.matchedTemplateId
       ? [
-          ...new Set([
-            ...(segment.matchedPatternLabels ?? []),
-            `Learned Template: ${inferred.type.replaceAll('_', ' ')}`,
-          ]),
-        ]
+        ...new Set([
+          ...(segment.matchedPatternLabels ?? []),
+          `Learned Template: ${inferred.type.replaceAll('_', ' ')}`,
+        ]),
+      ]
       : (segment.matchedPatternLabels ?? []);
     const nextPatternIds = inferred.matchedTemplateId
       ? [
-          ...new Set([
-            ...segment.matchedPatternIds,
-            `segment.learned.${inferred.type}.${inferred.matchedTemplateId}`,
-          ]),
-        ]
+        ...new Set([
+          ...segment.matchedPatternIds,
+          `segment.learned.${inferred.type}.${inferred.matchedTemplateId}`,
+        ]),
+      ]
       : segment.matchedPatternIds;
     return {
       ...segment,

@@ -34,7 +34,6 @@ const buildModelNode = (patch: Partial<AiNode> = {}): AiNode =>
     outputs: ['result', 'jobId'],
     config: {
       model: {
-        modelId: 'gpt-4o',
         temperature: 0.2,
         maxTokens: 256,
         waitForResult: false,

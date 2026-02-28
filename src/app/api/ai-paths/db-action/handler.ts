@@ -662,11 +662,11 @@ export async function postAiPathsDbActionHandler(
       const result =
         action === 'updateOne'
           ? await collectionRef.updateOne(normalizedFilter, updateDoc, {
-              upsert: !!upsert,
-            })
+            upsert: !!upsert,
+          })
           : await collectionRef.updateMany(normalizedFilter, updateDoc, {
-              upsert: !!upsert,
-            });
+            upsert: !!upsert,
+          });
       return withProviderPayload(provider, requestedProvider, {
         matchedCount: result.matchedCount,
         modifiedCount: result.modifiedCount,

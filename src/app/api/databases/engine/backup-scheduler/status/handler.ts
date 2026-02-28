@@ -5,7 +5,7 @@ import {
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
   getDatabaseBackupSchedulerQueueStatus,
   startDatabaseBackupSchedulerQueue,
-} from '@/features/jobs/workers/databaseBackupSchedulerQueue';
+} from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

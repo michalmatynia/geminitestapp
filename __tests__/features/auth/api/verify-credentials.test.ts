@@ -3,6 +3,9 @@ import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { POST } from '@/app/api/auth/verify-credentials/route';
+import type { AuthSecurityProfile } from '@/features/auth/services/auth-security-profile';
+import type { AuthUserRecord } from '@/features/auth/services/auth-user-repository';
+import type { LoginChallengeDto } from '@/shared/contracts/auth';
 
 vi.mock('bcryptjs', () => ({
   compare: vi.fn(),
@@ -29,17 +32,18 @@ describe('Auth Verify Credentials API', () => {
 
   it('verifies credentials successfully and returns challenge', async () => {
     const authServer = await import('@/features/auth/server');
-    const mockUser = { id: 'u1', email: 'test@example.com', passwordHash: 'hashed' };
-    vi.mocked(authServer.findAuthUserByEmail).mockResolvedValue(mockUser as any);
+    const mockUser: AuthUserRecord = { id: 'u1', email: 'test@example.com', passwordHash: 'hashed' };
+    vi.mocked(authServer.findAuthUserByEmail).mockResolvedValue(mockUser);
     vi.mocked(authServer.getAuthSecurityProfile).mockResolvedValue({
       mfaEnabled: false,
       allowedIps: [],
-    } as any);
-    vi.mocked(bcrypt.compare).mockResolvedValue(true as any);
+    } as unknown as AuthSecurityProfile);
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
     vi.mocked(authServer.createLoginChallenge).mockResolvedValue({
       id: 'ch1',
       expiresAt: new Date(Date.now() + 60000),
-    } as any);
+      mfaRequired: false,
+    } as unknown as Awaited<ReturnType<typeof authServer.createLoginChallenge>>);
 
     const req = new NextRequest('http://localhost/api/auth/verify-credentials', {
       method: 'POST',
@@ -59,10 +63,12 @@ describe('Auth Verify Credentials API', () => {
 
   it('returns invalid credentials for wrong password', async () => {
     const authServer = await import('@/features/auth/server');
-    const mockUser = { id: 'u1', email: 'test@example.com', passwordHash: 'hashed' };
-    vi.mocked(authServer.findAuthUserByEmail).mockResolvedValue(mockUser as any);
-    vi.mocked(authServer.getAuthSecurityProfile).mockResolvedValue({ allowedIps: [] } as any);
-    vi.mocked(bcrypt.compare).mockResolvedValue(false as any);
+    const mockUser: AuthUserRecord = { id: 'u1', email: 'test@example.com', passwordHash: 'hashed' };
+    vi.mocked(authServer.findAuthUserByEmail).mockResolvedValue(mockUser);
+    vi.mocked(authServer.getAuthSecurityProfile).mockResolvedValue({
+      allowedIps: [],
+    } as unknown as AuthSecurityProfile);
+    vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
 
     const req = new NextRequest('http://localhost/api/auth/verify-credentials', {
       method: 'POST',

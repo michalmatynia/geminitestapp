@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { FormField, FormSection, Input, SelectSimple, Textarea, Hint } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -25,7 +25,7 @@ export function GenerationSettingsTab(): React.JSX.Element {
     advancedOverridesError,
     handleAdvancedOverridesChange,
   } = useImageStudioSettingsContext();
-  const brainGenerationModel = useBrainModelOptions({
+  const brainGenerationModel = useBrainAssignment({
     capability: 'image_studio.general',
   });
   const effectiveGenerationModel =

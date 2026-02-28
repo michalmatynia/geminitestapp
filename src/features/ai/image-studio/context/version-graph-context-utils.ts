@@ -156,16 +156,16 @@ export const remapMetadataForDetachedCopy = (
   if (compositeConfig) {
     const remappedLayers = Array.isArray(compositeConfig['layers'])
       ? (compositeConfig['layers'] as unknown[])
-          .map((layer: unknown): Record<string, unknown> | null => {
-            const layerRecord = asRecord(layer);
-            if (!layerRecord) return null;
-            const rawSlotId = layerRecord['slotId'];
-            if (typeof rawSlotId !== 'string') return null;
-            const mappedSlotId = idMap.get(rawSlotId.trim());
-            if (!mappedSlotId) return null;
-            return { ...layerRecord, slotId: mappedSlotId };
-          })
-          .filter((layer): layer is Record<string, unknown> => Boolean(layer))
+        .map((layer: unknown): Record<string, unknown> | null => {
+          const layerRecord = asRecord(layer);
+          if (!layerRecord) return null;
+          const rawSlotId = layerRecord['slotId'];
+          if (typeof rawSlotId !== 'string') return null;
+          const mappedSlotId = idMap.get(rawSlotId.trim());
+          if (!mappedSlotId) return null;
+          return { ...layerRecord, slotId: mappedSlotId };
+        })
+        .filter((layer): layer is Record<string, unknown> => Boolean(layer))
       : [];
 
     const nextCompositeConfig: Record<string, unknown> = { ...compositeConfig };

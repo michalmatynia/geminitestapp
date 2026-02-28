@@ -16,10 +16,8 @@ export interface UseChatbotLogicReturn {
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
   isSending: boolean;
   setIsSending: React.Dispatch<React.SetStateAction<boolean>>;
-  modelOptions: string[];
   model: string;
   setModel: React.Dispatch<React.SetStateAction<string>>;
-  modelLoading: boolean;
   webSearchEnabled: boolean;
   setWebSearchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   useGlobalContext: boolean;

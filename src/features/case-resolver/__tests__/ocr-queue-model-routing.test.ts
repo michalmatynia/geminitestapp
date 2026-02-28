@@ -6,7 +6,7 @@ import {
   isRetryableCaseResolverOcrError,
   resolveCaseResolverOcrModelCandidates,
   resolveCaseResolverOcrModel,
-} from '@/features/jobs/workers/caseResolverOcrQueue';
+} from '@/features/case-resolver/workers/caseResolverOcrQueue';
 
 describe('case resolver OCR queue model routing helpers', () => {
   it('infers provider from model id patterns', () => {

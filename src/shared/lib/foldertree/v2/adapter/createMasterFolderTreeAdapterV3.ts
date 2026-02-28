@@ -144,9 +144,9 @@ export function createMasterFolderTreeAdapterV3<TEntity extends string>({
     ...(fetchState ? { fetchState } : {}),
     loadNodes: fetchState
       ? async (): Promise<MasterTreeNode[]> => {
-          const { nodes } = await fetchState();
-          return nodes;
-        }
+        const { nodes } = await fetchState();
+        return nodes;
+      }
       : undefined,
     prepare: defaultPrepare,
     apply: async (

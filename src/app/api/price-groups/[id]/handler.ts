@@ -175,8 +175,8 @@ export async function PUT_handler(
       currency,
       sourceGroup: updateDoc['sourceGroupId']
         ? await db
-            .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
-            .findOne({ id: updateDoc['sourceGroupId'] })
+          .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
+          .findOne({ id: updateDoc['sourceGroupId'] })
         : null,
     } as unknown as PriceGroupWithDetails);
   }

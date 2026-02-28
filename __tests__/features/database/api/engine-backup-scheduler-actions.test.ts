@@ -15,23 +15,22 @@ import {
 } from '@/shared/lib/db/services/database-backup-scheduler';
 import {
   enqueueProductAiJob,
-  enqueueProductAiJobToQueue,
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import {
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
   getDatabaseBackupSchedulerQueueStatus,
   startDatabaseBackupSchedulerQueue,
-} from '@/features/jobs/workers/databaseBackupSchedulerQueue';
+} from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
 
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
     (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
-    async (req: NextRequest): Promise<Response> =>
-      handler(req, {
-        requestId: 'test-request-id',
-      }),
+      async (req: NextRequest): Promise<Response> =>
+        handler(req, {
+          requestId: 'test-request-id',
+        }),
 }));
 
 vi.mock('@/features/auth/server', () => ({
@@ -48,7 +47,7 @@ vi.mock('@/shared/lib/db/services/database-backup-scheduler', () => ({
   markDatabaseBackupJobQueued: vi.fn(),
 }));
 
-vi.mock('@/features/jobs/workers/databaseBackupSchedulerQueue', () => ({
+vi.mock('@/shared/lib/db/workers/databaseBackupSchedulerQueue', () => ({
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS: 60_000,
   startDatabaseBackupSchedulerQueue: vi.fn(),
   getDatabaseBackupSchedulerQueueStatus: vi.fn(),
@@ -56,7 +55,6 @@ vi.mock('@/features/jobs/workers/databaseBackupSchedulerQueue', () => ({
 
 vi.mock('@/features/jobs/server', () => ({
   enqueueProductAiJob: vi.fn(),
-  enqueueProductAiJobToQueue: vi.fn(),
   startProductAiJobQueue: vi.fn(),
 }));
 
@@ -172,7 +170,7 @@ describe('Database Engine backup scheduler actions', () => {
         productId: 'system',
         status: 'pending',
       } as Awaited<ReturnType<typeof enqueueProductAiJob>>);
-    vi.mocked(enqueueProductAiJobToQueue).mockResolvedValue(undefined);
+    vi.mocked(enqueueProductAiJob).mockResolvedValue(undefined);
 
     const res = await POST_RUN_NOW(
       new NextRequest('http://localhost/api/databases/engine/backup-scheduler/run-now', {
@@ -195,7 +193,7 @@ describe('Database Engine backup scheduler actions', () => {
     expect(enqueueProductAiJob).toHaveBeenCalledTimes(2);
     expect(markDatabaseBackupJobQueued).toHaveBeenCalledTimes(2);
     expect(startProductAiJobQueue).toHaveBeenCalledTimes(1);
-    expect(enqueueProductAiJobToQueue).toHaveBeenCalledTimes(2);
+    expect(enqueueProductAiJob).toHaveBeenCalledTimes(2);
   });
 
   it('POST /api/databases/engine/backup-scheduler/tick returns forbidden when manual tick is disabled', async () => {

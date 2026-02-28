@@ -369,7 +369,7 @@ export const compileGraph = (
                 code: 'model_prompt_deadlock_risk',
                 severity: 'warning',
                 message:
-                  "Model prompt may never resolve because it depends on this model's own output in a wait-for-inputs cycle.",
+                  'Model prompt may never resolve because it depends on this model\'s own output in a wait-for-inputs cycle.',
                 nodeId: node.id,
               });
             }

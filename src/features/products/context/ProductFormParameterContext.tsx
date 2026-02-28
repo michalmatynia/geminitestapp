@@ -11,7 +11,7 @@ import type {
 import { internalError } from '@/shared/errors/app-error';
 
 import { useParameters } from '../hooks/useProductMetadataQueries';
-import { decodeSimpleParameterStorageId } from '../utils/parameter-partition';
+import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 
 export interface ProductFormParameterContextType {
   parameters: ProductParameter[];
@@ -54,15 +54,15 @@ export function ProductFormParameterProvider({
         typeof entry.valuesByLanguage === 'object' &&
         !Array.isArray(entry.valuesByLanguage)
           ? Object.entries(entry.valuesByLanguage).reduce(
-              (acc: Record<string, string>, [lang, rawValue]: [string, unknown]) => {
-                const normalizedLang = lang.trim().toLowerCase();
-                if (!normalizedLang) return acc;
-                const normalizedValue = typeof rawValue === 'string' ? rawValue : '';
-                acc[normalizedLang] = normalizedValue;
-                return acc;
-              },
+            (acc: Record<string, string>, [lang, rawValue]: [string, unknown]) => {
+              const normalizedLang = lang.trim().toLowerCase();
+              if (!normalizedLang) return acc;
+              const normalizedValue = typeof rawValue === 'string' ? rawValue : '';
+              acc[normalizedLang] = normalizedValue;
+              return acc;
+            },
               {} as Record<string, string>
-            )
+          )
           : {};
       const directValue = typeof entry?.value === 'string' ? entry.value : '';
       const fallbackValue =

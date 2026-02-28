@@ -108,11 +108,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     ...metaRecord,
     ...(identityRepair.warnings.length > 0
       ? {
-          identityRepair: {
-            warnings: identityRepair.warnings,
-            repairedAt: new Date().toISOString(),
-          },
-        }
+        identityRepair: {
+          warnings: identityRepair.warnings,
+          repairedAt: new Date().toISOString(),
+        },
+      }
       : {}),
     aiPathsValidation: validationConfig,
     validationPreflight: validationReport,
@@ -121,9 +121,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const compileReport = nodeValidationEnabled
     ? compileGraph(normalizedNodes, normalizedEdges)
     : compileGraph(normalizedNodes, normalizedEdges, {
-        scopeMode: 'reachable_from_roots',
-        ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
-      });
+      scopeMode: 'reachable_from_roots',
+      ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
+    });
   if (nodeValidationEnabled && !compileReport.ok) {
     const primaryError = compileReport.findings.find((finding) => finding.severity === 'error');
     throw badRequestError(

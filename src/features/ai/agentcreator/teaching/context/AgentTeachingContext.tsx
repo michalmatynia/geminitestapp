@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type {
   AgentTeachingAgentRecord,
   AgentTeachingEmbeddingCollectionRecord,
@@ -13,7 +13,6 @@ import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeac
 interface AgentTeachingContextType {
   agents: AgentTeachingAgentRecord[];
   collections: AgentTeachingEmbeddingCollectionRecord[];
-  modelOptions: string[];
   chatModelId: string;
   embeddingModelId: string;
   isLoading: boolean;
@@ -22,26 +21,6 @@ interface AgentTeachingContextType {
 }
 
 const AgentTeachingContext = createContext<AgentTeachingContextType | null>(null);
-
-const normalizeModelOptions = (input: unknown): string[] => {
-  if (Array.isArray(input)) {
-    return input
-      .filter((item): item is string => typeof item === 'string')
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0);
-  }
-  if (!input || typeof input !== 'object') {
-    return [];
-  }
-  const record = input as Record<string, unknown>;
-  if ('models' in record) {
-    return normalizeModelOptions(record['models']);
-  }
-  if ('data' in record) {
-    return normalizeModelOptions(record['data']);
-  }
-  return [];
-};
 
 export const useAgentTeachingQueriesContext = (): AgentTeachingContextType => {
   const context = useContext(AgentTeachingContext);
@@ -62,36 +41,20 @@ export function AgentTeachingProvider({ children }: { children: ReactNode }): Re
     isLoading: loadingCollections,
     refetch: refetchCollections,
   } = useTeachingCollections();
-  const chatModelOptions = useBrainModelOptions({
+  const chatAssignment = useBrainAssignment({
     capability: 'agent_teaching.chat',
   });
-  const embeddingModelOptions = useBrainModelOptions({
+  const embeddingAssignment = useBrainAssignment({
     capability: 'agent_teaching.embeddings',
   });
-  const chatModelId = chatModelOptions.effectiveModelId.trim();
-  const embeddingModelId = embeddingModelOptions.effectiveModelId.trim();
-  const modelOptions = useMemo(
-    () =>
-      normalizeModelOptions([
-        ...chatModelOptions.models,
-        ...embeddingModelOptions.models,
-        chatModelId,
-        embeddingModelId,
-      ]),
-    [chatModelId, chatModelOptions.models, embeddingModelId, embeddingModelOptions.models]
-  );
-
-  const isLoading =
-    loadingAgents ||
-    loadingCollections ||
-    chatModelOptions.isLoading ||
-    embeddingModelOptions.isLoading;
+  const chatModelId = chatAssignment.effectiveModelId.trim();
+  const embeddingModelId = embeddingAssignment.effectiveModelId.trim();
+  const isLoading = loadingAgents || loadingCollections;
 
   const value = useMemo(
     (): AgentTeachingContextType => ({
       agents,
       collections,
-      modelOptions,
       chatModelId,
       embeddingModelId,
       isLoading,
@@ -101,7 +64,6 @@ export function AgentTeachingProvider({ children }: { children: ReactNode }): Re
     [
       agents,
       collections,
-      modelOptions,
       chatModelId,
       embeddingModelId,
       isLoading,

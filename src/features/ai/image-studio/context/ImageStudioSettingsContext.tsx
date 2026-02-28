@@ -18,7 +18,7 @@ import {
   parsePromptValidationRules,
 } from '@/shared/lib/prompt-engine/settings';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -91,13 +91,13 @@ export function ImageStudioSettingsProvider({
     [promptEngineRaw]
   );
   const heavyMap = heavySettings.data ?? new Map<string, string>();
-  const promptExtractModel = useBrainModelOptions({
+  const promptExtractModel = useBrainAssignment({
     capability: 'image_studio.prompt_extract',
   });
-  const uiExtractorModel = useBrainModelOptions({
+  const uiExtractorModel = useBrainAssignment({
     capability: 'image_studio.ui_extractor',
   });
-  const generationModel = useBrainModelOptions({
+  const generationModel = useBrainAssignment({
     capability: 'image_studio.general',
   });
   const liveProjectId = selectedProjectId.trim();

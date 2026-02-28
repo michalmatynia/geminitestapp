@@ -1,7 +1,7 @@
 import {
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
-} from '@/features/filemaker/settings';
+} from '@/shared/lib/filemaker/settings';
 
 export type CaseResolverPartySelectOption = {
   value: string;

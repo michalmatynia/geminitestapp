@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { initializeQueues } from '@/features/jobs/lib/queue-init';
+import { initializeQueues } from '@/shared/lib/queue/queue-init';
 import type { QueueHealthStatus } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getQueueHealth, isRedisAvailable } from '@/shared/lib/queue';
@@ -19,8 +19,8 @@ type TraderaQueueHealthResponse = {
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   initializeQueues();
   await Promise.all([
-    import('@/features/jobs/workers/traderaListingQueue'),
-    import('@/features/jobs/workers/traderaRelistSchedulerQueue'),
+    import('@/shared/lib/integrations/workers/traderaListingQueue'),
+    import('@/shared/lib/integrations/workers/traderaRelistSchedulerQueue'),
   ]);
 
   const redisAvailable = isRedisAvailable();

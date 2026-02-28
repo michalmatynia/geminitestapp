@@ -3,9 +3,9 @@ import React from 'react';
 import type {
   CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture/proposals';
-import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
-import { encodeFilemakerPartyReference } from '@/features/filemaker/settings';
+} from '@/shared/lib/case-resolver-capture/proposals';
+import { type CaseResolverCaptureAction } from '@/shared/lib/case-resolver-capture/settings';
+import { encodeFilemakerPartyReference } from '@/shared/lib/filemaker/settings';
 import { Badge, Button, FormField, SelectSimple } from '@/shared/ui';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
@@ -155,12 +155,12 @@ export function PromptExploderCaptureMappingModal({
                   diagnostics.mutationDurationMs !== undefined) ||
                 (diagnostics.totalDurationMs !== null &&
                   diagnostics.totalDurationMs !== undefined) ? (
-                  <div className='mt-0.5 text-gray-500'>
+                    <div className='mt-0.5 text-gray-500'>
                     cleanup: {diagnostics.cleanupDurationMs ?? '-'}ms · mutation:{' '}
-                    {diagnostics.mutationDurationMs ?? '-'}ms · total:{' '}
-                    {diagnostics.totalDurationMs ?? '-'}ms
-                  </div>
-                ) : null}
+                      {diagnostics.mutationDurationMs ?? '-'}ms · total:{' '}
+                      {diagnostics.totalDurationMs ?? '-'}ms
+                    </div>
+                  ) : null}
               </div>
             ) : null}
 

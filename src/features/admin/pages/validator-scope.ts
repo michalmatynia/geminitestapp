@@ -196,9 +196,9 @@ export const parseValidatorPatternLists = (
       ? parsed
       : parsed && typeof parsed === 'object'
         ? (() => {
-            const record = parsed as Record<string, unknown>;
-            return Array.isArray(record['lists']) ? (record['lists'] as unknown[]) : null;
-          })()
+          const record = parsed as Record<string, unknown>;
+          return Array.isArray(record['lists']) ? (record['lists'] as unknown[]) : null;
+        })()
         : null;
 
     if (Array.isArray(rawLists)) {

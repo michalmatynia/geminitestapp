@@ -9,7 +9,7 @@ export type RegexAiPromptSectionProps = {
   onUpdateRegex: (patch: Partial<RegexConfig>) => void;
   connectedModel: {
     modelNode: AiNode | null | undefined;
-    modelId?: string;
+    modelLabel?: string;
   };
   onSendToAi?: (nodeId: string, prompt: string) => void | Promise<void>;
   sendingToAi: boolean;
@@ -38,7 +38,8 @@ export function RegexAiPromptSection({
         <Label className='text-xs text-gray-400'>AI Prompt (Output to AI Model)</Label>
         {connectedModel.modelNode ? (
           <div className='text-[11px] text-emerald-200'>
-            Connected: <span className='text-emerald-100'>{connectedModel.modelId || 'Model'}</span>
+            Connected:{' '}
+            <span className='text-emerald-100'>{connectedModel.modelLabel || 'Model'}</span>
           </div>
         ) : (
           <div className='text-[11px] text-amber-200'>Not connected to AI Model</div>

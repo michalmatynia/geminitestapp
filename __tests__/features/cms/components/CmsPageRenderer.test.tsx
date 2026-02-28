@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
+import type { PageComponent } from '@/shared/contracts/cms';
 
 // Mock the section components
 vi.mock('@/features/cms/components/frontend/sections/FrontendHeroSection', () => ({
@@ -19,7 +20,7 @@ vi.mock('@/features/cms/components/frontend/sections/FrontendNewsletterSection',
 
 // Mock GSAP wrapper to just render children
 vi.mock('@/features/cms/components/frontend/GsapAnimationWrapper', () => ({
-  GsapAnimationWrapper: ({ children }: any) => <div>{children}</div>,
+  GsapAnimationWrapper: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 describe('CmsPageRenderer Component', () => {
@@ -34,18 +35,18 @@ describe('CmsPageRenderer Component', () => {
       {
         type: 'RichText',
         content: { zone: 'template', settings: {}, blocks: [] },
-      },
+      } as unknown as PageComponent,
       {
         type: 'Hero',
         content: { zone: 'header', settings: {}, blocks: [] },
-      },
+      } as unknown as PageComponent,
       {
         type: 'Newsletter',
         content: { zone: 'footer', settings: {}, blocks: [] },
-      },
+      } as unknown as PageComponent,
     ];
 
-    render(<CmsPageRenderer components={components as any} />);
+    render(<CmsPageRenderer components={components} />);
 
     const sections = screen.getAllByTestId(/^section-/);
     expect(sections).toHaveLength(3);
@@ -58,27 +59,27 @@ describe('CmsPageRenderer Component', () => {
     expect(sections[2]).toHaveAttribute('data-testid', 'section-newsletter');
   });
 
-  it("should handle missing zone by defaulting to 'template'", () => {
+  it('should handle missing zone by defaulting to \'template\'', () => {
     const components = [
       {
         type: 'Grid',
         content: { settings: {}, blocks: [] },
-      },
+      } as unknown as PageComponent,
     ];
 
-    render(<CmsPageRenderer components={components as any} />);
+    render(<CmsPageRenderer components={components} />);
     expect(screen.getByTestId('section-grid')).toBeInTheDocument();
   });
 
-  it("should handle invalid zone by defaulting to 'template'", () => {
+  it('should handle invalid zone by defaulting to \'template\'', () => {
     const components = [
       {
         type: 'Grid',
         content: { zone: 'invalid-zone', settings: {}, blocks: [] },
-      },
+      } as unknown as PageComponent,
     ];
 
-    render(<CmsPageRenderer components={components as any} />);
+    render(<CmsPageRenderer components={components} />);
     expect(screen.getByTestId('section-grid')).toBeInTheDocument();
   });
 
@@ -87,14 +88,14 @@ describe('CmsPageRenderer Component', () => {
       {
         type: 'Hero',
         content: { zone: 'template', settings: { isHidden: 'false' }, blocks: [] },
-      },
+      } as unknown as PageComponent,
       {
         type: 'RichText',
         content: { zone: 'template', settings: { isHidden: 'true' }, blocks: [] },
-      },
+      } as unknown as PageComponent,
     ];
 
-    render(<CmsPageRenderer components={components as any} />);
+    render(<CmsPageRenderer components={components} />);
     expect(screen.getByTestId('section-hero')).toBeInTheDocument();
     expect(screen.queryByTestId('section-rich-text')).not.toBeInTheDocument();
   });
@@ -104,14 +105,14 @@ describe('CmsPageRenderer Component', () => {
       {
         type: 'Hero',
         content: { zone: 'template', settings: { id: 1 }, blocks: [] },
-      },
+      } as unknown as PageComponent,
       {
         type: 'RichText',
         content: { zone: 'template', settings: { id: 2 }, blocks: [] },
-      },
+      } as unknown as PageComponent,
     ];
 
-    render(<CmsPageRenderer components={components as any} />);
+    render(<CmsPageRenderer components={components} />);
     const sections = screen.getAllByTestId(/^section-/);
     expect(sections[0]).toHaveAttribute('data-testid', 'section-hero');
     expect(sections[1]).toHaveAttribute('data-testid', 'section-rich-text');

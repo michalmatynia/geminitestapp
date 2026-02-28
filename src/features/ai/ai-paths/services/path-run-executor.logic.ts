@@ -165,12 +165,12 @@ export const buildRuntimeProfileSnapshot = (input: {
     droppedEventCount: Math.max(input.eventCount - input.sampledHighlights.length, 0),
     summary: input.summary
       ? {
-          durationMs: input.summary.durationMs,
-          iterationCount: input.summary.iterationCount,
-          nodeCount: input.summary.nodeCount,
-          edgeCount: input.summary.edgeCount,
-          hottestNodes,
-        }
+        durationMs: input.summary.durationMs,
+        iterationCount: input.summary.iterationCount,
+        nodeCount: input.summary.nodeCount,
+        edgeCount: input.summary.edgeCount,
+        hottestNodes,
+      }
       : null,
     highlights: input.sampledHighlights.slice(0, RUNTIME_PROFILE_HIGHLIGHT_LIMIT),
     nodeSpans: input.nodeSpans,
@@ -212,8 +212,8 @@ export const resolveTriggerNodeId = (
   if (triggerNodes.length === 0) return undefined;
   const matching = triggerEvent
     ? triggerNodes.filter(
-        (node: AiNode) => (node.config?.trigger?.event ?? '').trim() === triggerEvent
-      )
+      (node: AiNode) => (node.config?.trigger?.event ?? '').trim() === triggerEvent
+    )
     : triggerNodes;
   const candidates = matching.length > 0 ? matching : triggerNodes;
   const connected = candidates.find((node: AiNode) =>

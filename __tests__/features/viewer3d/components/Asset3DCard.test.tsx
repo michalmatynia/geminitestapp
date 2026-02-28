@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { Asset3DCard } from '@/shared/lib/viewer3d/components/Asset3DCard';
 import { useAdmin3DAssetsContext } from '@/shared/lib/viewer3d/context/Admin3DAssetsContext';
+import { useAdmin3DAssetsState } from '@/shared/lib/viewer3d/hooks/useAdmin3DAssetsState';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 vi.mock('@/shared/lib/viewer3d/context/Admin3DAssetsContext', () => ({
@@ -29,6 +30,8 @@ const mockAsset: Asset3DRecord = {
   metadata: {},
 };
 
+type Admin3DAssetsContextValue = ReturnType<typeof useAdmin3DAssetsState>;
+
 describe('Asset3DCard', () => {
   const defaultProps = {
     asset: mockAsset,
@@ -38,12 +41,12 @@ describe('Asset3DCard', () => {
     setPreviewAsset: vi.fn(),
     setEditAsset: vi.fn(),
     handleDelete: vi.fn(),
-    isDeleting: vi.fn(() => false),
+    isDeleting: vi.fn().mockReturnValue(false),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAdmin3DAssetsContext).mockReturnValue(mockContext as any);
+    vi.mocked(useAdmin3DAssetsContext).mockReturnValue(mockContext as unknown as Admin3DAssetsContextValue);
   });
 
   it('should render asset information correctly', () => {
@@ -102,7 +105,7 @@ describe('Asset3DCard', () => {
     expect(deleteButton?.querySelector('.animate-spin')).toBeInTheDocument();
   });
 
-  it("should show 'Private' badge when isPublic is false", () => {
+  it('should show \'Private\' badge when isPublic is false', () => {
     const privateAsset = { ...mockAsset, isPublic: false };
     render(<Asset3DCard {...defaultProps} asset={privateAsset} />);
 

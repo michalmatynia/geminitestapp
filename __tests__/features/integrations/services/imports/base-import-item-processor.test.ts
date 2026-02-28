@@ -4,7 +4,7 @@ const applyBaseParameterImportMock = vi.hoisted(() => vi.fn());
 const validateProductCreateMock = vi.hoisted(() => vi.fn());
 const validateProductUpdateMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/features/integrations/services/imports/parameter-import/apply', () => ({
+vi.mock('@/shared/lib/integrations/services/imports/parameter-import/apply', () => ({
   applyBaseParameterImport: applyBaseParameterImportMock,
 }));
 
@@ -13,7 +13,7 @@ vi.mock('@/features/products/validations', () => ({
   validateProductUpdate: validateProductUpdateMock,
 }));
 
-import { importSingleItem } from '@/features/integrations/services/imports/base-import-item-processor';
+import { importSingleItem } from '@/shared/lib/integrations/services/imports/base-import-item-processor';
 
 describe('base import item processor', () => {
   beforeEach(() => {

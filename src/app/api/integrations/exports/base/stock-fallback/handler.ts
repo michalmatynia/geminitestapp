@@ -4,7 +4,7 @@ import { z } from 'zod';
 import {
   getExportStockFallbackEnabled,
   setExportStockFallbackEnabled,
-} from '@/features/integrations/server';
+} from '@/shared/lib/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

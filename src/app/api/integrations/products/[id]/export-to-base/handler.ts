@@ -14,8 +14,8 @@ import {
   LogCapture,
   findProductListingByIdAcrossProviders,
   findProductListingByProductAndConnectionAcrossProviders,
-} from '@/features/integrations/server';
-import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
+} from '@/shared/lib/integrations/server';
+import { resolveBaseConnectionToken } from '@/shared/lib/integrations/services/base-token-resolver';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
@@ -444,11 +444,11 @@ export async function postExportToBaseHandler(
 
     const baseImageDiagnostics = exportImagesAsBase64
       ? buildImageDiagnosticsLogger({
-          ...imageDiagnosticsContext,
-          exportImagesAsBase64,
-          imageBase64Mode,
-          imageTransform,
-        })
+        ...imageDiagnosticsContext,
+        exportImagesAsBase64,
+        imageBase64Mode,
+        imageTransform,
+      })
       : undefined;
 
     const buildExportSnapshot = async (
@@ -509,9 +509,9 @@ export async function postExportToBaseHandler(
     }
     let result = imagesOnly
       ? await exportProductImagesToBase(
-          token,
-          targetInventoryId,
-          exportProduct,
+        token,
+        targetInventoryId,
+        exportProduct,
           listingExternalId as string,
           {
             imageBaseUrl,
@@ -520,28 +520,28 @@ export async function postExportToBaseHandler(
             imageBase64Mode,
             imageTransform,
           }
-        )
+      )
       : await exportProductToBase(
-          token,
-          targetInventoryId,
-          exportProduct,
-          effectiveMappings,
-          warehouseId,
-          {
-            imageBaseUrl,
-            includeStockWithoutWarehouse,
-            ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
-            ...(producerNameById ? { producerNameById } : {}),
-            ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
-            ...(tagNameById ? { tagNameById } : {}),
-            ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
-            exportImagesAsBase64: exportImagesAsBase64,
-            ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
-            imageBase64Mode,
-            imageTransform,
-            existingProductId: listingExternalId ?? undefined,
-          }
-        );
+        token,
+        targetInventoryId,
+        exportProduct,
+        effectiveMappings,
+        warehouseId,
+        {
+          imageBaseUrl,
+          includeStockWithoutWarehouse,
+          ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+          ...(producerNameById ? { producerNameById } : {}),
+          ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
+          ...(tagNameById ? { tagNameById } : {}),
+          ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
+          exportImagesAsBase64: exportImagesAsBase64,
+          ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
+          imageBase64Mode,
+          imageTransform,
+          existingProductId: listingExternalId ?? undefined,
+        }
+      );
 
     const isWarehouseMismatch = (message: string | undefined) =>
       typeof message === 'string' &&
@@ -699,9 +699,9 @@ export async function postExportToBaseHandler(
         if (canRetryWrite) {
           result = imagesOnly
             ? await exportProductImagesToBase(
-                token,
-                targetInventoryId,
-                exportProduct,
+              token,
+              targetInventoryId,
+              exportProduct,
                 listingExternalId as string,
                 {
                   imageBaseUrl,
@@ -710,28 +710,28 @@ export async function postExportToBaseHandler(
                   imageBase64Mode,
                   imageTransform,
                 }
-              )
+            )
             : await exportProductToBase(
-                token,
-                targetInventoryId,
-                exportProduct,
-                effectiveMappings,
-                warehouseId,
-                {
-                  imageBaseUrl,
-                  includeStockWithoutWarehouse,
-                  ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
-                  ...(producerNameById ? { producerNameById } : {}),
-                  ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
-                  ...(tagNameById ? { tagNameById } : {}),
-                  ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
-                  exportImagesAsBase64: exportImagesAsBase64,
-                  imageDiagnostics,
-                  imageBase64Mode,
-                  imageTransform,
-                  existingProductId: listingExternalId ?? undefined,
-                }
-              );
+              token,
+              targetInventoryId,
+              exportProduct,
+              effectiveMappings,
+              warehouseId,
+              {
+                imageBaseUrl,
+                includeStockWithoutWarehouse,
+                ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+                ...(producerNameById ? { producerNameById } : {}),
+                ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
+                ...(tagNameById ? { tagNameById } : {}),
+                ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
+                exportImagesAsBase64: exportImagesAsBase64,
+                imageDiagnostics,
+                imageBase64Mode,
+                imageTransform,
+                existingProductId: listingExternalId ?? undefined,
+              }
+            );
         } else {
           let existingExternalProductId: string | null = null;
           if (product.sku) {

@@ -9,7 +9,7 @@ vi.unmock('@/shared/lib/db/prisma');
 
 import { DELETE } from '@/app/api/files/[id]/route';
 import { GET } from '@/app/api/files/route';
-import { createMockProduct } from '@/features/products/utils/productUtils';
+import { createMockProduct } from '@/shared/lib/products/utils/productUtils';
 import prisma from '@/shared/lib/db/prisma';
 
 describe('Files API', () => {

@@ -190,12 +190,6 @@ export const promptDocs: NodeConfigDocField[] = [
 
 export const modelDocs: NodeConfigDocField[] = [
   {
-    path: 'model.modelId',
-    description:
-      'Brain-managed model identifier. Node value is stored for compatibility but runtime uses AI Brain routing.',
-    defaultValue: 'AI Brain assignment',
-  },
-  {
     path: 'model.temperature',
     description: 'Brain-managed sampling temperature (0-2). Node value is ignored at runtime.',
     defaultValue: 'AI Brain assignment',

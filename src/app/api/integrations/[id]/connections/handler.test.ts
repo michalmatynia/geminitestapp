@@ -32,7 +32,7 @@ vi.mock('@/features/products/server', () => ({
   parseJsonBody: parseJsonBodyMock,
 }));
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/shared/lib/integrations/server', () => ({
   getIntegrationRepository: getIntegrationRepositoryMock,
   encryptSecret: encryptSecretMock,
 }));

@@ -136,7 +136,7 @@ describe('parseLogicalValueText', () => {
 
   it('strips quotes from strings', () => {
     expect(parseLogicalValueText('"hello"')).toBe('hello');
-    expect(parseLogicalValueText("'world'")).toBe('world');
+    expect(parseLogicalValueText('\'world\'')).toBe('world');
   });
 
   it('returns plain text as-is', () => {

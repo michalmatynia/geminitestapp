@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type { AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
 import type { AgentPersonaSettings } from '@/shared/contracts/agents';
 import { FormField, Input } from '@/shared/ui';
@@ -90,7 +90,7 @@ function BrainManagedModelField({
   field: ModelField;
   compatibilityValue: unknown;
 }): React.JSX.Element {
-  const brainModel = useBrainModelOptions({
+  const brainModel = useBrainAssignment({
     capability: field.capability,
   });
 

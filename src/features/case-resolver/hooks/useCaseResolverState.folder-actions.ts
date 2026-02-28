@@ -88,14 +88,14 @@ export const useCaseResolverStateFolderActions = ({
       const scopedCaseIds = selectedCaseScopeIds;
       const scopedFileIds = scopedCaseIds
         ? new Set<string>(
-            workspace.files
-              .filter(
-                (file: CaseResolverFile): boolean =>
-                  file.fileType !== 'case' &&
+          workspace.files
+            .filter(
+              (file: CaseResolverFile): boolean =>
+                file.fileType !== 'case' &&
                   Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId))
-              )
-              .map((file: CaseResolverFile): string => file.id)
-          )
+            )
+            .map((file: CaseResolverFile): string => file.id)
+        )
         : null;
       const hasLockedFilesInFolder = workspace.files.some(
         (file: CaseResolverFile): boolean =>
@@ -151,14 +151,14 @@ export const useCaseResolverStateFolderActions = ({
               if (currentHasLockedFilesInFolder) return current;
               const currentScopeFileIds = currentScopeCaseIds
                 ? new Set<string>(
-                    current.files
-                      .filter(
-                        (file: CaseResolverFile): boolean =>
-                          file.fileType !== 'case' &&
+                  current.files
+                    .filter(
+                      (file: CaseResolverFile): boolean =>
+                        file.fileType !== 'case' &&
                           Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId))
-                      )
-                      .map((file: CaseResolverFile): string => file.id)
-                  )
+                    )
+                    .map((file: CaseResolverFile): string => file.id)
+                )
                 : null;
               const currentRemovedFileIds = new Set(
                 current.files
@@ -435,14 +435,14 @@ export const useCaseResolverStateFolderActions = ({
           if (currentHasLockedFilesInFolder) return current;
           const currentScopeFileIds = currentScopeCaseIds
             ? new Set<string>(
-                current.files
-                  .filter(
-                    (file: CaseResolverFile): boolean =>
-                      file.fileType !== 'case' &&
+              current.files
+                .filter(
+                  (file: CaseResolverFile): boolean =>
+                    file.fileType !== 'case' &&
                       Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId))
-                  )
-                  .map((file: CaseResolverFile): string => file.id)
-              )
+                )
+                .map((file: CaseResolverFile): string => file.id)
+            )
             : null;
 
           return {

@@ -9,7 +9,7 @@ import {
 } from '../validator-pattern-modal-options';
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
-import { normalizeProductValidationPatternReplacementScopes } from '@/features/products/utils/validator-instance-behavior';
+import { normalizeProductValidationPatternReplacementScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
 import type { PatternFormData } from '@/shared/contracts/products';
 
 export function ValidatorPatternModalPolicySection(): React.JSX.Element {

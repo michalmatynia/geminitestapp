@@ -70,7 +70,7 @@ describe('CaseListNodeItem', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-02T00:00:00.000Z',
       isLocked: false,
-    } as any);
+    } as unknown as CaseResolverFile);
 
     render(<CaseListNodeItem {...props} />);
 
@@ -127,7 +127,7 @@ describe('CaseListNodeItem', () => {
       createdAt: '2026-01-03T00:00:00.000Z',
       updatedAt: '2026-01-04T00:00:00.000Z',
       isLocked: false,
-    } as any);
+    } as unknown as CaseResolverFile);
 
     render(<CaseListNodeItem {...props} />);
 

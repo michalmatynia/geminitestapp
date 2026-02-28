@@ -13,7 +13,7 @@ import {
 
 // Mock crypto module
 vi.mock('crypto', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
+  const actual = (await importOriginal()) as typeof import('crypto');
 
   const randomBytes = vi.fn((size: number) => {
     if (size === 20) return Buffer.from('01234567890123456789');
@@ -32,12 +32,12 @@ vi.mock('crypto', async (importOriginal) => {
       res[18] = 0;
       return res;
     }),
-  }));
+  } as unknown as crypto.Hmac));
 
   const createHash = vi.fn(() => ({
     update: vi.fn().mockReturnThis(),
     digest: vi.fn(() => 'mockhash'),
-  }));
+  } as unknown as crypto.Hash));
 
   return {
     ...actual,
@@ -131,7 +131,7 @@ describe('TOTP Service', () => {
           res[0] = 1; // code will not be 123456
           return res;
         }),
-      } as any);
+      } as unknown as crypto.Hmac);
 
       expect(verifyTotpToken(secret, '123456')).toBe(false);
       vi.useRealTimers();

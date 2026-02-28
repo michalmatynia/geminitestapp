@@ -378,28 +378,28 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
       toolResult =
         shouldInitializeBrowser || shouldRunExtraction
           ? await runAgentTool(
-              {
-                name: 'playwright',
-                input: {
-                  prompt: toolPrompt,
-                  browser: run.agentBrowser || 'chromium',
-                  runId: run.id,
-                  ...(typeof run.runHeadless === 'boolean' && {
-                    runHeadless: run.runHeadless,
-                  }),
-                  stepId: step.id,
-                  stepLabel: step.title,
-                },
+            {
+              name: 'playwright',
+              input: {
+                prompt: toolPrompt,
+                browser: run.agentBrowser || 'chromium',
+                runId: run.id,
+                ...(typeof run.runHeadless === 'boolean' && {
+                  runHeadless: run.runHeadless,
+                }),
+                stepId: step.id,
+                stepLabel: step.title,
               },
-              sharedBrowser ?? undefined,
-              sharedContext ?? undefined
-            )
+            },
+            sharedBrowser ?? undefined,
+            sharedContext ?? undefined
+          )
           : await runAgentBrowserControl({
-              runId: run.id,
-              action: 'snapshot',
-              stepId: step.id,
-              stepLabel: step.title,
-            });
+            runId: run.id,
+            action: 'snapshot',
+            stepId: step.id,
+            stepLabel: step.title,
+          });
     } catch (error) {
       toolError = error;
     } finally {
@@ -429,11 +429,11 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
     planSteps = planSteps.map((item: PlanStep) =>
       item.id === step.id
         ? {
-            ...item,
-            status: toolResult.ok ? 'completed' : 'failed',
-            snapshotId: toolResult.output?.snapshotId ?? null,
-            logCount: toolResult.output?.logCount ?? null,
-          }
+          ...item,
+          status: toolResult.ok ? 'completed' : 'failed',
+          snapshotId: toolResult.output?.snapshotId ?? null,
+          logCount: toolResult.output?.logCount ?? null,
+        }
         : item
     );
     if (toolResult.output?.snapshotId) {

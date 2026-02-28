@@ -9,7 +9,7 @@ import {
   APP_EMBED_SETTING_KEY,
   type AppEmbedId,
   APP_EMBED_OPTIONS,
-} from '@/features/app-embeds/lib/constants';
+} from '@/shared/lib/app-embeds/lib/constants';
 
 import { SettingsFormProvider } from './SettingsFormContext';
 import {
@@ -233,19 +233,19 @@ export function BlockSettingsTab(): React.JSX.Element | null {
         )}
         {isImageElementInContainer && isInBackgroundMode
           ? renderFieldGroups(
-              groupSettingsFields(prependManagementFields(IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS))
-            )
+            groupSettingsFields(prependManagementFields(IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS))
+          )
           : renderFieldGroups(
-              groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
-              undefined,
-              undefined,
-              (f) =>
-                selectedBlock.type === 'AppEmbed' && f.key === 'appId'
-                  ? { ...f, options: appEmbedOptions }
-                  : isRowBlock && rowHeightMode === 'inherit' && f.key === 'height'
-                    ? { ...f, disabled: true }
-                    : f
-            )}
+            groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
+            undefined,
+            undefined,
+            (f) =>
+              selectedBlock.type === 'AppEmbed' && f.key === 'appId'
+                ? { ...f, options: appEmbedOptions }
+                : isRowBlock && rowHeightMode === 'inherit' && f.key === 'height'
+                  ? { ...f, disabled: true }
+                  : f
+          )}
         {isGridImageElement && !isInBackgroundMode && (
           <div className='grid gap-2 border-t border-border/30 pt-4'>
             {selectedParentColumn && (

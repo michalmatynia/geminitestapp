@@ -1,4 +1,4 @@
-import { getProductRepository } from '@/features/products/services/product-repository';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { noteService } from '@/features/notesapp/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

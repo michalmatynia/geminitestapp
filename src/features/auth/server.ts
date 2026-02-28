@@ -20,5 +20,5 @@ export * from './services/totp';
 export * from '@/shared/contracts/auth';
 export { AUTH_SETTINGS_KEYS } from './utils/auth-management';
 export type { AuthUserRoleMap } from './utils/auth-management';
-export * from './utils/auth-encryption';
+export * from '@/shared/lib/security/encryption';
 export { logAuthEvent } from './utils/auth-request-logger';

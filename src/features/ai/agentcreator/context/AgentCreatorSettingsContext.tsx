@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 import { DEFAULT_AGENT_SETTINGS } from '@/features/ai/agentcreator/utils/constants';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 
 // --- Granular Contexts ---
 
@@ -40,8 +39,6 @@ export interface AgentCreatorModels {
   setAgentSelectorInferenceModel: (value: string | null | undefined) => void;
   agentOutputNormalizationModel: string | null | undefined;
   setAgentOutputNormalizationModel: (value: string | null | undefined) => void;
-  modelOptions: string[];
-  modelsLoading: boolean;
 }
 const ModelsContext = createContext<AgentCreatorModels | null>(null);
 export const useAgentCreatorModels = () => {
@@ -119,20 +116,6 @@ export function AgentCreatorSettingsProvider({
 }: {
   children: ReactNode;
 }): React.JSX.Element {
-  const brainModelOptions = useBrainModelOptions({
-    feature: 'chatbot',
-  });
-
-  const modelOptions = useMemo(() => {
-    const combined = [...brainModelOptions.models];
-    const seen = new Set<string>();
-    return combined.filter((m: string) => {
-      if (!m || seen.has(m)) return false;
-      seen.add(m);
-      return true;
-    });
-  }, [brainModelOptions.models]);
-
   const [agentModeEnabled, setAgentModeEnabled] = useState(false);
   const [agentBrowser, setAgentBrowser] = useState(DEFAULT_AGENT_SETTINGS.agentBrowser);
   const [agentRunHeadless, setAgentRunHeadless] = useState(DEFAULT_AGENT_SETTINGS.runHeadless);
@@ -225,8 +208,6 @@ export function AgentCreatorSettingsProvider({
       setAgentSelectorInferenceModel,
       agentOutputNormalizationModel,
       setAgentOutputNormalizationModel,
-      modelOptions,
-      modelsLoading: brainModelOptions.isLoading,
     }),
     [
       agentMemoryValidationModel,
@@ -239,8 +220,6 @@ export function AgentCreatorSettingsProvider({
       agentMemorySummarizationModel,
       agentSelectorInferenceModel,
       agentOutputNormalizationModel,
-      modelOptions,
-      brainModelOptions.isLoading,
     ]
   );
 

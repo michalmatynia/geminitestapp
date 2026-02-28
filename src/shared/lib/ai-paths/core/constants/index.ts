@@ -500,9 +500,9 @@ export const AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT =
   Number.isFinite(rawHistoryRetentionOptionsMax) &&
   rawHistoryRetentionOptionsMax >= AI_PATHS_HISTORY_RETENTION_MIN
     ? Math.min(
-        AI_PATHS_HISTORY_RETENTION_MAX,
-        Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(rawHistoryRetentionOptionsMax))
-      )
+      AI_PATHS_HISTORY_RETENTION_MAX,
+      Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(rawHistoryRetentionOptionsMax))
+    )
     : AI_PATHS_HISTORY_RETENTION_MAX;
 export const STORAGE_VERSION = 1;
 export const DEFAULT_MODELS = ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
@@ -1141,7 +1141,6 @@ export const initialNodes = [
     position: { x: 1400, y: 510 },
     config: {
       model: {
-        modelId: 'gemma',
         temperature: 0.4,
         maxTokens: 512,
         vision: true,
@@ -1171,7 +1170,6 @@ export const initialNodes = [
     position: { x: 1400, y: 690 },
     config: {
       model: {
-        modelId: 'gpt-4o',
         temperature: 0.6,
         maxTokens: 900,
         vision: false,

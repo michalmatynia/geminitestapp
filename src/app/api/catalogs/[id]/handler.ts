@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 import { getCatalogRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
-import { normalizeCatalogLanguageSelection } from '@/features/products/services/catalog-language-normalization';
-import { getProductDataProvider } from '@/features/products/services/product-provider';
+import { normalizeCatalogLanguageSelection } from '@/shared/lib/products/services/catalog-language-normalization';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { removeUndefined } from '@/shared/utils';

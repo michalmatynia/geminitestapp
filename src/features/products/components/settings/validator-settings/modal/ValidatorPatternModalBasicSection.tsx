@@ -12,9 +12,9 @@ import {
 } from '../validator-pattern-modal-options';
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
-import { normalizeProductValidationPatternScopes } from '@/features/products/utils/validator-instance-behavior';
+import { normalizeProductValidationPatternScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
 import type { PatternFormData, ReplacementMode } from '@/shared/contracts/products';
-import type { DynamicReplacementSourceMode } from '@/features/products/utils/validator-replacement-recipe';
+import type { DynamicReplacementSourceMode } from '@/shared/lib/products/utils/validator-replacement-recipe';
 
 export function ValidatorPatternModalBasicSection(): React.JSX.Element {
   const {

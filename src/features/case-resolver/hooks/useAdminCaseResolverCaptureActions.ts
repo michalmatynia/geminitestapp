@@ -4,16 +4,16 @@ import type {
   CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposal,
   CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture/proposals';
-import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver-capture/proposals';
-import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
+} from '@/shared/lib/case-resolver-capture/proposals';
+import { stripAcceptedCaptureContentFromTextWithReport } from '@/shared/lib/case-resolver-capture/proposals';
+import { type CaseResolverCaptureAction } from '@/shared/lib/case-resolver-capture/settings';
 import { deriveDocumentContentSync, toStorageDocumentValue } from '@/shared/lib/document-editor';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import {
   FILEMAKER_DATABASE_KEY,
   decodeFilemakerPartyReference,
   normalizeFilemakerDatabase,
-} from '@/features/filemaker/settings';
+} from '@/shared/lib/filemaker/settings';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { useToast } from '@/shared/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -30,7 +30,7 @@ import {
   buildFileEditDraft,
   createCaseResolverHistorySnapshotEntry,
 } from '@/features/case-resolver/utils/caseResolverUtils';
-import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
+import { upsertFilemakerCaptureCandidate } from '@/shared/lib/case-resolver-capture/filemaker-upsert';
 import { resolveCaptureMappingApplyGuardReason } from '../capture-mapping-apply-guard';
 import { type CaseResolverFileEditDraft } from '../types';
 
@@ -134,26 +134,26 @@ export function useAdminCaseResolverCaptureActions({
       targetFileId: promptExploderPartyProposal.targetFileId,
       addresser: promptExploderPartyProposal.addresser
         ? {
-            ...promptExploderPartyProposal.addresser,
-            candidate: { ...promptExploderPartyProposal.addresser.candidate },
-            existingReference: promptExploderPartyProposal.addresser.existingReference
-              ? { ...promptExploderPartyProposal.addresser.existingReference }
-              : null,
-          }
+          ...promptExploderPartyProposal.addresser,
+          candidate: { ...promptExploderPartyProposal.addresser.candidate },
+          existingReference: promptExploderPartyProposal.addresser.existingReference
+            ? { ...promptExploderPartyProposal.addresser.existingReference }
+            : null,
+        }
         : null,
       addressee: promptExploderPartyProposal.addressee
         ? {
-            ...promptExploderPartyProposal.addressee,
-            candidate: { ...promptExploderPartyProposal.addressee.candidate },
-            existingReference: promptExploderPartyProposal.addressee.existingReference
-              ? { ...promptExploderPartyProposal.addressee.existingReference }
-              : null,
-          }
+          ...promptExploderPartyProposal.addressee,
+          candidate: { ...promptExploderPartyProposal.addressee.candidate },
+          existingReference: promptExploderPartyProposal.addressee.existingReference
+            ? { ...promptExploderPartyProposal.addressee.existingReference }
+            : null,
+        }
         : null,
       documentDate: promptExploderPartyProposal.documentDate
         ? {
-            ...promptExploderPartyProposal.documentDate,
-          }
+          ...promptExploderPartyProposal.documentDate,
+        }
         : null,
     });
   }, [isPromptExploderPartyProposalOpen, promptExploderPartyProposal]);
@@ -341,26 +341,26 @@ export function useAdminCaseResolverCaptureActions({
           targetFileId,
           addresser: promptExploderProposalDraft.addresser
             ? ({
-                ...promptExploderProposalDraft.addresser,
-                candidate: { ...promptExploderProposalDraft.addresser.candidate },
-                existingReference: promptExploderProposalDraft.addresser.existingReference
-                  ? { ...(promptExploderPartyProposal?.addresser?.existingReference ?? null) }
-                  : null,
-              } as CaseResolverCaptureProposal)
+              ...promptExploderProposalDraft.addresser,
+              candidate: { ...promptExploderProposalDraft.addresser.candidate },
+              existingReference: promptExploderProposalDraft.addresser.existingReference
+                ? { ...(promptExploderPartyProposal?.addresser?.existingReference ?? null) }
+                : null,
+            } as CaseResolverCaptureProposal)
             : null,
           addressee: promptExploderProposalDraft.addressee
             ? ({
-                ...promptExploderProposalDraft.addressee,
-                candidate: { ...promptExploderProposalDraft.addressee.candidate },
-                existingReference: promptExploderProposalDraft.addressee.existingReference
-                  ? { ...(promptExploderPartyProposal?.addressee?.existingReference ?? null) }
-                  : null,
-              } as CaseResolverCaptureProposal)
+              ...promptExploderProposalDraft.addressee,
+              candidate: { ...promptExploderProposalDraft.addressee.candidate },
+              existingReference: promptExploderProposalDraft.addressee.existingReference
+                ? { ...(promptExploderPartyProposal?.addressee?.existingReference ?? null) }
+                : null,
+            } as CaseResolverCaptureProposal)
             : null,
           documentDate: promptExploderProposalDraft.documentDate
             ? {
-                ...promptExploderProposalDraft.documentDate,
-              }
+              ...promptExploderProposalDraft.documentDate,
+            }
             : null,
         };
         const rolePatches: {
@@ -510,10 +510,10 @@ export function useAdminCaseResolverCaptureActions({
         const acceptedDocumentDateValue =
           acceptedDateValue && dateProposal
             ? {
-                ...dateProposal,
-                isoDate: acceptedDateValue,
-                city: acceptedCityValue ?? dateProposal.city ?? dateProposal.cityHint ?? null,
-              }
+              ...dateProposal,
+              isoDate: acceptedDateValue,
+              city: acceptedCityValue ?? dateProposal.city ?? dateProposal.cityHint ?? null,
+            }
             : null;
 
         const cleanupProposalState: CaseResolverCaptureProposalState = {
@@ -569,20 +569,20 @@ export function useAdminCaseResolverCaptureActions({
         const hasSourceExplodedContent = (sourceExplodedContent ?? '').trim().length > 0;
         const cleanupResult = hasSourceExplodedContent
           ? stripAcceptedCaptureContentFromTextWithReport(
-              sourceExplodedContent ?? '',
-              cleanupProposalState
-            )
+            sourceExplodedContent ?? '',
+            cleanupProposalState
+          )
           : {
-              text: sourceExplodedContent ?? '',
-              report: {
-                changed: false,
-                sourceWasHtml: false,
-                removedAddressLineCount: 0,
-                removedAddresserLineCount: 0,
-                removedAddresseeLineCount: 0,
-                removedDateLineCount: 0,
-              },
-            };
+            text: sourceExplodedContent ?? '',
+            report: {
+              changed: false,
+              sourceWasHtml: false,
+              removedAddressLineCount: 0,
+              removedAddresserLineCount: 0,
+              removedAddresseeLineCount: 0,
+              removedDateLineCount: 0,
+            },
+          };
         cleanupDurationMs = resolveCaptureApplyDurationMs(cleanupStartedAtMs);
         const cleanedExplodedContent = cleanupResult.text;
         const hasExplodedCleanup = cleanupResult.report.changed;
@@ -598,13 +598,13 @@ export function useAdminCaseResolverCaptureActions({
 
         const cleanedExplodedCanonical = hasExplodedCleanup
           ? deriveDocumentContentSync({
-              mode: 'wysiwyg',
-              value: cleanedExplodedContent ?? '',
-              previousMarkdown:
+            mode: 'wysiwyg',
+            value: cleanedExplodedContent ?? '',
+            previousMarkdown:
                 draftForTargetFile?.documentContentMarkdown ?? targetFile.documentContentMarkdown,
-              previousHtml:
+            previousHtml:
                 draftForTargetFile?.documentContentHtml ?? targetFile.documentContentHtml,
-            })
+          })
           : null;
         const cleanedExplodedStored = cleanedExplodedCanonical
           ? toStorageDocumentValue(cleanedExplodedCanonical)
@@ -695,15 +695,15 @@ export function useAdminCaseResolverCaptureActions({
                   const nextContentVersion = file.documentContentVersion + 1;
                   const currentSnapshot = hasExplodedCleanup
                     ? createCaseResolverHistorySnapshotEntry({
-                        savedAt: now,
-                        documentContentVersion: file.documentContentVersion,
-                        activeDocumentVersion: file.activeDocumentVersion,
-                        editorType: file.editorType,
-                        documentContent: file.documentContent,
-                        documentContentMarkdown: file.documentContentMarkdown,
-                        documentContentHtml: file.documentContentHtml,
-                        documentContentPlainText: file.documentContentPlainText,
-                      })
+                      savedAt: now,
+                      documentContentVersion: file.documentContentVersion,
+                      activeDocumentVersion: file.activeDocumentVersion,
+                      editorType: file.editorType,
+                      documentContent: file.documentContent,
+                      documentContentMarkdown: file.documentContentMarkdown,
+                      documentContentHtml: file.documentContentHtml,
+                      documentContentPlainText: file.documentContentPlainText,
+                    })
                     : null;
                   const nextDocumentHistory = currentSnapshot
                     ? [currentSnapshot, ...file.documentHistory].slice(0, 120)
@@ -723,21 +723,21 @@ export function useAdminCaseResolverCaptureActions({
                     cleanedExplodedCanonical &&
                     cleanedExplodedStored
                       ? {
-                          explodedDocumentContent: cleanedExplodedStored,
-                          ...(file.activeDocumentVersion === 'exploded'
-                            ? {
-                                editorType: cleanedExplodedCanonical.mode,
-                                documentContentFormatVersion: 1,
-                                documentContent: cleanedExplodedStored,
-                                documentContentMarkdown: cleanedExplodedCanonical.markdown,
-                                documentContentHtml: cleanedExplodedCanonical.html,
-                                documentContentPlainText: cleanedExplodedCanonical.plainText,
-                                documentConversionWarnings: cleanedExplodedCanonical.warnings,
-                                lastContentConversionAt: now,
-                              }
-                            : {}),
-                          documentHistory: nextDocumentHistory,
-                        }
+                        explodedDocumentContent: cleanedExplodedStored,
+                        ...(file.activeDocumentVersion === 'exploded'
+                          ? {
+                            editorType: cleanedExplodedCanonical.mode,
+                            documentContentFormatVersion: 1,
+                            documentContent: cleanedExplodedStored,
+                            documentContentMarkdown: cleanedExplodedCanonical.markdown,
+                            documentContentHtml: cleanedExplodedCanonical.html,
+                            documentContentPlainText: cleanedExplodedCanonical.plainText,
+                            documentConversionWarnings: cleanedExplodedCanonical.warnings,
+                            lastContentConversionAt: now,
+                          }
+                          : {}),
+                        documentHistory: nextDocumentHistory,
+                      }
                       : {}),
                     documentContentVersion: nextContentVersion,
                     updatedAt: now,

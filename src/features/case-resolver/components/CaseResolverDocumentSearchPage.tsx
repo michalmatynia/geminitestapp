@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp, FileImage, FileText, FolderOpen, Plus } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { DocumentSearchPage } from '@/features/document-search';
+import { DocumentSearchPage } from '@/shared/lib/document-search';
 import type {
   CaseResolverCategory,
   CaseResolverFile,
@@ -65,8 +65,8 @@ const toDateLabel = (value: string | null | undefined): string => {
 const buildPathLabelMap = <
   T extends { id: string; name: string; parentId?: string | null | undefined },
 >(
-  items: T[]
-): Map<string, string> => {
+    items: T[]
+  ): Map<string, string> => {
   const byId = new Map<string, T>(items.map((item: T): [string, T] => [item.id, item]));
   const cache = new Map<string, string>();
 

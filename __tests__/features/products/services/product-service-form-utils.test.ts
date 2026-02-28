@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formDataToObject,
   parseProductForm,
-} from '@/features/products/services/product-service-form-utils';
+} from '@/shared/lib/products/services/product-service-form-utils';
 
 describe('product-service-form-utils', () => {
   it('preserves repeated form keys as arrays', () => {

@@ -11,7 +11,7 @@ import {
   parseImageStudioSettings,
 } from '@/shared/lib/ai/image-studio/studio-settings';
 import { auth } from '@/features/auth/server';
-import { getSettingValue } from '@/features/products/services/aiDescriptionService';
+import { getSettingValue } from '@/shared/lib/products/services/aiDescriptionService';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,

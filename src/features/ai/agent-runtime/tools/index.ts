@@ -133,14 +133,14 @@ export async function runAgentTool(
     const runRecord =
       'chatbotAgentRun' in prisma
         ? await prisma.chatbotAgentRun.findUnique({
-            where: { id: runId },
-            select: {
-              model: true,
-              searchProvider: true,
-              planState: true,
-              memoryKey: true,
-            },
-          })
+          where: { id: runId },
+          select: {
+            model: true,
+            searchProvider: true,
+            planState: true,
+            memoryKey: true,
+          },
+        })
         : null;
     const [
       defaultConfig,
@@ -458,8 +458,8 @@ export async function runAgentTool(
               if (results.length > 0) {
                 const allowedResults = targetHostname
                   ? results.filter((result: { url: string }) =>
-                      isAllowedUrl(result.url, targetHostname)
-                    )
+                    isAllowedUrl(result.url, targetHostname)
+                  )
                   : results;
 
                 if (targetHostname && allowedResults.length === 0) {
@@ -524,8 +524,8 @@ export async function runAgentTool(
           if (results.length > 0) {
             const allowedResults = targetHostname
               ? results.filter((result: { url: string }) =>
-                  isAllowedUrl(result.url, targetHostname)
-                )
+                isAllowedUrl(result.url, targetHostname)
+              )
               : results;
 
             if (targetHostname && allowedResults.length === 0) {

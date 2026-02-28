@@ -232,6 +232,27 @@ export function GenerationToolbarCenterSection({
           {centerGuidesEnabled ? 'Hide Guides' : 'Show Guides'}
         </Button>
       </div>
+      {centerMode === 'client_white_bg_bbox' ? (
+        <div className='mt-2'>
+          <input
+            type='number'
+            min={1}
+            max={80}
+            step={1}
+            value={centerLayoutWhiteThreshold}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setCenterLayoutWhiteThreshold(event.target.value);
+            }}
+            className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
+            placeholder='White threshold (1-80)'
+            aria-label='White background threshold'
+            title='Pixels with all channels above (255 - threshold) are treated as white background. Higher value is more permissive.'
+          />
+          <div className='mt-1 text-[10px] text-gray-500'>
+            White threshold — pixels darker than this are treated as object
+          </div>
+        </div>
+      ) : null}
       {centerLayoutEnabled ? (
         <div className='mt-2 space-y-2'>
           {maybeWrapTooltip(

@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { prismaAsset3DRepository } from '@/shared/lib/viewer3d/services/asset3d-repository/prisma-asset3d-repository';
 import { uploadAsset3D, deleteAsset3D } from '@/shared/lib/viewer3d/utils/asset3dUploader';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 vi.mock('fs/promises', () => ({
   default: {
@@ -34,7 +35,7 @@ describe('asset3dUploader', () => {
         file.arrayBuffer = () => Promise.resolve(new ArrayBuffer(8));
       }
       const mockResult = { id: '1', filename: 'test.glb' };
-      vi.mocked(prismaAsset3DRepository.createAsset3D).mockResolvedValue(mockResult as any);
+      vi.mocked(prismaAsset3DRepository.createAsset3D).mockResolvedValue(mockResult as unknown as Asset3DRecord);
 
       const result = await uploadAsset3D(file, { name: 'Test Asset' });
 
@@ -59,8 +60,8 @@ describe('asset3dUploader', () => {
   describe('deleteAsset3D', () => {
     it('should delete file from disk and database', async () => {
       const mockAsset = { id: '1', filepath: '/uploads/assets3d/test.glb' };
-      vi.mocked(prismaAsset3DRepository.getAsset3DById).mockResolvedValue(mockAsset as any);
-      vi.mocked(prismaAsset3DRepository.deleteAsset3D).mockResolvedValue(mockAsset as any);
+      vi.mocked(prismaAsset3DRepository.getAsset3DById).mockResolvedValue(mockAsset as unknown as Asset3DRecord);
+      vi.mocked(prismaAsset3DRepository.deleteAsset3D).mockResolvedValue(mockAsset as unknown as Asset3DRecord);
 
       const result = await deleteAsset3D('1');
 

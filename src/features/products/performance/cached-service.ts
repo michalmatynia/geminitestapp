@@ -1,7 +1,7 @@
 import 'server-only';
 
-import { productService } from '@/features/products/services/productService';
-import { getProductDataProvider } from '@/features/products/services/product-provider';
+import { productService } from '@/shared/lib/products/services/productService';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ProductFilters } from '@/shared/contracts/products';
 
@@ -161,28 +161,28 @@ export class CachedProductService {
     categoryId: string,
     limit?: number
   ) => Promise<ProductWithImages[]> = withQueryCache(
-    async (categoryId: string, limit?: number) => {
-      const categoryFilters: ProductFilters = {};
-      if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
-        categoryFilters.pageSize = limit;
+      async (categoryId: string, limit?: number) => {
+        const categoryFilters: ProductFilters = {};
+        if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
+          categoryFilters.pageSize = limit;
+        }
+        const products = await productService.getProducts(categoryFilters);
+        const filtered = products.filter(
+          (product: ProductWithImages) =>
+            typeof product.categoryId === 'string' && product.categoryId === categoryId
+        );
+        return typeof limit === 'number' && limit > 0 ? filtered.slice(0, limit) : filtered;
+      },
+      {
+        keyGenerator: (categoryId: string, limit?: number) =>
+          `products:category:${categoryId}:${limit || 'all'}`,
+        ttl: 240000, // 4 minutes
+        tags: (categoryId: string) => [
+          ...ProductCacheHelpers.getTags.category(categoryId),
+          'products:list',
+        ],
       }
-      const products = await productService.getProducts(categoryFilters);
-      const filtered = products.filter(
-        (product: ProductWithImages) =>
-          typeof product.categoryId === 'string' && product.categoryId === categoryId
-      );
-      return typeof limit === 'number' && limit > 0 ? filtered.slice(0, limit) : filtered;
-    },
-    {
-      keyGenerator: (categoryId: string, limit?: number) =>
-        `products:category:${categoryId}:${limit || 'all'}`,
-      ttl: 240000, // 4 minutes
-      tags: (categoryId: string) => [
-        ...ProductCacheHelpers.getTags.category(categoryId),
-        'products:list',
-      ],
-    }
-  );
+    );
 
   // Get product with images (expensive query)
   static getProductWithImages: (id: string) => Promise<ProductWithImages | null> = withQueryCache(
@@ -199,28 +199,28 @@ export class CachedProductService {
     query: string,
     filters?: ProductFilterInput
   ) => Promise<ProductWithImages[]> = withQueryCache(
-    async (query: string, filters: ProductFilterInput = {}) => {
-      return productService.getProducts({
-        ...normalizeFilters(filters),
-        search: query,
-      });
-    },
-    {
-      keyGenerator: (query: string, filters: ProductFilterInput = {}) =>
-        `products:search:${query}:${JSON.stringify(filters)}`,
-      ttl: 120000, // 2 minutes (shorter for search results)
-      tags: (_query: string, _filters: ProductFilterInput = {}) => [
-        'products:search',
-        'products:list',
-      ],
-    }
-  );
+      async (query: string, filters: ProductFilterInput = {}) => {
+        return productService.getProducts({
+          ...normalizeFilters(filters),
+          search: query,
+        });
+      },
+      {
+        keyGenerator: (query: string, filters: ProductFilterInput = {}) =>
+          `products:search:${query}:${JSON.stringify(filters)}`,
+        ttl: 120000, // 2 minutes (shorter for search results)
+        tags: (_query: string, _filters: ProductFilterInput = {}) => [
+          'products:search',
+          'products:list',
+        ],
+      }
+    );
 
   // List categories with caching
   static listCategories: (filters: { catalogId: string }) => Promise<unknown[]> = withQueryCache(
     async (filters: { catalogId: string }) => {
       const primaryProvider = await getProductDataProvider();
-      const repository = await import('@/features/products/services/category-repository').then(
+      const repository = await import('@/shared/lib/products/services/category-repository').then(
         (m) => m.getCategoryRepository(primaryProvider)
       );
       return repository.listCategories(filters);
@@ -239,7 +239,7 @@ export class CachedProductService {
   static getCategoryTree: (catalogId: string) => Promise<unknown[]> = withQueryCache(
     async (catalogId: string) => {
       const primaryProvider = await getProductDataProvider();
-      const repository = await import('@/features/products/services/category-repository').then(
+      const repository = await import('@/shared/lib/products/services/category-repository').then(
         (m) => m.getCategoryRepository(primaryProvider)
       );
       return repository.getCategoryTree(catalogId);

@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import { getValidationPatternRepository } from '@/features/products/server';
-import { invalidateValidationPatternRuntimeCache } from '@/features/products/services/validation-pattern-runtime-cache';
+import { invalidateValidationPatternRuntimeCache } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
   normalizeProductValidationLaunchScopeBehavior,
@@ -11,9 +11,9 @@ import {
   normalizeProductValidationPatternLaunchScopes,
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
-} from '@/features/products/utils/validator-instance-behavior';
+} from '@/shared/lib/products/utils/validator-instance-behavior';
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
-import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { validateAndNormalizeRuntimeConfig } from '@/features/products/validations/validator-runtime-config';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -215,13 +215,13 @@ export async function putValidatorPatternByIdHandler(
   const nextLaunchAppliesToScopes =
     body.launchAppliesToScopes !== undefined
       ? normalizeProductValidationPatternLaunchScopes(
-          body.launchAppliesToScopes,
-          body.appliesToScopes ?? current.appliesToScopes
-        )
+        body.launchAppliesToScopes,
+        body.appliesToScopes ?? current.appliesToScopes
+      )
       : normalizeProductValidationPatternLaunchScopes(
-          current.launchAppliesToScopes,
-          current.appliesToScopes
-        );
+        current.launchAppliesToScopes,
+        current.appliesToScopes
+      );
   const nextAppliesToScopes =
     body.appliesToScopes !== undefined
       ? normalizeProductValidationPatternScopes(body.appliesToScopes)
@@ -229,13 +229,13 @@ export async function putValidatorPatternByIdHandler(
   const nextReplacementAppliesToScopes =
     body.replacementAppliesToScopes !== undefined
       ? normalizeProductValidationPatternReplacementScopes(
-          body.replacementAppliesToScopes,
-          body.appliesToScopes ?? current.appliesToScopes
-        )
+        body.replacementAppliesToScopes,
+        body.appliesToScopes ?? current.appliesToScopes
+      )
       : normalizeProductValidationPatternReplacementScopes(
-          current.replacementAppliesToScopes,
-          current.appliesToScopes
-        );
+        current.replacementAppliesToScopes,
+        current.appliesToScopes
+      );
   const nextRuntimeEnabled =
     body.runtimeEnabled !== undefined ? body.runtimeEnabled : current.runtimeEnabled;
   const nextRuntimeType = body.runtimeType !== undefined ? body.runtimeType : current.runtimeType;

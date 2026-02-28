@@ -18,7 +18,7 @@ import type {
   DynamicReplacementRoundMode,
   DynamicReplacementLogicOperator,
   DynamicReplacementLogicAction,
-} from '@/features/products/utils/validator-replacement-recipe';
+} from '@/shared/lib/products/utils/validator-replacement-recipe';
 
 export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null {
   const { formData, setFormData, sourceFieldOptions } = useValidatorSettingsContext();

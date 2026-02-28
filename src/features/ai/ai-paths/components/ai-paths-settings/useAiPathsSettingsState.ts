@@ -24,7 +24,6 @@ import {
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
   AI_PATHS_LAST_ERROR_KEY,
   DEFAULT_AI_PATHS_VALIDATION_CONFIG,
-  DEFAULT_MODELS,
   createDefaultPathConfig,
   initialEdges,
   initialNodes,
@@ -41,7 +40,6 @@ import {
   triggerButtonsApi,
 } from '@/shared/lib/ai-paths';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
@@ -159,8 +157,8 @@ export function useAiPathsSettingsState({
           const resolved =
             typeof nextValue === 'function'
               ? (nextValue as (prevState: AiPathsValidationConfig) => AiPathsValidationConfig)(
-                  previous
-                )
+                previous
+              )
               : nextValue;
           const normalized = normalizeAiPathsValidationConfig(resolved);
           if (activePathId) {
@@ -329,19 +327,6 @@ export function useAiPathsSettingsState({
     },
     [activePathId, activeTab, edges.length, nodes.length, pathName, persistLastError]
   );
-
-  const brainModelOptions = useBrainModelOptions({
-    feature: 'ai_paths',
-  });
-
-  const modelOptions = useMemo((): string[] => {
-    const apiModels = brainModelOptions.models;
-    const savedModels = nodes
-      .filter((node: AiNode): boolean => node.type === 'model')
-      .map((node: AiNode): string | undefined => node.config?.model?.modelId)
-      .filter((modelId: string | undefined): modelId is string => Boolean(modelId?.trim()));
-    return Array.from(new Set([...DEFAULT_MODELS, ...apiModels, ...savedModels]));
-  }, [brainModelOptions.models, nodes]);
 
   const pruneRuntimeInputs = useCallback(
     (state: RuntimeState, removedEdges: Edge[], remainingEdges: Edge[]): RuntimeState => {
@@ -1148,7 +1133,6 @@ export function useAiPathsSettingsState({
     configOpen,
     nodeConfigDirty,
     setNodeConfigDirty,
-    modelOptions,
     parserSamples,
     setParserSamples,
     parserSampleLoading,

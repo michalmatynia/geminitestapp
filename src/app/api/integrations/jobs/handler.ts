@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getProductListingRepository } from '@/features/integrations/server';
+import { getProductListingRepository } from '@/shared/lib/integrations/server';
 import { getProductRepository } from '@/features/products/server';
 import type { ProductListing, ProductListingWithDetails } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

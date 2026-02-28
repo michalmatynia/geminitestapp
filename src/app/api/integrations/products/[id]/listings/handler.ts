@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { isTraderaIntegrationSlug } from '@/shared/lib/integrations/constants/slugs';
 import {
   findProductListingByIdAcrossProviders,
   getExportDefaultConnectionId,
@@ -9,8 +9,8 @@ import {
   getProductListingRepository,
   listingExistsAcrossProviders,
   listProductListingsByProductIdAcrossProviders,
-} from '@/features/integrations/server';
-import { getIntegrationRepository } from '@/features/integrations/server';
+} from '@/shared/lib/integrations/server';
+import { getIntegrationRepository } from '@/shared/lib/integrations/server';
 import { enqueueTraderaListingJob } from '@/features/jobs/server';
 import { getProductRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
@@ -52,8 +52,8 @@ const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext |
   const preferredConnection =
     (defaultConnectionId
       ? connections.find(
-          (connection: (typeof connections)[number]) => connection.id === defaultConnectionId
-        )
+        (connection: (typeof connections)[number]) => connection.id === defaultConnectionId
+      )
       : null) ??
     connections.find((connection: (typeof connections)[number]) =>
       Boolean(connection.baseApiToken || connection.password)
@@ -224,14 +224,14 @@ export async function POST_handler(
           : { source: 'manual-listing' },
       relistPolicy: isTraderaIntegrationSlug(integration.slug)
         ? {
-            enabled: data.autoRelistEnabled ?? connection.traderaAutoRelistEnabled ?? true,
-            leadMinutes:
+          enabled: data.autoRelistEnabled ?? connection.traderaAutoRelistEnabled ?? true,
+          leadMinutes:
               data.autoRelistLeadMinutes ?? connection.traderaAutoRelistLeadMinutes ?? 180,
-            durationHours: data.durationHours ?? connection.traderaDefaultDurationHours ?? 72,
-            templateId: templateIdProvided
-              ? (data.templateId ?? null)
-              : (connection.traderaDefaultTemplateId ?? null),
-          }
+          durationHours: data.durationHours ?? connection.traderaDefaultDurationHours ?? 72,
+          templateId: templateIdProvided
+            ? (data.templateId ?? null)
+            : (connection.traderaDefaultTemplateId ?? null),
+        }
         : null,
     });
 

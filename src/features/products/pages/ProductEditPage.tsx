@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import EditProductForm from '@/features/products/components/EditProductForm';
-import { productService } from '@/features/products/services/productService';
+import { productService } from '@/shared/lib/products/services/productService';
 
 import type { JSX } from 'react';
 

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { enqueueProductAiJob } from '@/features/jobs/services/productAiService';
+import { enqueueProductAiJob } from '@/shared/lib/products/services/productAiService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   DatabaseBackupSchedulerTickResult,
@@ -181,7 +181,7 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
   });
 
   try {
-    const queueModule = await import('@/features/jobs/workers/productAiQueue');
+    const queueModule = await import('@/features/products/workers/productAiQueue');
     queueModule.startProductAiJobQueue();
     const runtimeType = job.jobType ?? job.type ?? 'db_backup';
     void queueModule
@@ -195,7 +195,7 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
             action: 'enqueueScheduledBackupRuntimeQueue',
           },
         });
-        void queueModule.processSingleJob(job.id).catch((inlineError: unknown) => {
+        void queueModule.processProductAiJob(job.id).catch((inlineError: unknown) => {
           void ErrorSystem.captureException(inlineError, {
             service: LOG_SOURCE,
             context: {

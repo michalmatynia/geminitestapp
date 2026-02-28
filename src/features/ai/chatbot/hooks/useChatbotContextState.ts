@@ -90,9 +90,9 @@ export function useChatbotContextState() {
       const tagsFromUrl = searchParams.get('tags');
       const parsedTags = tagsFromUrl
         ? tagsFromUrl
-            .split(',')
-            .map((tag) => tag.trim())
-            .filter(Boolean)
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean)
         : [];
       setTagQuery(queryFromUrl);
       setTagFilters(parsedTags);

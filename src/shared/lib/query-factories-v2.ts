@@ -209,11 +209,11 @@ const applyInfiniteQueryRuntimeGuards = <
   TQueryKey extends QueryKey,
   TPageParam,
 >(
-  options: Omit<
+    options: Omit<
     UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
     'queryKey' | 'queryFn' | 'meta'
   >
-): Omit<
+  ): Omit<
   UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
   'queryKey' | 'queryFn' | 'meta'
 > => {
@@ -278,9 +278,9 @@ const withQueryKeyMeta = <TQueryKey extends QueryKey>(
   meta: TanstackFactoryMeta,
   queryKey: TQueryKey
 ): TanstackFactoryMeta => ({
-  ...meta,
-  queryKey,
-});
+    ...meta,
+    queryKey,
+  });
 
 const withMutationKeyMeta = (
   meta: TanstackFactoryMeta,
@@ -294,7 +294,7 @@ const invokeQueryFactoryFn = <TQueryFnData, TQueryKey extends QueryKey>(
   queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>,
   context: QueryFunctionContext<TQueryKey>
 ): Promise<TQueryFnData> =>
-  (queryFn as (ctx: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>)(context);
+    (queryFn as (ctx: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>)(context);
 
 const combineEnabledWithRequiredId = <TData, TTransformedData, TQueryKey extends QueryKey>(
   enabled: SingleQueryConfigV2<TData, TTransformedData, TQueryKey>['enabled'],

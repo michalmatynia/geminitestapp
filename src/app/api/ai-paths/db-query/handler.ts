@@ -284,18 +284,18 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       if (single) {
         const item = delegate.findFirst
           ? await delegate.findFirst({
+            where,
+            ...(select ? { select } : {}),
+            ...(orderBy ? { orderBy } : {}),
+          })
+          : ((
+            await delegate.findMany({
               where,
               ...(select ? { select } : {}),
               ...(orderBy ? { orderBy } : {}),
+              take: 1,
             })
-          : ((
-              await delegate.findMany({
-                where,
-                ...(select ? { select } : {}),
-                ...(orderBy ? { orderBy } : {}),
-                take: 1,
-              })
-            )[0] ?? null);
+          )[0] ?? null);
         return {
           item: (item as Record<string, unknown> | null) ?? null,
           count: item ? 1 : 0,

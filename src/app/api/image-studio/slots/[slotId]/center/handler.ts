@@ -107,7 +107,9 @@ const sanitizeSegment = (value: string): string => value.trim().replace(/[^a-zA-
 const sanitizeFilename = (value: string): string => value.replace(/[^a-zA-Z0-9._-]/g, '_');
 
 const isClientCenterMode = (mode: ImageStudioCenterMode): boolean =>
-  mode === 'client_alpha_bbox' || mode === 'client_object_layout_v1';
+  mode === 'client_alpha_bbox' ||
+  mode === 'client_object_layout_v1' ||
+  mode === 'client_white_bg_bbox';
 
 const isServerCenterMode = (mode: ImageStudioCenterMode): boolean =>
   mode === 'server_alpha_bbox' || mode === 'server_object_layout_v1';
@@ -343,7 +345,8 @@ const readCenterMetadataFromSlot = (
     effectiveModeRaw === 'client_alpha_bbox' ||
     effectiveModeRaw === 'server_alpha_bbox' ||
     effectiveModeRaw === 'client_object_layout_v1' ||
-    effectiveModeRaw === 'server_object_layout_v1'
+    effectiveModeRaw === 'server_object_layout_v1' ||
+    effectiveModeRaw === 'client_white_bg_bbox'
       ? effectiveModeRaw
       : null;
 
@@ -468,9 +471,9 @@ const readCenterMetadataFromSlot = (
       : null;
     const candidateDetections = candidateDetectionsRaw
       ? {
-          alpha_bbox: alphaCandidate,
-          white_bg_first_colored_pixel: whiteCandidate,
-        }
+        alpha_bbox: alphaCandidate,
+        white_bg_first_colored_pixel: whiteCandidate,
+      }
       : undefined;
 
     return {
@@ -791,9 +794,9 @@ async function processCenterPayload(input: {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : centerBadRequest(
-          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING,
-          'Server centering requires a resolvable source image.'
-        );
+        IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING,
+        'Server centering requires a resolvable source image.'
+      );
   }
 
   if (uploadedClientImage) {
@@ -828,20 +831,20 @@ async function processCenterPayload(input: {
       scale: null,
       layout: isObjectLayoutMode(payload.mode)
         ? {
-            paddingPercent: normalizedLayout.paddingPercent,
-            paddingXPercent: normalizedLayout.paddingXPercent,
-            paddingYPercent: normalizedLayout.paddingYPercent,
-            fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
-            targetCanvasWidth: normalizedLayout.targetCanvasWidth,
-            targetCanvasHeight: normalizedLayout.targetCanvasHeight,
-            whiteThreshold: normalizedLayout.whiteThreshold,
-            chromaThreshold: normalizedLayout.chromaThreshold,
-            shadowPolicy: normalizedLayout.shadowPolicy,
-            layoutPolicyVersion: null,
-            detectionPolicyDecision: null,
-            detectionUsed: null,
-            scale: null,
-          }
+          paddingPercent: normalizedLayout.paddingPercent,
+          paddingXPercent: normalizedLayout.paddingXPercent,
+          paddingYPercent: normalizedLayout.paddingYPercent,
+          fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
+          targetCanvasWidth: normalizedLayout.targetCanvasWidth,
+          targetCanvasHeight: normalizedLayout.targetCanvasHeight,
+          whiteThreshold: normalizedLayout.whiteThreshold,
+          chromaThreshold: normalizedLayout.chromaThreshold,
+          shadowPolicy: normalizedLayout.shadowPolicy,
+          layoutPolicyVersion: null,
+          detectionPolicyDecision: null,
+          detectionUsed: null,
+          scale: null,
+        }
         : null,
     };
   }
@@ -883,20 +886,20 @@ async function processCenterPayload(input: {
     scale: null,
     layout: isObjectLayoutMode(payload.mode)
       ? {
-          paddingPercent: normalizedLayout.paddingPercent,
-          paddingXPercent: normalizedLayout.paddingXPercent,
-          paddingYPercent: normalizedLayout.paddingYPercent,
-          fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
-          targetCanvasWidth: normalizedLayout.targetCanvasWidth,
-          targetCanvasHeight: normalizedLayout.targetCanvasHeight,
-          whiteThreshold: normalizedLayout.whiteThreshold,
-          chromaThreshold: normalizedLayout.chromaThreshold,
-          shadowPolicy: normalizedLayout.shadowPolicy,
-          layoutPolicyVersion: null,
-          detectionPolicyDecision: null,
-          detectionUsed: null,
-          scale: null,
-        }
+        paddingPercent: normalizedLayout.paddingPercent,
+        paddingXPercent: normalizedLayout.paddingXPercent,
+        paddingYPercent: normalizedLayout.paddingYPercent,
+        fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
+        targetCanvasWidth: normalizedLayout.targetCanvasWidth,
+        targetCanvasHeight: normalizedLayout.targetCanvasHeight,
+        whiteThreshold: normalizedLayout.whiteThreshold,
+        chromaThreshold: normalizedLayout.chromaThreshold,
+        shadowPolicy: normalizedLayout.shadowPolicy,
+        layoutPolicyVersion: null,
+        detectionPolicyDecision: null,
+        detectionUsed: null,
+        scale: null,
+      }
       : null,
   };
 }
@@ -1259,10 +1262,10 @@ export async function postCenterSlotHandler(
     const normalizedError =
       error instanceof z.ZodError
         ? centerBadRequest(
-            IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID,
-            'Center schema validation failed.',
-            { responseErrors: error.format() }
-          )
+          IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID,
+          'Center schema validation failed.',
+          { responseErrors: error.format() }
+        )
         : error;
 
     void logSystemEvent({

@@ -29,11 +29,11 @@ export const getThemeById = async (id: string): Promise<ThemeRecord | null> => {
   const theme = await prisma.theme.findUnique({ where: { id } });
   return theme
     ? {
-        ...theme,
-        isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
-        createdAt: theme.createdAt.toISOString(),
-        updatedAt: theme.updatedAt?.toISOString() ?? null,
-      }
+      ...theme,
+      isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
+      createdAt: theme.createdAt.toISOString(),
+      updatedAt: theme.updatedAt?.toISOString() ?? null,
+    }
     : null;
 };
 

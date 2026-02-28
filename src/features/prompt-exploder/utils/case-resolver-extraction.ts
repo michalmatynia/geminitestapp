@@ -742,19 +742,19 @@ export const extractCaseResolverBridgePayloadFromSegments = (
     (mode === 'rules_only' && captureRules.length > 0 && hasAnyRuleCapture);
   const heuristicPayload = shouldUseHeuristics
     ? (() => {
-        const usedSegmentIds = new Set<string>();
-        const addresserSegment = resolvePartySegment(segments, 'addresser', usedSegmentIds);
-        const addresseeSegment = resolvePartySegment(segments, 'addressee', usedSegmentIds);
-        return {
-          addresser: addresserSegment
-            ? buildPartyCandidateFromSegment(addresserSegment, 'addresser')
-            : null,
-          addressee: addresseeSegment
-            ? buildPartyCandidateFromSegment(addresseeSegment, 'addressee')
-            : null,
-          metadata: resolvePlaceDateMetadata(segments),
-        };
-      })()
+      const usedSegmentIds = new Set<string>();
+      const addresserSegment = resolvePartySegment(segments, 'addresser', usedSegmentIds);
+      const addresseeSegment = resolvePartySegment(segments, 'addressee', usedSegmentIds);
+      return {
+        addresser: addresserSegment
+          ? buildPartyCandidateFromSegment(addresserSegment, 'addresser')
+          : null,
+        addressee: addresseeSegment
+          ? buildPartyCandidateFromSegment(addresseeSegment, 'addressee')
+          : null,
+        metadata: resolvePlaceDateMetadata(segments),
+      };
+    })()
     : null;
 
   const addresser = mergePartyCandidates(ruleAddresser, heuristicPayload?.addresser ?? null);
@@ -764,9 +764,9 @@ export const extractCaseResolverBridgePayloadFromSegments = (
   const parties: PromptExploderCaseResolverPartyBundle | undefined =
     addresser || addressee
       ? {
-          ...(addresser ? { addresser } : {}),
-          ...(addressee ? { addressee } : {}),
-        }
+        ...(addresser ? { addresser } : {}),
+        ...(addressee ? { addressee } : {}),
+      }
       : undefined;
 
   return {

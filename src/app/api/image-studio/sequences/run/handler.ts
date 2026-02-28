@@ -45,10 +45,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     referenceSlotIds: parsed.data.referenceSlotIds ?? [],
     mask: parsed.data.mask
       ? {
-          polygons: parsed.data.mask.polygons,
-          invert: Boolean(parsed.data.mask.invert),
-          feather: parsed.data.mask.feather ?? 0,
-        }
+        polygons: parsed.data.mask.polygons,
+        invert: Boolean(parsed.data.mask.invert),
+        feather: parsed.data.mask.feather ?? 0,
+      }
       : null,
     studioSettings: parsed.data.studioSettings ?? null,
     steps: parsed.data.steps,

@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   GenericApiConsole,
   type ApiPreset,
-} from '@/features/integrations/components/connections/GenericApiConsole';
+} from '@/shared/lib/integrations/components/connections/GenericApiConsole';
 
 describe('GenericApiConsole', () => {
   const mockPresets: ApiPreset[] = [

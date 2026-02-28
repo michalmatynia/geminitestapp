@@ -7,12 +7,12 @@ import {
   getIntegrationRepository,
   getProductListingRepository,
   findProductListingByProductAndConnectionAcrossProviders,
-} from '@/features/integrations/server';
-import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
+} from '@/shared/lib/integrations/server';
+import { resolveBaseConnectionToken } from '@/shared/lib/integrations/services/base-token-resolver';
 import {
   callBaseApi,
   fetchBaseProductDetails,
-} from '@/features/integrations/services/imports/base-client';
+} from '@/shared/lib/integrations/services/imports/base-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   getProductSyncProfile,

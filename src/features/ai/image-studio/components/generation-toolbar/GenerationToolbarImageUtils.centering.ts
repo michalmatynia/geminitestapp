@@ -23,6 +23,7 @@ import { ApiError } from '@/shared/lib/api-client';
 import {
   analyzeAndPlanAutoScaleFromRgba,
   detectObjectBoundsForLayoutFromRgba,
+  resolveWhiteBgSimpleBboxFromRgba,
   type NormalizedImageStudioAnalysisLayoutConfig,
 } from '@/features/ai/image-studio/analysis/shared';
 
@@ -192,6 +193,78 @@ export const centerCanvasImageObject = async (src: string): Promise<string> => {
   const targetLeft = Math.round((sourceWidth - bounds.width) / 2);
   const targetTop = Math.round((sourceHeight - bounds.height) / 2);
   outputContext.clearRect(0, 0, sourceWidth, sourceHeight);
+  outputContext.drawImage(
+    sourceCanvas,
+    bounds.left,
+    bounds.top,
+    bounds.width,
+    bounds.height,
+    targetLeft,
+    targetTop,
+    bounds.width,
+    bounds.height
+  );
+
+  return outputCanvas.toDataURL('image/png');
+};
+
+/**
+ * White-background simple bounding-box centering (client-side).
+ * Scans all pixels once for non-white content, computes the bounding rectangle,
+ * and repositions it to the centre of the original canvas dimensions.
+ * No scaling — canvas size stays the same. White pixels fill the cleared area.
+ */
+export const centerCanvasImageObjectWhiteBg = async (
+  src: string,
+  whiteThreshold = CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD
+): Promise<string> => {
+  const image = await loadImageElement(src);
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  if (!(sourceWidth > 0 && sourceHeight > 0)) {
+    throw new Error('Source image dimensions are invalid.');
+  }
+
+  const sourceCanvas = document.createElement('canvas');
+  sourceCanvas.width = sourceWidth;
+  sourceCanvas.height = sourceHeight;
+  const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+  if (!sourceContext) {
+    throw new Error('Canvas context is unavailable.');
+  }
+  sourceContext.drawImage(image, 0, 0, sourceWidth, sourceHeight);
+
+  let imageData: ImageData;
+  try {
+    imageData = sourceContext.getImageData(0, 0, sourceWidth, sourceHeight);
+  } catch {
+    throw new Error(
+      'Client centering failed due to cross-origin restrictions. Use "Center Server: Sharp".'
+    );
+  }
+
+  const bounds = resolveWhiteBgSimpleBboxFromRgba(
+    imageData.data,
+    sourceWidth,
+    sourceHeight,
+    whiteThreshold
+  );
+  if (!bounds) {
+    throw new Error('No visible object pixels were detected on the white background.');
+  }
+
+  const outputCanvas = document.createElement('canvas');
+  outputCanvas.width = sourceWidth;
+  outputCanvas.height = sourceHeight;
+  const outputContext = outputCanvas.getContext('2d');
+  if (!outputContext) {
+    throw new Error('Canvas context is unavailable.');
+  }
+
+  const targetLeft = Math.round((sourceWidth - bounds.width) / 2);
+  const targetTop = Math.round((sourceHeight - bounds.height) / 2);
+  outputContext.fillStyle = '#ffffff';
+  outputContext.fillRect(0, 0, sourceWidth, sourceHeight);
   outputContext.drawImage(
     sourceCanvas,
     bounds.left,

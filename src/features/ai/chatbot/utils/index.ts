@@ -362,9 +362,9 @@ export const getSelfCheckAudits = (audits: AgentAuditLog[]): AgentAuditLog[] =>
 export const getAuditList = (value: unknown): string[] =>
   Array.isArray(value)
     ? value
-        .filter((item: unknown): item is string => typeof item === 'string')
-        .map((item: string): string => item.trim())
-        .filter(Boolean)
+      .filter((item: unknown): item is string => typeof item === 'string')
+      .map((item: string): string => item.trim())
+      .filter(Boolean)
     : [];
 
 export const formatAdaptiveReason = (reason?: string | null): string => {

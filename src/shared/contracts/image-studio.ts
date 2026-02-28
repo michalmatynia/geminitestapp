@@ -235,6 +235,7 @@ export const imageStudioCenterModeSchema = z.enum([
   'server_alpha_bbox',
   'client_object_layout_v1',
   'server_object_layout_v1',
+  'client_white_bg_bbox',
 ]);
 
 export type ImageStudioCenterMode = z.infer<typeof imageStudioCenterModeSchema>;

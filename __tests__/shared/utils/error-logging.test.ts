@@ -20,9 +20,9 @@ describe('Centralized Error Logging', () => {
     vi.stubGlobal(
       'Blob',
       class {
-        parts: any[];
-        options: any;
-        constructor(parts: any[], options: any) {
+        parts: string[];
+        options: BlobPropertyBag | undefined;
+        constructor(parts: string[], options?: BlobPropertyBag) {
           this.parts = parts;
           this.options = options;
         }
@@ -43,11 +43,11 @@ describe('Centralized Error Logging', () => {
     logClientError(error);
 
     expect(navigator.sendBeacon).toHaveBeenCalled();
-    const [url, blob] = (navigator.sendBeacon as any).mock.calls[0];
+    const [url, blob] = vi.mocked(navigator.sendBeacon).mock.calls[0] as [string, Blob];
     expect(url).toBe('/api/client-errors');
 
     // Convert blob back to text to verify payload
-    const data = await (blob as Blob).text();
+    const data = await blob.text();
     const payload = JSON.parse(data);
     expect(payload.message).toBe('Test error message');
     expect(payload.name).toBe('Error');
@@ -58,8 +58,8 @@ describe('Centralized Error Logging', () => {
   it('should log a string error message', async () => {
     logClientError('Simple string error');
 
-    const blob = (navigator.sendBeacon as any).mock.calls[0][1];
-    const data = await (blob as Blob).text();
+    const blob = vi.mocked(navigator.sendBeacon).mock.calls[0]?.[1] as Blob;
+    const data = await blob.text();
     const payload = JSON.parse(data);
     expect(payload.message).toBe('Simple string error');
   });
@@ -69,14 +69,14 @@ describe('Centralized Error Logging', () => {
     const context = { userId: 'user-123', feature: 'test-feature' };
     logClientError(error, { context });
 
-    const blob = (navigator.sendBeacon as any).mock.calls[0][1];
-    const data = await (blob as Blob).text();
+    const blob = vi.mocked(navigator.sendBeacon).mock.calls[0]?.[1] as Blob;
+    const data = await blob.text();
     const payload = JSON.parse(data);
     expect(payload.context).toMatchObject(context);
   });
 
   it('should fall back to fetch if sendBeacon is unavailable or fails', () => {
-    (navigator as any).sendBeacon = undefined;
+    (navigator as unknown as { sendBeacon: undefined }).sendBeacon = undefined;
 
     logClientError('Fetch fallback test');
 

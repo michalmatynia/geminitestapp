@@ -40,7 +40,7 @@ export function useOfflineQueueStatus(): {
   count: number;
   refresh: () => void;
   clear: () => void;
-} {
+  } {
   const [items, setItems] = useState<OfflineQueueItem[]>((): OfflineQueueItem[] =>
     readQueueFromStorage()
   );

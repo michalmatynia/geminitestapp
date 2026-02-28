@@ -11,6 +11,7 @@ import {
   fetchTags,
 } from '@/shared/lib/viewer3d/api';
 import { server } from '@/mocks/server';
+import type { Asset3DUpdateInput } from '@/shared/contracts/viewer3d';
 
 vi.mock('@/shared/utils/upload-with-progress', () => ({
   uploadWithProgress: vi.fn().mockResolvedValue({
@@ -90,7 +91,7 @@ describe('Asset3D API', () => {
   it('should update an asset', async () => {
     server.use(
       http.patch('/api/assets3d/1', async ({ request }) => {
-        const body = (await request.json()) as any;
+        const body = (await request.json()) as Asset3DUpdateInput;
         expect(body.name).toBe('Updated');
         return HttpResponse.json({ ...mockAsset, name: 'Updated' });
       })

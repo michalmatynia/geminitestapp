@@ -6,11 +6,11 @@ vi.unmock('@/shared/lib/db/prisma');
 import { DELETE } from '@/app/api/cms/slugs/[id]/route';
 import { GET, POST } from '@/app/api/cms/slugs/route';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import type { Slug } from '@/shared/contracts/cms';
+import type { Slug, CmsRepository } from '@/shared/contracts/cms';
 import prisma from '@/shared/lib/db/prisma';
 
 describe('CMS API', () => {
-  let cmsRepository: any;
+  let cmsRepository: CmsRepository;
 
   beforeEach(async () => {
     cmsRepository = await getCmsRepository();

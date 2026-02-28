@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { translateProduct } from '@/features/products/services/aiTranslationService';
-import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import { translateProduct } from '@/shared/lib/products/services/aiTranslationService';
+import {
+  resolveBrainExecutionConfigForCapability,
+  type BrainExecutionConfig,
+} from '@/shared/lib/ai-brain/server';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 
 // Mock AI Brain functions
@@ -33,8 +36,12 @@ describe('aiTranslationService', () => {
       temperature: 0.3,
       maxTokens: 1200,
       systemPrompt: 'You are a professional translator.',
-      brainApplied: {},
-    } as any);
+      brainApplied: {
+        modelId: 'test-model',
+        temperature: 0.3,
+        maxTokens: 1200,
+      },
+    } as unknown as BrainExecutionConfig);
   });
 
   it('should successfully translate product data to target languages', async () => {

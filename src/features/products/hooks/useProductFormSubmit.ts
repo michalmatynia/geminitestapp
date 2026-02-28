@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState, useEffect } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
+import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import type {
   ProductWithImages,
   ProductFormData,
@@ -133,15 +133,15 @@ function buildFormData(
           typeof entry.valuesByLanguage === 'object' &&
           !Array.isArray(entry.valuesByLanguage)
             ? Object.entries(entry.valuesByLanguage).reduce(
-                (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
-                  const normalizedLang = lang.trim().toLowerCase();
-                  const normalizedValue = typeof value === 'string' ? value.trim() : '';
-                  if (!normalizedLang || !normalizedValue) return acc;
-                  acc[normalizedLang] = normalizedValue;
-                  return acc;
-                },
-                {}
-              )
+              (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
+                const normalizedLang = lang.trim().toLowerCase();
+                const normalizedValue = typeof value === 'string' ? value.trim() : '';
+                if (!normalizedLang || !normalizedValue) return acc;
+                acc[normalizedLang] = normalizedValue;
+                return acc;
+              },
+              {}
+            )
             : {};
         const directValue = typeof entry.value === 'string' ? entry.value.trim() : '';
         const fallbackLocalizedValue =

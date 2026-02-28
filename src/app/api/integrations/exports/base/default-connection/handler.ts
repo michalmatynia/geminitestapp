@@ -5,7 +5,7 @@ import {
   getExportDefaultConnectionId,
   getIntegrationRepository,
   setExportDefaultConnectionId,
-} from '@/features/integrations/server';
+} from '@/shared/lib/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type {
   IntegrationRecord as Integration,

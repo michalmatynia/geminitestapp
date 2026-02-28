@@ -200,26 +200,26 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
         : null;
     const nextCaseIdentifier: CaseResolverIdentifier = editingCaseIdentifier
       ? {
-          ...editingCaseIdentifier,
-          name: normalizedName,
-          parentId: normalizedParentId,
-          color: formData.color.trim() || '#f59e0b',
-          updatedAt: now,
-        }
+        ...editingCaseIdentifier,
+        name: normalizedName,
+        parentId: normalizedParentId,
+        color: formData.color.trim() || '#f59e0b',
+        updatedAt: now,
+      }
       : {
-          id: createCaseIdentifierId(),
-          type: 'custom',
-          value: normalizedName,
-          name: normalizedName,
-          parentId: normalizedParentId,
-          color: formData.color.trim() || '#f59e0b',
-          createdAt: now,
-          updatedAt: now,
-        };
+        id: createCaseIdentifierId(),
+        type: 'custom',
+        value: normalizedName,
+        name: normalizedName,
+        parentId: normalizedParentId,
+        color: formData.color.trim() || '#f59e0b',
+        createdAt: now,
+        updatedAt: now,
+      };
     const nextCaseIdentifiers = editingCaseIdentifier
       ? caseIdentifiers.map((caseIdentifier: CaseResolverIdentifier) =>
-          caseIdentifier.id === editingCaseIdentifier.id ? nextCaseIdentifier : caseIdentifier
-        )
+        caseIdentifier.id === editingCaseIdentifier.id ? nextCaseIdentifier : caseIdentifier
+      )
       : [...caseIdentifiers, nextCaseIdentifier];
 
     try {
@@ -264,10 +264,10 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
         (caseIdentifier: CaseResolverIdentifier): CaseResolverIdentifier =>
           caseIdentifier.parentId === caseIdentifierToDelete.id
             ? {
-                ...caseIdentifier,
-                parentId: null,
-                updatedAt: now,
-              }
+              ...caseIdentifier,
+              parentId: null,
+              updatedAt: now,
+            }
             : caseIdentifier
       );
     try {

@@ -10,6 +10,7 @@ import {
   type ProductAdvancedFilterGroup,
   type ProductAdvancedFilterField,
   type ProductAdvancedFilterOperator,
+  type ProductAdvancedFilterCondition,
 } from '@/shared/contracts/products';
 
 const makeCondition = (
@@ -18,7 +19,7 @@ const makeCondition = (
   operator: ProductAdvancedFilterOperator,
   value?: unknown,
   valueTo?: unknown
-) =>
+): ProductAdvancedFilterCondition =>
   ({
     type: 'condition' as const,
     id,
@@ -26,7 +27,7 @@ const makeCondition = (
     operator,
     ...(value !== undefined ? { value } : {}),
     ...(valueTo !== undefined ? { valueTo } : {}),
-  }) as any;
+  }) as unknown as ProductAdvancedFilterCondition;
 
 const makeGroup = (
   id: string,

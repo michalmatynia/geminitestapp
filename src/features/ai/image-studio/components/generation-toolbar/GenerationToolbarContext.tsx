@@ -21,7 +21,8 @@ export type CenterMode =
   | 'client_alpha_bbox'
   | 'server_alpha_bbox'
   | 'client_object_layout_v1'
-  | 'server_object_layout_v1';
+  | 'server_object_layout_v1'
+  | 'client_white_bg_bbox';
 export type AutoScalerMode = 'client_auto_scaler_v1' | 'server_auto_scaler_v1';
 
 export type CropStatus =

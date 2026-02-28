@@ -201,7 +201,6 @@ export const buildDescriptionInferenceLitePathConfigValue = (timestamp: string):
         position: { x: 1660, y: 500 },
         config: {
           model: {
-            modelId: 'gemma3:12b',
             temperature: 0.1,
             maxTokens: 1100,
             vision: true,

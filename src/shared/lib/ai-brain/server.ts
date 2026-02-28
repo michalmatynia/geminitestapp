@@ -153,6 +153,8 @@ export const resolveBrainExecutionConfigForCapability = async (
     defaultTemperature?: number;
     defaultMaxTokens?: number;
     defaultSystemPrompt?: string;
+    /** Fallback model ID used when Brain has no modelId configured for this capability. */
+    defaultModelId?: string;
     runtimeKind?: BrainAppliedMeta['runtimeKind'];
   }
 ): Promise<BrainExecutionConfig> => {
@@ -211,7 +213,7 @@ export const resolveBrainExecutionConfigForCapability = async (
     );
   }
 
-  const modelId = assignment.modelId.trim();
+  const modelId = assignment.modelId.trim() || options?.defaultModelId?.trim() || '';
   if (!modelId) {
     throw configurationError(
       `${capabilityLabel} has no model assigned in AI Brain. Set a non-empty model ID in /admin/settings/brain.`
@@ -254,6 +256,8 @@ export const resolveBrainModelExecutionConfig = async (
     defaultTemperature?: number;
     defaultMaxTokens?: number;
     defaultSystemPrompt?: string;
+    /** Fallback model ID used when Brain has no modelId configured for this feature. */
+    defaultModelId?: string;
   }
 ): Promise<BrainModelExecutionConfig> => {
   return resolveBrainExecutionConfigForCapability(getDefaultCapabilityForFeature(feature), options);

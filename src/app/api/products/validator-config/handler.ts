@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
-import { listValidationPatternsCached } from '@/features/products/services/validation-pattern-runtime-cache';
+import { listValidationPatternsCached } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

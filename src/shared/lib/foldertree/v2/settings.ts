@@ -46,8 +46,8 @@ export const parseFolderTreeUiStateV2Entry = (
     const parsed = JSON.parse(raw) as Partial<FolderTreeUiStateV2Entry>;
     const expandedNodeIds = Array.isArray(parsed.expandedNodeIds)
       ? Array.from(
-          new Set(parsed.expandedNodeIds.map((value: string) => value.trim()).filter(Boolean))
-        )
+        new Set(parsed.expandedNodeIds.map((value: string) => value.trim()).filter(Boolean))
+      )
       : [];
     return {
       expandedNodeIds,

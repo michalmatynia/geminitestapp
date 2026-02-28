@@ -23,7 +23,7 @@ import { DocumentWysiwygEditor } from '@/shared/lib/document-editor';
 import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,
-} from '@/features/filemaker/settings';
+} from '@/shared/lib/filemaker/settings';
 import {
   Badge,
   Button,
@@ -372,13 +372,13 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                     updateEditingDocumentDraft({
                       documentDate: val
                         ? {
-                            source: 'metadata',
-                            sourceLine: null,
-                            cityHint: null,
-                            action: 'useDetectedDate',
-                            ...draft.documentDate,
-                            isoDate: val,
-                          }
+                          source: 'metadata',
+                          sourceLine: null,
+                          cityHint: null,
+                          action: 'useDetectedDate',
+                          ...draft.documentDate,
+                          isoDate: val,
+                        }
                         : null,
                     });
                   }}

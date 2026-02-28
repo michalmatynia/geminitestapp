@@ -257,7 +257,7 @@ export function useSaveCatalogMutation(): SaveMutation<Catalog> {
 export function useSaveCategoryMutation(): SaveMutation<
   ProductCategory,
   { id: string | undefined; data: Partial<ProductCategory> }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createMutationV2({
@@ -282,7 +282,7 @@ export function useSaveCategoryMutation(): SaveMutation<
 export function useDeleteCategoryMutation(): UpdateMutation<
   void,
   { id: string; catalogId: string | null }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createDeleteMutationV2({
@@ -305,7 +305,7 @@ export function useDeleteCategoryMutation(): UpdateMutation<
 export function useReorderCategoryMutation(): UpdateMutation<
   ProductCategory,
   api.ReorderCategoryPayload
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createUpdateMutationV2({
@@ -329,7 +329,7 @@ export function useReorderCategoryMutation(): UpdateMutation<
 export function useSaveTagMutation(): SaveMutation<
   ProductTag,
   { id: string | undefined; data: Partial<ProductTag> }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createMutationV2({
@@ -354,7 +354,7 @@ export function useSaveTagMutation(): SaveMutation<
 export function useDeleteTagMutation(): UpdateMutation<
   void,
   { id: string; catalogId: string | null }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createDeleteMutationV2({
@@ -377,7 +377,7 @@ export function useDeleteTagMutation(): UpdateMutation<
 export function useSaveParameterMutation(): SaveMutation<
   ProductParameter,
   { id: string | undefined; data: Partial<ProductParameter> }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createMutationV2({
@@ -402,7 +402,7 @@ export function useSaveParameterMutation(): SaveMutation<
 export function useDeleteParameterMutation(): UpdateMutation<
   void,
   { id: string; catalogId: string | null }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createDeleteMutationV2({
@@ -425,7 +425,7 @@ export function useDeleteParameterMutation(): UpdateMutation<
 export function useUpdateValidatorSettingsMutation(): UpdateMutation<
   ProductValidatorSettings,
   Partial<ProductValidatorSettings>
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorSettings();
   return createUpdateMutationV2({
@@ -448,7 +448,7 @@ export function useUpdateValidatorSettingsMutation(): UpdateMutation<
 export function useCreateValidationPatternMutation(): CreateMutation<
   ProductValidationPattern,
   api.CreateValidationPatternPayload
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createCreateMutationV2({
@@ -471,7 +471,7 @@ export function useCreateValidationPatternMutation(): CreateMutation<
 export function useUpdateValidationPatternMutation(): UpdateMutation<
   ProductValidationPattern,
   { id: string; data: api.UpdateValidationPatternPayload }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
@@ -515,7 +515,7 @@ export function useDeleteValidationPatternMutation(): DeleteMutation {
 export function useReorderValidationPatternsMutation(): UpdateMutation<
   { updated: ProductValidationPattern[] },
   { updates: api.ReorderValidationPatternUpdatePayload[] }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
@@ -539,7 +539,7 @@ export function useReorderValidationPatternsMutation(): UpdateMutation<
 export function useImportValidationPatternsMutation(): UpdateMutation<
   api.ImportValidationPatternsResult,
   api.ImportValidationPatternsPayload
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({

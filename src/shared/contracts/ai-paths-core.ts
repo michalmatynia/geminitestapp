@@ -903,7 +903,7 @@ export type PromptConfigDto = z.infer<typeof promptConfigSchema>;
 export type PromptConfig = PromptConfigDto;
 
 export const modelConfigSchema = z.object({
-  modelId: z.string(),
+  modelId: z.string().optional(),
   temperature: z.number(),
   maxTokens: z.number(),
   vision: z.boolean(),

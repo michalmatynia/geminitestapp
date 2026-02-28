@@ -90,12 +90,12 @@ export async function initializePlanState(
       const rawResumeContext = await getBrowserContextSummary(run.id);
       const resumeContext: AgentExecutionContext['browserContext'] = rawResumeContext
         ? {
-            url: rawResumeContext.url ?? '',
-            title: rawResumeContext.title ?? null,
-            domTextSample: rawResumeContext.domTextSample ?? '',
-            logs: rawResumeContext.logs ?? [],
-            uiInventory: rawResumeContext.uiInventory,
-          }
+          url: rawResumeContext.url ?? '',
+          title: rawResumeContext.title ?? null,
+          domTextSample: rawResumeContext.domTextSample ?? '',
+          logs: rawResumeContext.logs ?? [],
+          uiInventory: rawResumeContext.uiInventory,
+        }
         : null;
       const resumeReview = await buildResumePlanReview({
         prompt: run.prompt,
@@ -103,12 +103,12 @@ export async function initializePlanState(
         model: memorySummarizationModel,
         browserContext: resumeContext
           ? {
-              url: resumeContext.url ?? '',
-              title: resumeContext.title ?? null,
-              domTextSample: resumeContext.domTextSample ?? '',
-              logs: resumeContext.logs ?? [],
-              uiInventory: resumeContext.uiInventory,
-            }
+            url: resumeContext.url ?? '',
+            title: resumeContext.title ?? null,
+            domTextSample: resumeContext.domTextSample ?? '',
+            logs: resumeContext.logs ?? [],
+            uiInventory: resumeContext.uiInventory,
+          }
           : null,
         currentPlan: planSteps,
         completedIndex: Math.max(stepIndex, 0),
@@ -180,12 +180,12 @@ export async function initializePlanState(
       guardModel: loopGuardModel,
       browserContext: browserContext
         ? {
-            url: browserContext.url ?? '',
-            title: browserContext.title ?? null,
-            domTextSample: browserContext.domTextSample ?? '',
-            logs: browserContext.logs ?? [],
-            uiInventory: browserContext.uiInventory,
-          }
+          url: browserContext.url ?? '',
+          title: browserContext.title ?? null,
+          domTextSample: browserContext.domTextSample ?? '',
+          logs: browserContext.logs ?? [],
+          uiInventory: browserContext.uiInventory,
+        }
         : null,
       maxSteps: settings.maxSteps,
       maxStepAttempts: settings.maxStepAttempts,

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
+import { ChatbotSettings } from '@prisma/client';
 
 import { GET, POST } from '@/app/api/chatbot/settings/route';
 import prisma from '@/shared/lib/db/prisma';
@@ -15,7 +16,7 @@ describe('Chatbot Settings API', () => {
 
   it('GET: returns settings by key', async () => {
     const mockSettings = { key: 'default', settings: { model: 'gpt-4' } };
-    vi.mocked(prisma.chatbotSettings.findUnique).mockResolvedValue(mockSettings as any);
+    vi.mocked(prisma.chatbotSettings.findUnique).mockResolvedValue(mockSettings as unknown as ChatbotSettings);
 
     const req = new NextRequest('http://localhost/api/chatbot/settings?key=default');
     const res = await GET(req);
@@ -30,7 +31,7 @@ describe('Chatbot Settings API', () => {
 
   it('POST: saves settings using upsert', async () => {
     const mockSaved = { key: 'default', settings: { model: 'gpt-4' } };
-    vi.mocked(prisma.chatbotSettings.upsert).mockResolvedValue(mockSaved as any);
+    vi.mocked(prisma.chatbotSettings.upsert).mockResolvedValue(mockSaved as unknown as ChatbotSettings);
 
     const req = new NextRequest('http://localhost/api/chatbot/settings', {
       method: 'POST',

@@ -110,7 +110,7 @@ export async function registerNodeInstrumentation() {
     })();
   });
 
-  const { initializeQueues } = await import('@/features/jobs/lib/queue-init');
+  const { initializeQueues } = await import('@/shared/lib/queue/queue-init');
   initializeQueues();
 
   if (globalScope.__cmsProcessHandlersRegistered) {

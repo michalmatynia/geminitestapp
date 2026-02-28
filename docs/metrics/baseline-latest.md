@@ -1,13 +1,13 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-28T06:28:42.723Z
+Generated at: 2026-02-28T06:32:05.927Z
 
 ## Snapshot
 
-- Source files: 3704
-- Source lines: 607530
+- Source files: 3710
+- Source lines: 607145
 - use client files: 1287
-- Files >= 1000 LOC: 20
+- Files >= 1000 LOC: 18
 - Files >= 1500 LOC: 1
 - Largest file: `src/features/case-resolver/__tests__/settings.test.ts` (1774 LOC)
 - API routes: 316
@@ -67,14 +67,12 @@ Generated at: 2026-02-28T06:28:42.723Z
 | `src/app/api/image-studio/slots/[slotId]/center/handler.ts` | 1293 |
 | `src/features/cms/components/page-builder/ThemeSettingsPanel.tsx` | 1286 |
 | `src/features/ai/image-studio/analysis/shared.ts` | 1235 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts` | 1200 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 1197 |
 | `src/shared/ui/vector-canvas.tsx` | 1178 |
 | `src/app/api/integrations/products/[id]/export-to-base/helpers.ts` | 1163 |
 | `src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts` | 1147 |
 | `src/features/ai/ai-paths/server/settings-store-parameter-inference.ts` | 1128 |
 | `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts` | 1127 |
-| `src/features/notesapp/services/notes/note-repository/mongo-note-repository.ts` | 1116 |
 | `src/features/ai/image-studio/components/generation-toolbar/GenerationToolbar.handlers.ts` | 1110 |
 | `src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts` | 1072 |
 | `src/features/ai/agent-runtime/tools/index.ts` | 1056 |
@@ -82,3 +80,5 @@ Generated at: 2026-02-28T06:28:42.723Z
 | `src/features/ai/image-studio/server/sequence-executor.ts` | 1030 |
 | `src/features/ai/image-studio/server/run-executor.ts` | 1022 |
 | `src/features/prompt-exploder/pattern-pack-rules.ts` | 1000 |
+| `src/features/filemaker/filemaker-settings.database.ts` | 999 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsCanvasInteractions.ts` | 985 |

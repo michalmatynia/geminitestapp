@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-02-28T06:32:05.927Z",
+  "generatedAt": "2026-02-28T06:30:19.972Z",
   "source": {
-    "totalFiles": 3710,
-    "totalLines": 607145,
+    "totalFiles": 3707,
+    "totalLines": 607535,
     "useClientFiles": 1287,
-    "filesOver800": 92,
-    "filesOver1000": 18,
+    "filesOver800": 93,
+    "filesOver1000": 19,
     "filesOver1500": 1,
     "largestFile": {
       "path": "src/features/case-resolver/__tests__/settings.test.ts",
@@ -220,8 +220,8 @@
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 723,
-        "lines": 163013
+        "files": 720,
+        "lines": 163403
       },
       {
         "feature": "case-resolver",
@@ -391,6 +391,10 @@
         "lines": 1235
       },
       {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts",
+        "lines": 1200
+      },
+      {
         "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts",
         "lines": 1197
       },
@@ -484,10 +488,6 @@
       },
       {
         "path": "src/features/integrations/context/IntegrationsContext.tsx",
-        "lines": 956
-      },
-      {
-        "path": "src/shared/contracts/cms.ts",
         "lines": 956
       }
     ],

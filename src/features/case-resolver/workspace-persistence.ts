@@ -386,30 +386,57 @@ export const fetchCaseResolverWorkspaceRecord = async (
   source: string,
   options?: {
     fresh?: boolean;
+    strategy?: 'light_then_heavy' | 'light_only' | 'heavy_only';
   }
 ): Promise<CaseResolverWorkspace | null> => {
   const startedAt = Date.now();
-  const attempts: Array<{ key: string; url: string }> = [];
-  if (options?.fresh === false) {
-    attempts.push({
-      key: 'light_cached_key',
-      url: `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-    });
-  } else {
+  const fetchStrategy = options?.strategy ?? 'light_then_heavy';
+  const attemptScopes: Array<'light' | 'heavy'> =
+    fetchStrategy === 'heavy_only'
+      ? ['heavy']
+      : fetchStrategy === 'light_only'
+        ? ['light']
+        : ['light', 'heavy'];
+  const attempts: Array<{ key: string; url: string; scope: 'light' | 'heavy' }> = [];
+  attemptScopes.forEach((scope): void => {
+    if (options?.fresh === false) {
+      attempts.push({
+        key: `${scope}_cached_key`,
+        scope,
+        url: `/api/settings?scope=${scope}&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+      });
+      return;
+    }
     attempts.push(
       {
-        key: 'light_fresh_key',
-        url: `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+        key: `${scope}_fresh_key`,
+        scope,
+        url: `/api/settings?scope=${scope}&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
       },
       {
-        key: 'light_cached_key',
-        url: `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+        key: `${scope}_cached_key`,
+        scope,
+        url: `/api/settings?scope=${scope}&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
       }
     );
-  }
+  });
 
   let lastFailureMessage = 'Workspace record request failed.';
+  let loggedHeavyFallback = false;
   for (const attempt of attempts) {
+    if (
+      !loggedHeavyFallback &&
+      fetchStrategy === 'light_then_heavy' &&
+      attempt.scope === 'heavy'
+    ) {
+      loggedHeavyFallback = true;
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'refresh_fallback_to_heavy',
+        durationMs: Date.now() - startedAt,
+        message: 'fallback=heavy_keyed',
+      });
+    }
     try {
       const response = await fetchSettingsPayloadWithTimeout({
         url: attempt.url,

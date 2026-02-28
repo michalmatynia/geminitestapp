@@ -10,6 +10,7 @@ import {
   compactCaseResolverWorkspaceForPersist,
   computeCaseResolverConflictRetryDelayMs,
   fetchCaseResolverWorkspaceMetadata,
+  fetchCaseResolverWorkspaceRecord,
   fetchCaseResolverWorkspaceSnapshot,
   getCaseResolverWorkspaceMaxPayloadBytes,
   getCaseResolverWorkspaceRevision,
@@ -177,6 +178,64 @@ describe('case-resolver workspace persistence', () => {
     );
   });
 
+  it('falls back to keyed heavy endpoint when keyed light returns no workspace record', async () => {
+    const workspace = createDefaultCaseResolverWorkspace();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(toJsonResponse(200, []))
+      .mockResolvedValueOnce(toJsonResponse(200, []))
+      .mockResolvedValueOnce(
+        toJsonResponse(200, [
+          {
+            key: CASE_RESOLVER_WORKSPACE_KEY,
+            value: JSON.stringify(workspace),
+          },
+        ])
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
+
+    expect(result).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+    expect(fetchMock.mock.calls[2]?.[0]).toBe(
+      `/api/settings?scope=heavy&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+  });
+
+  it('supports cached-only heavy fallback when fresh mode is disabled', async () => {
+    const workspace = createDefaultCaseResolverWorkspace();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(toJsonResponse(200, []))
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspace),
+        })
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceRecord('test_source', {
+      fresh: false,
+    });
+
+    expect(result).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      `/api/settings?scope=heavy&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+  });
+
   it('supports object payload shape for key snapshot fetch responses', async () => {
     const workspace = createDefaultCaseResolverWorkspace();
     const fetchMock = vi.fn().mockResolvedValue(
@@ -193,22 +252,30 @@ describe('case-resolver workspace persistence', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('does not fall back to full scope reads when keyed workspace fetches fail', async () => {
+  it('does not fall back to broad scope reads when keyed workspace fetches fail', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(toJsonResponse(500, { error: 'fresh key failed' }))
-      .mockResolvedValueOnce(toJsonResponse(500, { error: 'cached key failed' }));
+      .mockResolvedValueOnce(toJsonResponse(500, { error: 'cached key failed' }))
+      .mockResolvedValueOnce(toJsonResponse(500, { error: 'heavy fresh key failed' }))
+      .mockResolvedValueOnce(toJsonResponse(500, { error: 'heavy cached key failed' }));
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
 
     expect(result).toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
     );
     expect(fetchMock.mock.calls[1]?.[0]).toBe(
       `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+    expect(fetchMock.mock.calls[2]?.[0]).toBe(
+      `/api/settings?scope=heavy&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+    expect(fetchMock.mock.calls[3]?.[0]).toBe(
+      `/api/settings?scope=heavy&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
     );
   });
 

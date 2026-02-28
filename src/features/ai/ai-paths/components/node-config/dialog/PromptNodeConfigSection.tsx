@@ -307,9 +307,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
                 <div className='flex items-center gap-2'>
                   <span className='text-[11px] text-emerald-100'>
                     Connected to AI Model:{' '}
-                    <span className='font-medium text-emerald-200'>
-                      {modelLabel}
-                    </span>
+                    <span className='font-medium text-emerald-200'>{modelLabel}</span>
                   </span>
                 </div>
                 {modelMissingFromCatalog ? (

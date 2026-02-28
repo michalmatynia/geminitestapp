@@ -79,7 +79,9 @@ export function usePageAiAssistant() {
         : 'You are a CMS layout assistant. Return only valid JSON. The response must be an object with a "sections" array. Each section should use { "type": string, "zone": string, "settings"?: object }. Do not use markdown or code fences.';
     const userContent = [
       `Task: ${pageAiTask}`,
-      pageAiPrompt.trim() ? `Prompt:\n${pageAiPrompt.trim()}` : 'Prompt:\nGenerate a useful result.',
+      pageAiPrompt.trim()
+        ? `Prompt:\n${pageAiPrompt.trim()}`
+        : 'Prompt:\nGenerate a useful result.',
       `Context:\n${pageContext}`,
     ].join('\n\n');
 

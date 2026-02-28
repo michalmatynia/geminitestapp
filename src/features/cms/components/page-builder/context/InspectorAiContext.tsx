@@ -19,7 +19,10 @@ import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
-import { extractCssFromResponse, extractJsonFromResponse } from '@/features/cms/components/page-builder/utils/ai-helpers';
+import {
+  extractCssFromResponse,
+  extractJsonFromResponse,
+} from '@/features/cms/components/page-builder/utils/ai-helpers';
 
 // ---------------------------------------------------------------------------
 // Context & Types

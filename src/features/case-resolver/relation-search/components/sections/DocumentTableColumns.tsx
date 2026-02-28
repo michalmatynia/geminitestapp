@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Lock, Plus } from 'lucide-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';

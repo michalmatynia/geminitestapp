@@ -62,7 +62,8 @@ type ErrorFingerprintParams = {
 // Real implementations from features layer via dynamic imports to avoid circular dependencies
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
-    const { logSystemEvent: realLogSystemEvent } = await import('@/shared/lib/observability/system-logger');
+    const { logSystemEvent: realLogSystemEvent } =
+      await import('@/shared/lib/observability/system-logger');
     await realLogSystemEvent(params);
   } catch (error) {
     logger.error('Failed to log system event via observability feature', error, {

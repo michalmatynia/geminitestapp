@@ -1,11 +1,7 @@
 'use client';
 
 import type { AnalyticsScope } from '@/shared/contracts';
-import {
-  Button,
-  SectionHeader,
-  SelectSimple,
-} from '@/shared/ui';
+import { Button, SectionHeader, SelectSimple } from '@/shared/ui';
 
 import { type AnalyticsRange } from '../api';
 import { useAnalytics } from '../context/AnalyticsContext';
@@ -23,8 +19,7 @@ const scopes: Array<{ value: AnalyticsScope | 'all'; label: string }> = [
 ];
 
 export function AnalyticsDashboardHeader(): React.JSX.Element {
-  const { range, setRange, scope, setScope, summaryQuery, fromToLabel } =
-    useAnalytics();
+  const { range, setRange, scope, setScope, summaryQuery, fromToLabel } = useAnalytics();
 
   return (
     <>
@@ -36,11 +31,10 @@ export function AnalyticsDashboardHeader(): React.JSX.Element {
           <>
             <div className='flex items-center gap-2'>
               <span className='text-xs text-gray-400'>Scope</span>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={scope}
-                onValueChange={(val: string): void =>
-                  setScope(val as AnalyticsScope | 'all')
-                }
+                onValueChange={(val: string): void => setScope(val as AnalyticsScope | 'all')}
                 options={scopes}
                 triggerClassName='h-9 w-25 border-border bg-gray-900/40 text-sm text-white'
               />
@@ -48,11 +42,10 @@ export function AnalyticsDashboardHeader(): React.JSX.Element {
 
             <div className='flex items-center gap-2'>
               <span className='text-xs text-gray-400'>Range</span>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={range}
-                onValueChange={(val: string): void =>
-                  setRange(val as AnalyticsRange)
-                }
+                onValueChange={(val: string): void => setRange(val as AnalyticsRange)}
                 options={ranges}
                 triggerClassName='h-9 w-32.5 border-border bg-gray-900/40 text-sm text-white'
               />

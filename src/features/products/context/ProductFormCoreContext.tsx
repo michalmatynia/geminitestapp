@@ -20,7 +20,10 @@ import {
   UseFormReturn,
 } from 'react-hook-form';
 
-import { productCreateSchema, productUpdateSchema } from '@/shared/lib/products/validations/schemas';
+import {
+  productCreateSchema,
+  productUpdateSchema,
+} from '@/shared/lib/products/validations/schemas';
 import { ProductFormData, ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 

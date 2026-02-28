@@ -251,7 +251,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       const scope: 'project' | 'global' = projectSettingsKey ? 'project' : 'global';
       const sourcePayload = options?.settingsOverride ?? studioSettings;
       const effectivePromptExtractModel =
-        promptExtractModel.effectiveModelId.trim() || sourcePayload.promptExtraction.gpt.model.trim();
+        promptExtractModel.effectiveModelId.trim() ||
+        sourcePayload.promptExtraction.gpt.model.trim();
       const effectiveUiExtractorModel =
         uiExtractorModel.effectiveModelId.trim() || sourcePayload.uiExtractor.model.trim();
       const effectiveGenerationModel =

@@ -59,7 +59,7 @@ const asTrimmedString = (value: unknown): string | null => {
 };
 
 const toMaskContext = (
-  value: ImageStudioSequenceMaskContext | null | undefined,
+  value: ImageStudioSequenceMaskContext | null | undefined
 ): ImageStudioSequenceMaskContext => {
   if (!value || !Array.isArray(value.polygons) || value.polygons.length === 0) {
     return null;
@@ -72,12 +72,14 @@ const toMaskContext = (
         .map((point) => {
           if (!point || typeof point !== 'object' || Array.isArray(point)) return null;
           const record = point as Record<string, unknown>;
-          const x = typeof record['x'] === 'number' && Number.isFinite(record['x'])
-            ? Math.max(0, Math.min(1, record['x']))
-            : null;
-          const y = typeof record['y'] === 'number' && Number.isFinite(record['y'])
-            ? Math.max(0, Math.min(1, record['y']))
-            : null;
+          const x =
+            typeof record['x'] === 'number' && Number.isFinite(record['x'])
+              ? Math.max(0, Math.min(1, record['x']))
+              : null;
+          const y =
+            typeof record['y'] === 'number' && Number.isFinite(record['y'])
+              ? Math.max(0, Math.min(1, record['y']))
+              : null;
           if (x === null || y === null) return null;
           return { x, y };
         })
@@ -117,7 +119,11 @@ const resolveProjectScopedSettings = async (params: {
   projectId: string;
   studioSettings: Record<string, unknown> | null | undefined;
 }): Promise<Record<string, unknown>> => {
-  if (params.studioSettings && typeof params.studioSettings === 'object' && !Array.isArray(params.studioSettings)) {
+  if (
+    params.studioSettings &&
+    typeof params.studioSettings === 'object' &&
+    !Array.isArray(params.studioSettings)
+  ) {
     const parsed = parseImageStudioSettings(JSON.stringify(params.studioSettings));
     return parsed as unknown as Record<string, unknown>;
   }
@@ -145,8 +151,8 @@ const resolveSequenceSteps = (params: {
     : sequenceSettings.activePresetId;
 
   const fallbackSteps = activePresetId
-    ? sequenceSettings.presets.find((preset) => preset.id === activePresetId)?.steps
-      ?? resolveImageStudioSequenceActiveSteps(sequenceSettings)
+    ? (sequenceSettings.presets.find((preset) => preset.id === activePresetId)?.steps ??
+      resolveImageStudioSequenceActiveSteps(sequenceSettings))
     : resolveImageStudioSequenceActiveSteps(sequenceSettings);
 
   if (isSequenceStepArray(params.requestedSteps)) {
@@ -160,7 +166,7 @@ const resolveSequenceSteps = (params: {
 };
 
 export async function startImageStudioSequenceRun(
-  input: StartImageStudioSequenceInput,
+  input: StartImageStudioSequenceInput
 ): Promise<StartImageStudioSequenceResult> {
   const projectId = asTrimmedString(input.projectId);
   if (!projectId) {
@@ -223,9 +229,7 @@ export async function startImageStudioSequenceRun(
     dispatchMode = await enqueueImageStudioSequenceJob(run.id);
   } catch (error) {
     const errorMessage =
-      error instanceof Error
-        ? error.message
-        : 'Failed to dispatch Image Studio sequence run.';
+      error instanceof Error ? error.message : 'Failed to dispatch Image Studio sequence run.';
 
     await updateImageStudioSequenceRun(run.id, {
       status: 'failed',
@@ -282,7 +286,7 @@ export async function startImageStudioSequenceRun(
 }
 
 export async function cancelImageStudioSequenceRun(
-  runId: string,
+  runId: string
 ): Promise<ImageStudioSequenceRunRecord> {
   const normalizedRunId = asTrimmedString(runId);
   if (!normalizedRunId) {

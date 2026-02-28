@@ -20,7 +20,9 @@ const promptEntrySchema = z.object({
 
 const promptEntryListSchema = z.array(promptEntrySchema);
 
-export function parseImageStudioPromptLibrary(raw: string | null | undefined): ImageStudioPromptEntry[] {
+export function parseImageStudioPromptLibrary(
+  raw: string | null | undefined
+): ImageStudioPromptEntry[] {
   if (!raw) return [];
   try {
     const json = JSON.parse(raw) as unknown;

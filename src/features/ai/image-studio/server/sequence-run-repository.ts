@@ -3,7 +3,6 @@ import 'server-only';
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-
 export type ImageStudioSequenceRunStatus =
   | 'queued'
   | 'running'
@@ -146,7 +145,7 @@ const createId = (): string => {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
-const toJsonSafe = <T,>(value: T): T => {
+const toJsonSafe = <T>(value: T): T => {
   try {
     return JSON.parse(JSON.stringify(value)) as T;
   } catch {
@@ -178,9 +177,7 @@ const ensureIndexesOnce = (() => {
   };
 })();
 
-const normalizeHistoryEventSource = (
-  value: unknown
-): ImageStudioSequenceRunHistoryEventSource => {
+const normalizeHistoryEventSource = (value: unknown): ImageStudioSequenceRunHistoryEventSource => {
   if (
     value === 'api' ||
     value === 'queue' ||
@@ -198,22 +195,13 @@ const toHistoryEvent = (
   fallbackAt: string
 ): ImageStudioSequenceRunHistoryEvent | null => {
   if (!event) return null;
-  const type =
-    typeof event.type === 'string' && event.type.trim()
-      ? event.type.trim()
-      : 'event';
+  const type = typeof event.type === 'string' && event.type.trim() ? event.type.trim() : 'event';
   const message =
-    typeof event.message === 'string' && event.message.trim()
-      ? event.message.trim()
-      : '';
-  const at =
-    typeof event.at === 'string' && event.at.trim() ? event.at : fallbackAt;
+    typeof event.message === 'string' && event.message.trim() ? event.message.trim() : '';
+  const at = typeof event.at === 'string' && event.at.trim() ? event.at : fallbackAt;
   const payload = isRecord(event.payload) ? toJsonSafe(event.payload) : undefined;
   return {
-    id:
-      typeof event.id === 'string' && event.id.trim()
-        ? event.id
-        : createId(),
+    id: typeof event.id === 'string' && event.id.trim() ? event.id : createId(),
     type,
     source: normalizeHistoryEventSource(event.source),
     message,
@@ -237,14 +225,10 @@ const buildHistoryEventDocument = (
   source: normalizeHistoryEventSource(event.source),
   message: event.message.trim(),
   at: event.at?.trim() || fallbackAt,
-  ...(event.payload && isRecord(event.payload)
-    ? { payload: toJsonSafe(event.payload) }
-    : {}),
+  ...(event.payload && isRecord(event.payload) ? { payload: toJsonSafe(event.payload) } : {}),
 });
 
-const toRecord = (
-  doc: ImageStudioSequenceRunDocument
-): ImageStudioSequenceRunRecord => ({
+const toRecord = (doc: ImageStudioSequenceRunDocument): ImageStudioSequenceRunRecord => ({
   id: doc._id,
   projectId: doc.projectId,
   sourceSlotId: doc.sourceSlotId,
@@ -257,9 +241,7 @@ const toRecord = (
       ? Math.max(0, Math.floor(doc.activeStepIndex))
       : null,
   activeStepId:
-    typeof doc.activeStepId === 'string' && doc.activeStepId.trim()
-      ? doc.activeStepId
-      : null,
+    typeof doc.activeStepId === 'string' && doc.activeStepId.trim() ? doc.activeStepId : null,
   outputSlotIds: Array.isArray(doc.outputSlotIds)
     ? doc.outputSlotIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
     : [],
@@ -314,7 +296,7 @@ export async function createImageStudioSequenceRun(
             stepCount: input.request.steps.length,
           },
         },
-        now,
+        now
       ),
     ],
   };
@@ -380,11 +362,9 @@ export async function updateImageStudioSequenceRun(
     };
   }
 
-  const result = await collection.findOneAndUpdate(
-    { _id: runId },
-    updateDocument,
-    { returnDocument: 'after' }
-  );
+  const result = await collection.findOneAndUpdate({ _id: runId }, updateDocument, {
+    returnDocument: 'after',
+  });
 
   if (!result) return null;
   return toRecord(result);
@@ -400,9 +380,7 @@ export async function listImageStudioSequenceRuns(
   const limit = Number.isFinite(input.limit)
     ? Math.max(1, Math.min(200, Math.floor(input.limit ?? 50)))
     : 50;
-  const offset = Number.isFinite(input.offset)
-    ? Math.max(0, Math.floor(input.offset ?? 0))
-    : 0;
+  const offset = Number.isFinite(input.offset) ? Math.max(0, Math.floor(input.offset ?? 0)) : 0;
 
   const query: Record<string, unknown> = {};
   if (input.status) query['status'] = input.status;
@@ -410,12 +388,7 @@ export async function listImageStudioSequenceRuns(
   if (input.sourceSlotId) query['sourceSlotId'] = input.sourceSlotId;
 
   const [docs, total] = await Promise.all([
-    collection
-      .find(query)
-      .sort({ createdAt: -1 })
-      .skip(offset)
-      .limit(limit)
-      .toArray(),
+    collection.find(query).sort({ createdAt: -1 }).skip(offset).limit(limit).toArray(),
     collection.countDocuments(query),
   ]);
 

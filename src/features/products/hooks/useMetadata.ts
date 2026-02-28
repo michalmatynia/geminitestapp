@@ -1,5 +1,3 @@
-
-
 /**
  * Compatibility layer for product metadata queries.
  * Use useProductMetadataQueries.ts for the actual implementations.

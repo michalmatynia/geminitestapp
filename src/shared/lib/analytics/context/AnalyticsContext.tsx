@@ -3,7 +3,11 @@
 import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { createContext, useContext, useMemo, useState, ReactNode } from 'react';
 
-import { useAnalyticsSummary, useAnalyticsInsights, useRunAnalyticsInsight } from '@/shared/lib/analytics/hooks/useAnalytics';
+import {
+  useAnalyticsSummary,
+  useAnalyticsInsights,
+  useRunAnalyticsInsight,
+} from '@/shared/lib/analytics/hooks/useAnalytics';
 import type { AnalyticsScope, AnalyticsSummaryDto, AiInsightRecord } from '@/shared/contracts';
 
 import { type AnalyticsRange } from '../api';
@@ -40,11 +44,11 @@ export function AnalyticsProvider({ children }: { children: ReactNode }): React.
   const runInsightMutation = useRunAnalyticsInsight();
 
   // We can wrap the mutation to add toast handling if we want it to be part of the context
-  // or just let the components using it handle it. 
+  // or just let the components using it handle it.
   // Given it's in a context, let's keep it as is and maybe the components handle the toast.
   // Actually, the original had it in the mutation options.
   // Let's use the mutation with options if we want.
-  
+
   // Actually, I'll just use the mutation as returned by the hook.
   // If the user wants specific behavior in the context, we can add it.
 

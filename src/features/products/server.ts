@@ -15,15 +15,18 @@ export { ProductsImagesUploadPOST } from './api/routes/images-upload-route';
 export { ProductsV2GET, ProductsV2POST } from './api/routes/v2-products-route';
 
 // Infrastructure
-export { getProductDataProvider, invalidateProductDataProviderCache } from '@/shared/lib/products/services/product-provider';
+export {
+  getProductDataProvider,
+  invalidateProductDataProviderCache,
+} from '@/shared/lib/products/services/product-provider';
 export { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 // Explicitly export to resolve ambiguity
-export { 
-  productFilterSchema, 
+export {
+  productFilterSchema,
   productDbProviderSchema,
-  type ProductDbProvider, 
-  type ProductRepository 
+  type ProductDbProvider,
+  type ProductRepository,
 } from '@/shared/contracts/products';
 
 // Contracts & Types

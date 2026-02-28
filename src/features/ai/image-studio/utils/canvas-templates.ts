@@ -24,7 +24,7 @@ const canvasTemplateSchema = z.object({
 const canvasTemplateListSchema = z.array(canvasTemplateSchema);
 
 export function parseImageStudioCanvasTemplates(
-  raw: string | null | undefined,
+  raw: string | null | undefined
 ): ImageStudioCanvasTemplate[] {
   if (!raw?.trim()) {
     return [...DEFAULT_IMAGE_STUDIO_CANVAS_TEMPLATES];

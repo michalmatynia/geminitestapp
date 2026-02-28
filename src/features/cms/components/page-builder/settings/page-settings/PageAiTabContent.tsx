@@ -4,7 +4,11 @@ import React, { useMemo } from 'react';
 import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
 import { usePageAiAssistant } from './usePageAiAssistant';
 
-export function PageAiTabContent({ activeTab: _activeTab }: { activeTab: string }): React.JSX.Element {
+export function PageAiTabContent({
+  activeTab: _activeTab,
+}: {
+  activeTab: string;
+}): React.JSX.Element {
   const ai = usePageAiAssistant();
 
   const pageAiTaskOptions = useMemo(
@@ -39,25 +43,13 @@ export function PageAiTabContent({ activeTab: _activeTab }: { activeTab: string 
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Provider</Label>
-        <Input
-          size='sm'
-          value={providerLabel}
-          readOnly
-          disabled
-          className='cursor-not-allowed'
-        />
+        <Input size='sm' value={providerLabel} readOnly disabled className='cursor-not-allowed' />
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>
           {ai.pageAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}
         </Label>
-        <Input
-          size='sm'
-          value={targetValue}
-          readOnly
-          disabled
-          className='cursor-not-allowed'
-        />
+        <Input size='sm' value={targetValue} readOnly disabled className='cursor-not-allowed' />
       </div>
       <div className='rounded border border-border/40 bg-gray-800/20 px-3 py-2 text-[11px] text-gray-400'>
         Routing for this assistant is managed in AI Brain via the CMS CSS Stream capability. Local

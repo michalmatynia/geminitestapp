@@ -1,15 +1,15 @@
 import { useCallback } from 'react';
-import { 
-  resolveDbActionProvider, 
-  isProviderActionCategorySupported, 
-  getDefaultProviderAction, 
-  resolveProviderAction 
+import {
+  resolveDbActionProvider,
+  isProviderActionCategorySupported,
+  getDefaultProviderAction,
+  resolveProviderAction,
 } from '@/shared/lib/ai-paths/core/utils/provider-actions';
-import type { 
-  DatabaseAction, 
-  DatabaseActionCategory, 
-  DatabaseConfig, 
-  DbQueryConfig 
+import type {
+  DatabaseAction,
+  DatabaseActionCategory,
+  DatabaseConfig,
+  DbQueryConfig,
 } from '@/shared/lib/ai-paths';
 
 export function useDatabaseActionConfig(args: {
@@ -56,20 +56,22 @@ export function useDatabaseActionConfig(args: {
           },
           actionCategory: normalizedCategory,
           action: normalizedAction,
-          operation: (
+          operation:
             args.databaseConfig.useMongoActions === false
               ? (args.databaseConfig.operation ?? 'query')
-              : args.mapOperationFromActionCategory(normalizedCategory)
-          ),
+              : args.mapOperationFromActionCategory(normalizedCategory),
         },
       });
     },
     [args]
   );
-          
+
   const applyActionConfig = useCallback(
     (nextCategory: DatabaseActionCategory, nextAction: DatabaseAction) => {
-      const normalizedCategory = isProviderActionCategorySupported(args.resolvedProvider, nextCategory)
+      const normalizedCategory = isProviderActionCategorySupported(
+        args.resolvedProvider,
+        nextCategory
+      )
         ? nextCategory
         : 'read';
       const nextActionResolved = resolveProviderAction(
@@ -78,7 +80,7 @@ export function useDatabaseActionConfig(args: {
         nextAction,
         args.queryConfig.single ?? false
       );
-          
+
       args.updateSelectedNodeConfig({
         database: {
           ...args.databaseConfig,

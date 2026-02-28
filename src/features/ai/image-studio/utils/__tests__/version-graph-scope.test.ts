@@ -3,11 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { resolveScopedVersionGraphSlots } from '@/features/ai/image-studio/utils/version-graph-scope';
 
-
-const makeSlot = (
-  id: string,
-  metadata?: Record<string, unknown>
-): ImageStudioSlotRecord => ({
+const makeSlot = (id: string, metadata?: Record<string, unknown>): ImageStudioSlotRecord => ({
   id,
   projectId: 'project-1',
   name: id,
@@ -45,7 +41,11 @@ describe('resolveScopedVersionGraphSlots', () => {
       makeSlot('root-b'),
       makeSlot('a1', { sourceSlotId: 'root-a', relationType: 'generation:output' }),
       makeSlot('b1', { sourceSlotId: 'root-b', relationType: 'generation:output' }),
-      makeSlot('merge', { sourceSlotIds: ['a1', 'b1'], relationType: 'merge:output', role: 'merge' }),
+      makeSlot('merge', {
+        sourceSlotIds: ['a1', 'b1'],
+        relationType: 'merge:output',
+        role: 'merge',
+      }),
       makeSlot('desc', { sourceSlotId: 'merge', relationType: 'generation:output' }),
       makeSlot('isolated'),
     ];
@@ -56,4 +56,3 @@ describe('resolveScopedVersionGraphSlots', () => {
     expect(scopedIds).toEqual(['a1', 'b1', 'desc', 'merge', 'root-a', 'root-b']);
   });
 });
-

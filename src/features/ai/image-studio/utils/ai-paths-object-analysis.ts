@@ -108,9 +108,7 @@ export const getValueAtPath = (obj: unknown, path: string): unknown => {
 
 const BUTTONS_LOCAL_KEY_PREFIX = 'image_studio_custom_trigger_buttons_';
 
-export const loadCustomTriggerButtons = (
-  projectId: string,
-): ImageStudioCustomTriggerButton[] => {
+export const loadCustomTriggerButtons = (projectId: string): ImageStudioCustomTriggerButton[] => {
   if (typeof window === 'undefined') return [];
   const key = BUTTONS_LOCAL_KEY_PREFIX + sanitizeStudioProjectId(projectId);
   try {
@@ -124,7 +122,7 @@ export const loadCustomTriggerButtons = (
         typeof item === 'object' &&
         typeof (item as Record<string, unknown>)['id'] === 'string' &&
         typeof (item as Record<string, unknown>)['label'] === 'string' &&
-        typeof (item as Record<string, unknown>)['pathId'] === 'string',
+        typeof (item as Record<string, unknown>)['pathId'] === 'string'
     );
   } catch {
     return [];
@@ -133,7 +131,7 @@ export const loadCustomTriggerButtons = (
 
 export const saveCustomTriggerButtons = (
   projectId: string,
-  buttons: ImageStudioCustomTriggerButton[],
+  buttons: ImageStudioCustomTriggerButton[]
 ): void => {
   if (typeof window === 'undefined') return;
   const key = BUTTONS_LOCAL_KEY_PREFIX + sanitizeStudioProjectId(projectId);
@@ -159,7 +157,7 @@ export const extractObjectBoundsFromRunResult = (
   result: Record<string, unknown> | null | undefined,
   fieldMapping: AiPathsObjectAnalysisFieldMapping,
   sourceImageWidth?: number | null | undefined,
-  sourceImageHeight?: number | null | undefined,
+  sourceImageHeight?: number | null | undefined
 ): ExtractedObjectBounds | null => {
   if (!result) return null;
 
@@ -171,13 +169,25 @@ export const extractObjectBoundsFromRunResult = (
   const CANVAS_OUTPUT_KEYS = ['image_studio_bounds'] as const;
   for (const key of CANVAS_OUTPUT_KEYS) {
     const candidate = result[key];
-    if (candidate !== null && candidate !== undefined && typeof candidate === 'object' && !Array.isArray(candidate)) {
+    if (
+      candidate !== null &&
+      candidate !== undefined &&
+      typeof candidate === 'object' &&
+      !Array.isArray(candidate)
+    ) {
       const rec = candidate as Record<string, unknown>;
-      const left   = toFiniteNumber(rec['left']);
-      const top    = toFiniteNumber(rec['top']);
-      const width  = toFiniteNumber(rec['width']);
+      const left = toFiniteNumber(rec['left']);
+      const top = toFiniteNumber(rec['top']);
+      const width = toFiniteNumber(rec['width']);
       const height = toFiniteNumber(rec['height']);
-      if (left !== null && top !== null && width !== null && height !== null && width > 0 && height > 0) {
+      if (
+        left !== null &&
+        top !== null &&
+        width !== null &&
+        height !== null &&
+        width > 0 &&
+        height > 0
+      ) {
         return { left, top, width, height };
       }
     }
@@ -195,9 +205,12 @@ export const extractObjectBoundsFromRunResult = (
     const width = toFiniteNumber(getValueAtPath(result, widthPath));
     const height = toFiniteNumber(getValueAtPath(result, heightPath));
     if (
-      left !== null && top !== null &&
-      width !== null && height !== null &&
-      width > 0 && height > 0
+      left !== null &&
+      top !== null &&
+      width !== null &&
+      height !== null &&
+      width > 0 &&
+      height > 0
     ) {
       return { left, top, width, height };
     }
@@ -213,12 +226,14 @@ export const extractObjectBoundsFromRunResult = (
       // Without width/height we cannot compute padding, so use a 1-px stub.
       // Canvas offset computation only needs the centre, so this is sufficient
       // for the preview repositioning use case.
-      const w = (sourceImageWidth !== null && sourceImageWidth !== undefined && sourceImageWidth > 0)
-        ? sourceImageWidth
-        : 1;
-      const h = (sourceImageHeight !== null && sourceImageHeight !== undefined && sourceImageHeight > 0)
-        ? sourceImageHeight
-        : 1;
+      const w =
+        sourceImageWidth !== null && sourceImageWidth !== undefined && sourceImageWidth > 0
+          ? sourceImageWidth
+          : 1;
+      const h =
+        sourceImageHeight !== null && sourceImageHeight !== undefined && sourceImageHeight > 0
+          ? sourceImageHeight
+          : 1;
       return { left: cx - w / 2, top: cy - h / 2, width: w, height: h };
     }
   }
@@ -231,7 +246,7 @@ export const extractObjectBoundsFromRunResult = (
  */
 export const extractConfidenceFromRunResult = (
   result: Record<string, unknown> | null | undefined,
-  fieldMapping: AiPathsObjectAnalysisFieldMapping,
+  fieldMapping: AiPathsObjectAnalysisFieldMapping
 ): number | null => {
   if (!result) return null;
   const path = fieldMapping.confidence?.trim() ?? '';
@@ -264,12 +279,15 @@ export const computeCanvasOffsetFromObjectBounds = (
   sourceHeight: number,
   canvasWidth: number,
   canvasHeight: number,
-  currentOffset: { x: number; y: number },
+  currentOffset: { x: number; y: number }
 ): { x: number; y: number } => {
   if (
-    sourceWidth <= 0 || sourceHeight <= 0 ||
-    frame.width <= 0 || frame.height <= 0 ||
-    canvasWidth <= 0 || canvasHeight <= 0
+    sourceWidth <= 0 ||
+    sourceHeight <= 0 ||
+    frame.width <= 0 ||
+    frame.height <= 0 ||
+    canvasWidth <= 0 ||
+    canvasHeight <= 0
   ) {
     return currentOffset;
   }
@@ -325,7 +343,7 @@ export const buildDefaultSharedLayout = (overrides?: {
 // ---------------------------------------------------------------------------
 
 export const parseAiPathMetasFromSettings = (
-  settings: Array<{ key: string; value: string }>,
+  settings: Array<{ key: string; value: string }>
 ): AiPathMeta[] => {
   if (!Array.isArray(settings)) return [];
   const indexItem = settings.find((s) => s.key === AI_PATHS_INDEX_KEY);
@@ -339,7 +357,7 @@ export const parseAiPathMetasFromSettings = (
           item !== null &&
           typeof item === 'object' &&
           typeof (item as Record<string, unknown>)['id'] === 'string' &&
-          typeof (item as Record<string, unknown>)['name'] === 'string',
+          typeof (item as Record<string, unknown>)['name'] === 'string'
       )
       .map((item) => {
         return { id: item['id'] as string, name: item['name'] as string };
@@ -351,7 +369,7 @@ export const parseAiPathMetasFromSettings = (
 
 export const parseAiPathNodesAndEdgesFromSettings = (
   settings: Array<{ key: string; value: string }>,
-  pathId: string,
+  pathId: string
 ): { nodes: unknown[]; edges: unknown[] } | null => {
   if (!Array.isArray(settings) || !pathId) return null;
   const configItem = settings.find((s) => s.key === `${AI_PATHS_CONFIG_PREFIX}${pathId}`);
@@ -380,9 +398,7 @@ const DEFAULT_CONFIG: AiPathsObjectAnalysisConfig = {
   runAfterApply: false,
 };
 
-export const loadAiPathsObjectAnalysisConfig = (
-  projectId: string,
-): AiPathsObjectAnalysisConfig => {
+export const loadAiPathsObjectAnalysisConfig = (projectId: string): AiPathsObjectAnalysisConfig => {
   if (typeof window === 'undefined') return DEFAULT_CONFIG;
   const key = CONFIG_LOCAL_KEY_PREFIX + sanitizeStudioProjectId(projectId);
   try {
@@ -419,7 +435,7 @@ export const loadAiPathsObjectAnalysisConfig = (
 
 export const saveAiPathsObjectAnalysisConfig = (
   projectId: string,
-  config: AiPathsObjectAnalysisConfig,
+  config: AiPathsObjectAnalysisConfig
 ): void => {
   if (typeof window === 'undefined') return;
   const key = CONFIG_LOCAL_KEY_PREFIX + sanitizeStudioProjectId(projectId);

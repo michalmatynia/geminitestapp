@@ -43,7 +43,9 @@ describe('crop-utils', () => {
     });
 
     expect(clientFingerprint).toBe(serverFingerprint);
-    expect(buildCropFingerprintRelationType(clientFingerprint)).toMatch(/^crop:output:[a-f0-9]{20}$/);
+    expect(buildCropFingerprintRelationType(clientFingerprint)).toMatch(
+      /^crop:output:[a-f0-9]{20}$/
+    );
   });
 
   it('includes canvas context in bbox fingerprint payload', () => {

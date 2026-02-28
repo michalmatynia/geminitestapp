@@ -1,13 +1,10 @@
+import { type AiNode, type Edge } from '@/shared/contracts/ai-paths-core';
 import {
-  type AiNode,
-  type Edge
-} from '@/shared/contracts/ai-paths-core';
-import { 
-  CONTEXT_INPUT_PORTS, 
-  CONTEXT_OUTPUT_PORTS, 
-  PROMPT_OUTPUT_PORTS, 
-  MODEL_OUTPUT_PORTS, 
-  DATABASE_INPUT_PORTS 
+  CONTEXT_INPUT_PORTS,
+  CONTEXT_OUTPUT_PORTS,
+  PROMPT_OUTPUT_PORTS,
+  MODEL_OUTPUT_PORTS,
+  DATABASE_INPUT_PORTS,
 } from './ports';
 import { DEFAULT_CONTEXT_ROLE } from './base';
 

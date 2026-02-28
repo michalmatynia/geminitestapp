@@ -180,11 +180,17 @@ export const handleValidationPattern: NodeHandler = ({
     .map((value: string): string => value.trim())
     .filter(Boolean);
   const includeRuleIdSet = includeRuleIds.length > 0 ? new Set<string>(includeRuleIds) : null;
-  const runtimeRules = normalizeValidationPatternRules(config.rules as ValidationPatternRule[], includeRuleIdSet);
+  const runtimeRules = normalizeValidationPatternRules(
+    config.rules as ValidationPatternRule[],
+    includeRuleIdSet
+  );
   const runtimeLearnedRules =
     config.includeLearnedRules === false
       ? []
-      : normalizeValidationPatternRules(config.learnedRules as ValidationPatternRule[], includeRuleIdSet);
+      : normalizeValidationPatternRules(
+          config.learnedRules as ValidationPatternRule[],
+          includeRuleIdSet
+      );
 
   if (runtimeRules.length === 0 && runtimeLearnedRules.length === 0) {
     const outputs = buildValidationPatternOutputPorts({

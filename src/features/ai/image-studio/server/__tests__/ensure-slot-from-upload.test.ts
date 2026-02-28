@@ -106,8 +106,18 @@ describe('ensureImageStudioSlotFromUploadedAsset', () => {
     };
 
     const [first, second] = await Promise.all([
-      ensureImageStudioSlotFromUploadedAsset(input, { listSlots, updateSlot, createSlots, getSlotById }),
-      ensureImageStudioSlotFromUploadedAsset(input, { listSlots, updateSlot, createSlots, getSlotById }),
+      ensureImageStudioSlotFromUploadedAsset(input, {
+        listSlots,
+        updateSlot,
+        createSlots,
+        getSlotById,
+      }),
+      ensureImageStudioSlotFromUploadedAsset(input, {
+        listSlots,
+        updateSlot,
+        createSlots,
+        getSlotById,
+      }),
     ]);
 
     expect(createSlots).toHaveBeenCalledTimes(1);

@@ -137,9 +137,7 @@ export default function PageAnalyticsTracker(): null {
     const referrer = typeof document !== 'undefined' ? document.referrer || null : null;
     const language = typeof navigator !== 'undefined' ? navigator.language || null : null;
     const languages =
-      typeof navigator !== 'undefined' && navigator.languages
-        ? [...navigator.languages]
-        : null;
+      typeof navigator !== 'undefined' && navigator.languages ? [...navigator.languages] : null;
     const timeZone = getTimeZone();
 
     const viewport =

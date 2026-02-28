@@ -1,8 +1,5 @@
 import { ObjectId } from 'mongodb';
-import {
-  IntegrationRecord,
-  IntegrationConnectionRecord,
-} from '@/shared/contracts/integrations';
+import { IntegrationRecord, IntegrationConnectionRecord } from '@/shared/contracts/integrations';
 
 export const INTEGRATION_COLLECTION = 'integrations';
 export const INTEGRATION_CONNECTION_COLLECTION = 'integration_connections';
@@ -193,7 +190,10 @@ export const toIntegrationRecord = (doc: unknown): IntegrationRecord => {
   }
   const d = doc as Record<string, unknown>;
   const rawId = d['id'] ?? d['_id'];
-  const id = rawId && typeof rawId === 'object' && 'toString' in rawId ? rawId.toString() : String(rawId ?? '');
+  const id =
+    rawId && typeof rawId === 'object' && 'toString' in rawId
+      ? rawId.toString()
+      : String(rawId ?? '');
 
   return {
     id,
@@ -210,7 +210,10 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
   }
   const d = doc as Record<string, unknown>;
   const rawId = d['id'] ?? d['_id'];
-  const id = rawId && typeof rawId === 'object' && 'toString' in rawId ? rawId.toString() : String(rawId ?? '');
+  const id =
+    rawId && typeof rawId === 'object' && 'toString' in rawId
+      ? rawId.toString()
+      : String(rawId ?? '');
 
   return {
     id,
@@ -220,14 +223,17 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     password: d['password'] ? String(d['password']) : undefined,
     playwrightStorageState: (d['playwrightStorageState'] as string) ?? null,
     playwrightStorageStateUpdatedAt: toIsoStringOrNull(d['playwrightStorageStateUpdatedAt']),
-    playwrightHeadless: (d['playwrightHeadless'] as boolean) ?? CONNECTION_DEFAULTS.playwrightHeadless,
+    playwrightHeadless:
+      (d['playwrightHeadless'] as boolean) ?? CONNECTION_DEFAULTS.playwrightHeadless,
     playwrightSlowMo: (d['playwrightSlowMo'] as number) ?? CONNECTION_DEFAULTS.playwrightSlowMo,
     playwrightTimeout: (d['playwrightTimeout'] as number) ?? CONNECTION_DEFAULTS.playwrightTimeout,
     playwrightNavigationTimeout:
-      (d['playwrightNavigationTimeout'] as number) ?? CONNECTION_DEFAULTS.playwrightNavigationTimeout,
+      (d['playwrightNavigationTimeout'] as number) ??
+      CONNECTION_DEFAULTS.playwrightNavigationTimeout,
     playwrightHumanizeMouse:
       (d['playwrightHumanizeMouse'] as boolean) ?? CONNECTION_DEFAULTS.playwrightHumanizeMouse,
-    playwrightMouseJitter: (d['playwrightMouseJitter'] as number) ?? CONNECTION_DEFAULTS.playwrightMouseJitter,
+    playwrightMouseJitter:
+      (d['playwrightMouseJitter'] as number) ?? CONNECTION_DEFAULTS.playwrightMouseJitter,
     playwrightClickDelayMin:
       (d['playwrightClickDelayMin'] as number) ?? CONNECTION_DEFAULTS.playwrightClickDelayMin,
     playwrightClickDelayMax:
@@ -240,13 +246,19 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
       (d['playwrightActionDelayMin'] as number) ?? CONNECTION_DEFAULTS.playwrightActionDelayMin,
     playwrightActionDelayMax:
       (d['playwrightActionDelayMax'] as number) ?? CONNECTION_DEFAULTS.playwrightActionDelayMax,
-    playwrightProxyEnabled: (d['playwrightProxyEnabled'] as boolean) ?? CONNECTION_DEFAULTS.playwrightProxyEnabled,
-    playwrightProxyServer: (d['playwrightProxyServer'] as string) ?? CONNECTION_DEFAULTS.playwrightProxyServer,
-    playwrightProxyUsername: (d['playwrightProxyUsername'] as string) ?? CONNECTION_DEFAULTS.playwrightProxyUsername,
+    playwrightProxyEnabled:
+      (d['playwrightProxyEnabled'] as boolean) ?? CONNECTION_DEFAULTS.playwrightProxyEnabled,
+    playwrightProxyServer:
+      (d['playwrightProxyServer'] as string) ?? CONNECTION_DEFAULTS.playwrightProxyServer,
+    playwrightProxyUsername:
+      (d['playwrightProxyUsername'] as string) ?? CONNECTION_DEFAULTS.playwrightProxyUsername,
     playwrightProxyPassword: (d['playwrightProxyPassword'] as string) ?? null,
-    playwrightEmulateDevice: (d['playwrightEmulateDevice'] as boolean) ?? CONNECTION_DEFAULTS.playwrightEmulateDevice,
-    playwrightDeviceName: (d['playwrightDeviceName'] as string) ?? CONNECTION_DEFAULTS.playwrightDeviceName,
-    playwrightPersonaId: (d['playwrightPersonaId'] as string) ?? CONNECTION_DEFAULTS.playwrightPersonaId,
+    playwrightEmulateDevice:
+      (d['playwrightEmulateDevice'] as boolean) ?? CONNECTION_DEFAULTS.playwrightEmulateDevice,
+    playwrightDeviceName:
+      (d['playwrightDeviceName'] as string) ?? CONNECTION_DEFAULTS.playwrightDeviceName,
+    playwrightPersonaId:
+      (d['playwrightPersonaId'] as string) ?? CONNECTION_DEFAULTS.playwrightPersonaId,
     allegroAccessToken: (d['allegroAccessToken'] as string) ?? null,
     allegroRefreshToken: (d['allegroRefreshToken'] as string) ?? null,
     allegroTokenType: (d['allegroTokenType'] as string) ?? null,
@@ -260,14 +272,17 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     traderaDefaultTemplateId:
       (d['traderaDefaultTemplateId'] as string) ?? CONNECTION_DEFAULTS.traderaDefaultTemplateId,
     traderaDefaultDurationHours:
-      (d['traderaDefaultDurationHours'] as number) ?? CONNECTION_DEFAULTS.traderaDefaultDurationHours,
+      (d['traderaDefaultDurationHours'] as number) ??
+      CONNECTION_DEFAULTS.traderaDefaultDurationHours,
     traderaAutoRelistEnabled:
       (d['traderaAutoRelistEnabled'] as boolean) ?? CONNECTION_DEFAULTS.traderaAutoRelistEnabled,
     traderaAutoRelistLeadMinutes:
-      (d['traderaAutoRelistLeadMinutes'] as number) ?? CONNECTION_DEFAULTS.traderaAutoRelistLeadMinutes,
+      (d['traderaAutoRelistLeadMinutes'] as number) ??
+      CONNECTION_DEFAULTS.traderaAutoRelistLeadMinutes,
     traderaApiAppId: (d['traderaApiAppId'] as number) ?? CONNECTION_DEFAULTS.traderaApiAppId,
     traderaApiAppKey: (d['traderaApiAppKey'] as string) ?? CONNECTION_DEFAULTS.traderaApiAppKey,
-    traderaApiPublicKey: (d['traderaApiPublicKey'] as string) ?? CONNECTION_DEFAULTS.traderaApiPublicKey,
+    traderaApiPublicKey:
+      (d['traderaApiPublicKey'] as string) ?? CONNECTION_DEFAULTS.traderaApiPublicKey,
     traderaApiUserId: (d['traderaApiUserId'] as number) ?? CONNECTION_DEFAULTS.traderaApiUserId,
     traderaApiToken: (d['traderaApiToken'] as string) ?? CONNECTION_DEFAULTS.traderaApiToken,
     traderaApiTokenUpdatedAt: toIsoStringOrNull(d['traderaApiTokenUpdatedAt']),

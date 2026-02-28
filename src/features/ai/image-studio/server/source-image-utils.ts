@@ -53,7 +53,8 @@ export const loadSourceBufferFromSlot = async (input: {
   onInvalidSource: () => Error;
   onRemoteFetchFailed: (status: number) => Error;
 }): Promise<LoadedSourceBuffer> => {
-  const { slot, sourceFetchTimeoutMs, onMissingSource, onInvalidSource, onRemoteFetchFailed } = input;
+  const { slot, sourceFetchTimeoutMs, onMissingSource, onInvalidSource, onRemoteFetchFailed } =
+    input;
 
   const base64Candidate =
     typeof slot.imageBase64 === 'string' && slot.imageBase64.trim().startsWith('data:')

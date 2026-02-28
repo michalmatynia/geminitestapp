@@ -1,17 +1,28 @@
 'use client';
 
-import {
-  Sun,
-  Moon,
-  Sparkles,
-  Eye,
-} from 'lucide-react';
+import { Sun, Moon, Sparkles, Eye } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Button, SelectSimple, Input, FormSection, FormField, Checkbox, Tabs, TabsList, TabsTrigger, TabsContent, ToggleRow } from '@/shared/ui';
+import {
+  Button,
+  SelectSimple,
+  Input,
+  FormSection,
+  FormField,
+  Checkbox,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  ToggleRow,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useViewer3D, orderedDitheringPresets, type OrderedDitheringPresetKey } from '../context/Viewer3DContext';
+import {
+  useViewer3D,
+  orderedDitheringPresets,
+  type OrderedDitheringPresetKey,
+} from '../context/Viewer3DContext';
 
 import type { LightingPreset, EnvironmentPreset } from './Viewer3D';
 
@@ -48,32 +59,57 @@ const orderedDitheringLuminanceOptions: LuminanceOption[] = [
 
 export function Viewer3DSettingsPanel(): React.JSX.Element {
   const {
-    autoRotate, setAutoRotate,
-    autoRotateSpeed, setAutoRotateSpeed,
-    environment, setEnvironment,
-    lighting, setLighting,
-    lightIntensity, setLightIntensity,
-    enableShadows, setEnableShadows,
-    enableContactShadows, setEnableContactShadows,
-    showGround, setShowGround,
-    enableBloom, setEnableBloom,
-    bloomIntensity, setBloomIntensity,
-    enableVignette, setEnableVignette,
-    enableToneMapping, setEnableToneMapping,
-    exposure, setExposure,
-    enableDithering, setEnableDithering,
-    ditheringIntensity, setDitheringIntensity,
-    enablePixelation, setEnablePixelation,
-    pixelSize, setPixelSize,
-    enableOrderedDithering, setEnableOrderedDithering,
-    orderedDitheringGridSize, setOrderedDitheringGridSize,
-    orderedDitheringPixelSizeRatio, setOrderedDitheringPixelSizeRatio,
-    orderedDitheringGrayscaleOnly, setOrderedDitheringGrayscaleOnly,
-    orderedDitheringInvertColor, setOrderedDitheringInvertColor,
-    orderedDitheringLuminanceMethod, setOrderedDitheringLuminanceMethod,
-    orderedDitheringPreset, setOrderedDitheringPreset,
+    autoRotate,
+    setAutoRotate,
+    autoRotateSpeed,
+    setAutoRotateSpeed,
+    environment,
+    setEnvironment,
+    lighting,
+    setLighting,
+    lightIntensity,
+    setLightIntensity,
+    enableShadows,
+    setEnableShadows,
+    enableContactShadows,
+    setEnableContactShadows,
+    showGround,
+    setShowGround,
+    enableBloom,
+    setEnableBloom,
+    bloomIntensity,
+    setBloomIntensity,
+    enableVignette,
+    setEnableVignette,
+    enableToneMapping,
+    setEnableToneMapping,
+    exposure,
+    setExposure,
+    enableDithering,
+    setEnableDithering,
+    ditheringIntensity,
+    setDitheringIntensity,
+    enablePixelation,
+    setEnablePixelation,
+    pixelSize,
+    setPixelSize,
+    enableOrderedDithering,
+    setEnableOrderedDithering,
+    orderedDitheringGridSize,
+    setOrderedDitheringGridSize,
+    orderedDitheringPixelSizeRatio,
+    setOrderedDitheringPixelSizeRatio,
+    orderedDitheringGrayscaleOnly,
+    setOrderedDitheringGrayscaleOnly,
+    orderedDitheringInvertColor,
+    setOrderedDitheringInvertColor,
+    orderedDitheringLuminanceMethod,
+    setOrderedDitheringLuminanceMethod,
+    orderedDitheringPreset,
+    setOrderedDitheringPreset,
     applyOrderedDitheringPreset,
-    backgroundColor, setBackgroundColor,
+    backgroundColor,
+    setBackgroundColor,
   } = useViewer3D();
 
   const [activeTab, setActiveTab] = useState<'environment' | 'effects' | 'view'>('environment');
@@ -119,7 +155,8 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
           <TabsContent value='environment' className='p-4 space-y-4 mt-0'>
             {/* Environment Preset */}
             <FormField label='HDR Environment'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={environment}
                 onValueChange={(v: string): void => setEnvironment(v as EnvironmentPreset)}
                 options={environmentPresets}
@@ -221,7 +258,12 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
               title='ACES Tone Mapping'
               variant='subtle'
               className='p-3 space-y-3'
-              actions={<Checkbox checked={enableToneMapping} onCheckedChange={(v) => setEnableToneMapping(Boolean(v))} />}
+              actions={
+                <Checkbox
+                  checked={enableToneMapping}
+                  onCheckedChange={(v) => setEnableToneMapping(Boolean(v))}
+                />
+              }
             >
               {enableToneMapping && (
                 <div className='mt-2'>
@@ -245,7 +287,12 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
               title='Bloom Effect'
               variant='subtle'
               className='p-3 space-y-3'
-              actions={<Checkbox checked={enableBloom} onCheckedChange={(v) => setEnableBloom(Boolean(v))} />}
+              actions={
+                <Checkbox
+                  checked={enableBloom}
+                  onCheckedChange={(v) => setEnableBloom(Boolean(v))}
+                />
+              }
             >
               {enableBloom && (
                 <div className='mt-2'>
@@ -279,7 +326,12 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
               description='Chunky pixelated rendering'
               variant='subtle'
               className='p-3 space-y-3'
-              actions={<Checkbox checked={enablePixelation} onCheckedChange={(v) => setEnablePixelation(Boolean(v))} />}
+              actions={
+                <Checkbox
+                  checked={enablePixelation}
+                  onCheckedChange={(v) => setEnablePixelation(Boolean(v))}
+                />
+              }
             >
               {enablePixelation && (
                 <div className='mt-2'>
@@ -304,12 +356,18 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
               description='Shader-based dither with pixel grid'
               variant='subtle'
               className='p-3 space-y-3'
-              actions={<Checkbox checked={enableOrderedDithering} onCheckedChange={(v) => setEnableOrderedDithering(Boolean(v))} />}
+              actions={
+                <Checkbox
+                  checked={enableOrderedDithering}
+                  onCheckedChange={(v) => setEnableOrderedDithering(Boolean(v))}
+                />
+              }
             >
               {enableOrderedDithering && (
                 <div className='mt-4 space-y-4'>
                   <FormField label='Preset'>
-                    <SelectSimple size='sm'
+                    <SelectSimple
+                      size='sm'
                       value={orderedDitheringPreset}
                       onValueChange={(v: string): void => {
                         const value = v as OrderedDitheringPresetKey;
@@ -322,9 +380,9 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                       options={[
                         ...Object.entries(orderedDitheringPresets).map(([key, preset]) => ({
                           value: key,
-                          label: preset.label
+                          label: preset.label,
                         })),
-                        { value: 'custom', label: 'Custom' }
+                        { value: 'custom', label: 'Custom' },
                       ]}
                       triggerClassName='w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8'
                     />
@@ -358,13 +416,17 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                     />
                   </FormField>
                   <FormField label='Luminance'>
-                    <SelectSimple size='sm'
+                    <SelectSimple
+                      size='sm'
                       value={String(orderedDitheringLuminanceMethod)}
                       onValueChange={(v: string): void => {
                         setOrderedDitheringLuminanceMethod(parseInt(v, 10));
                         setOrderedDitheringPreset('custom');
                       }}
-                      options={orderedDitheringLuminanceOptions.map((opt) => ({ value: String(opt.value), label: opt.label }))}
+                      options={orderedDitheringLuminanceOptions.map((opt) => ({
+                        value: String(opt.value),
+                        label: opt.label,
+                      }))}
                       triggerClassName='w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8'
                     />
                   </FormField>
@@ -400,7 +462,12 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
               description='Artistic retro effect'
               variant='subtle'
               className='p-3 space-y-3'
-              actions={<Checkbox checked={enableDithering} onCheckedChange={(v) => setEnableDithering(Boolean(v))} />}
+              actions={
+                <Checkbox
+                  checked={enableDithering}
+                  onCheckedChange={(v) => setEnableDithering(Boolean(v))}
+                />
+              }
             >
               {enableDithering && (
                 <div className='mt-2'>
@@ -426,7 +493,9 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
               title='Auto-rotate'
               variant='subtle'
               className='p-3 space-y-3'
-              actions={<Checkbox checked={autoRotate} onCheckedChange={(v) => setAutoRotate(Boolean(v))} />}
+              actions={
+                <Checkbox checked={autoRotate} onCheckedChange={(v) => setAutoRotate(Boolean(v))} />
+              }
             >
               {autoRotate && (
                 <div className='mt-2'>
@@ -446,7 +515,11 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
             </FormSection>
 
             {/* Controls Help */}
-            <FormSection title='Controls' variant='subtle-compact' className='p-3 text-xs text-gray-400 space-y-1'>
+            <FormSection
+              title='Controls'
+              variant='subtle-compact'
+              className='p-3 text-xs text-gray-400 space-y-1'
+            >
               <div className='mt-2 space-y-1'>
                 <p>• Left click + drag to rotate</p>
                 <p>• Right click + drag to pan</p>

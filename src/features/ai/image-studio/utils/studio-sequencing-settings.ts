@@ -8,8 +8,7 @@ export const IMAGE_STUDIO_SEQUENCE_OPERATIONS = [
 
 export const IMAGE_STUDIO_SEQUENCE_MAX_STEPS = 20;
 
-export type ImageStudioSequenceOperation =
-  (typeof IMAGE_STUDIO_SEQUENCE_OPERATIONS)[number];
+export type ImageStudioSequenceOperation = (typeof IMAGE_STUDIO_SEQUENCE_OPERATIONS)[number];
 
 export const IMAGE_STUDIO_SEQUENCE_CROP_KINDS = [
   'center_square',
@@ -20,21 +19,15 @@ export const IMAGE_STUDIO_SEQUENCE_CROP_KINDS = [
   'selected_shape',
 ] as const;
 
-export type ImageStudioSequenceCropKind =
-  (typeof IMAGE_STUDIO_SEQUENCE_CROP_KINDS)[number];
+export type ImageStudioSequenceCropKind = (typeof IMAGE_STUDIO_SEQUENCE_CROP_KINDS)[number];
 
-export const IMAGE_STUDIO_SEQUENCE_MASK_SOURCES = [
-  'current_shapes',
-  'preset_polygons',
-] as const;
+export const IMAGE_STUDIO_SEQUENCE_MASK_SOURCES = ['current_shapes', 'preset_polygons'] as const;
 
-export type ImageStudioSequenceMaskSource =
-  (typeof IMAGE_STUDIO_SEQUENCE_MASK_SOURCES)[number];
+export type ImageStudioSequenceMaskSource = (typeof IMAGE_STUDIO_SEQUENCE_MASK_SOURCES)[number];
 
 export const IMAGE_STUDIO_SEQUENCE_PROMPT_MODES = ['inherit', 'override'] as const;
 
-export type ImageStudioSequencePromptMode =
-  (typeof IMAGE_STUDIO_SEQUENCE_PROMPT_MODES)[number];
+export type ImageStudioSequencePromptMode = (typeof IMAGE_STUDIO_SEQUENCE_PROMPT_MODES)[number];
 
 export const IMAGE_STUDIO_SEQUENCE_REFERENCE_POLICIES = ['inherit', 'none'] as const;
 
@@ -43,18 +36,13 @@ export type ImageStudioSequenceReferencePolicy =
 
 export const IMAGE_STUDIO_SEQUENCE_FAILURE_MODES = ['stop', 'continue', 'skip'] as const;
 
-export type ImageStudioSequenceFailureMode =
-  (typeof IMAGE_STUDIO_SEQUENCE_FAILURE_MODES)[number];
+export type ImageStudioSequenceFailureMode = (typeof IMAGE_STUDIO_SEQUENCE_FAILURE_MODES)[number];
 
 export const IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES = ['server', 'client'] as const;
 
-export type ImageStudioSequenceStepRuntime =
-  (typeof IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES)[number];
+export type ImageStudioSequenceStepRuntime = (typeof IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES)[number];
 
-export const IMAGE_STUDIO_SEQUENCE_STEP_INPUT_SOURCES = [
-  'previous',
-  'source',
-] as const;
+export const IMAGE_STUDIO_SEQUENCE_STEP_INPUT_SOURCES = ['previous', 'source'] as const;
 
 export type ImageStudioSequenceStepInputSource =
   (typeof IMAGE_STUDIO_SEQUENCE_STEP_INPUT_SOURCES)[number];
@@ -237,23 +225,26 @@ const asInteger = (value: unknown): number | null => {
 };
 
 const isSequenceOperation = (value: unknown): value is ImageStudioSequenceOperation =>
-  typeof value === 'string' && IMAGE_STUDIO_SEQUENCE_OPERATIONS.includes(value as ImageStudioSequenceOperation);
+  typeof value === 'string' &&
+  IMAGE_STUDIO_SEQUENCE_OPERATIONS.includes(value as ImageStudioSequenceOperation);
 
 const isCropKind = (value: unknown): value is ImageStudioSequenceCropKind =>
-  typeof value === 'string' && IMAGE_STUDIO_SEQUENCE_CROP_KINDS.includes(value as ImageStudioSequenceCropKind);
+  typeof value === 'string' &&
+  IMAGE_STUDIO_SEQUENCE_CROP_KINDS.includes(value as ImageStudioSequenceCropKind);
 
 const isStepRuntime = (value: unknown): value is ImageStudioSequenceStepRuntime =>
-  typeof value === 'string' && IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES.includes(value as ImageStudioSequenceStepRuntime);
-
-const isStepInputSource = (
-  value: unknown,
-): value is ImageStudioSequenceStepInputSource =>
   typeof value === 'string' &&
-  IMAGE_STUDIO_SEQUENCE_STEP_INPUT_SOURCES.includes(
-    value as ImageStudioSequenceStepInputSource,
-  );
+  IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES.includes(value as ImageStudioSequenceStepRuntime);
 
-const toStepId = (value: unknown, fallbackType: ImageStudioSequenceOperation, index: number): string => {
+const isStepInputSource = (value: unknown): value is ImageStudioSequenceStepInputSource =>
+  typeof value === 'string' &&
+  IMAGE_STUDIO_SEQUENCE_STEP_INPUT_SOURCES.includes(value as ImageStudioSequenceStepInputSource);
+
+const toStepId = (
+  value: unknown,
+  fallbackType: ImageStudioSequenceOperation,
+  index: number
+): string => {
   const candidate = asTrimmedString(value);
   if (!candidate) return `step_${index + 1}_${fallbackType}`;
   return candidate.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
@@ -305,7 +296,7 @@ const normalizeSequenceCropRect = (value: unknown): ImageStudioSequenceCropRect 
 const normalizeSequenceBase = (
   value: Record<string, unknown> | null,
   type: ImageStudioSequenceOperation,
-  index: number,
+  index: number
 ): Omit<ImageStudioSequenceStepBase, 'type'> => {
   const fallback = defaultSequenceStepByType(type, index);
 
@@ -319,9 +310,7 @@ const normalizeSequenceBase = (
     ? runtimeRaw
     : fallback.runtime;
   const inputSourceRaw = asTrimmedString(value?.['inputSource']);
-  const inputSource: ImageStudioSequenceStepInputSource = isStepInputSource(
-    inputSourceRaw,
-  )
+  const inputSource: ImageStudioSequenceStepInputSource = isStepInputSource(inputSourceRaw)
     ? inputSourceRaw
     : fallback.inputSource;
 
@@ -336,7 +325,7 @@ const normalizeSequenceBase = (
     onFailure,
     retries: clampSequenceRetries(asInteger(value?.['retries']) ?? fallback.retries),
     retryBackoffMs: clampSequenceRetryBackoffMs(
-      asInteger(value?.['retryBackoffMs']) ?? fallback.retryBackoffMs,
+      asInteger(value?.['retryBackoffMs']) ?? fallback.retryBackoffMs
     ),
     timeoutMs: clampSequenceTimeoutMs(timeoutRaw ?? fallback.timeoutMs),
   };
@@ -364,9 +353,7 @@ const cloneStep = (step: ImageStudioSequenceStep): ImageStudioSequenceStep => {
         selectedShapeId: step.config.selectedShapeId ?? null,
         aspectRatio: step.config.aspectRatio,
         paddingPercent: step.config.paddingPercent,
-        bbox: step.config.bbox
-          ? { ...step.config.bbox }
-          : null,
+        bbox: step.config.bbox ? { ...step.config.bbox } : null,
         polygon: Array.isArray(step.config.polygon)
           ? step.config.polygon.map((point) => ({ ...point }))
           : null,
@@ -380,9 +367,7 @@ const cloneStep = (step: ImageStudioSequenceStep): ImageStudioSequenceStep => {
       type: 'mask',
       config: {
         source: step.config.source,
-        polygons: step.config.polygons.map((polygon) =>
-          polygon.map((point) => ({ ...point }))
-        ),
+        polygons: step.config.polygons.map((polygon) => polygon.map((point) => ({ ...point }))),
         invert: step.config.invert,
         feather: step.config.feather,
         variant: step.config.variant,
@@ -420,7 +405,7 @@ const cloneStep = (step: ImageStudioSequenceStep): ImageStudioSequenceStep => {
 
 const defaultSequenceStepByType = (
   type: ImageStudioSequenceOperation,
-  index = 0,
+  index = 0
 ): ImageStudioSequenceStep => {
   const base: Omit<ImageStudioSequenceStepBase, 'type'> = {
     id: `step_${index + 1}_${type}`,
@@ -494,7 +479,7 @@ const defaultSequenceStepByType = (
 const normalizeSequenceStep = (
   value: unknown,
   index: number,
-  fallbackByType: Partial<Record<ImageStudioSequenceOperation, ImageStudioSequenceStep>>,
+  fallbackByType: Partial<Record<ImageStudioSequenceOperation, ImageStudioSequenceStep>>
 ): ImageStudioSequenceStep | null => {
   const record = asRecord(value);
   if (!record) return null;
@@ -510,19 +495,25 @@ const normalizeSequenceStep = (
   if (type === 'crop_center') {
     const kind = isCropKind(config?.['kind'])
       ? config?.['kind']
-      : (fallback.type === 'crop_center' ? fallback.config.kind : 'center_square');
-    const selectedShapeId = asTrimmedString(config?.['selectedShapeId'])
-      ?? (fallback.type === 'crop_center' ? fallback.config.selectedShapeId : null);
-    const aspectRatio = asTrimmedString(config?.['aspectRatio'])
-      ?? (fallback.type === 'crop_center' ? fallback.config.aspectRatio : null);
+      : fallback.type === 'crop_center'
+        ? fallback.config.kind
+        : 'center_square';
+    const selectedShapeId =
+      asTrimmedString(config?.['selectedShapeId']) ??
+      (fallback.type === 'crop_center' ? fallback.config.selectedShapeId : null);
+    const aspectRatio =
+      asTrimmedString(config?.['aspectRatio']) ??
+      (fallback.type === 'crop_center' ? fallback.config.aspectRatio : null);
     const paddingPercent = clampSequencePaddingPercent(
-      asFiniteNumber(config?.['paddingPercent'])
-      ?? (fallback.type === 'crop_center' ? fallback.config.paddingPercent : 0),
+      asFiniteNumber(config?.['paddingPercent']) ??
+        (fallback.type === 'crop_center' ? fallback.config.paddingPercent : 0)
     );
-    const bbox = normalizeSequenceCropRect(config?.['bbox'])
-      ?? (fallback.type === 'crop_center' ? fallback.config.bbox : null);
-    const polygon = normalizeSequencePolygon(config?.['polygon'])
-      ?? (fallback.type === 'crop_center' ? fallback.config.polygon : null);
+    const bbox =
+      normalizeSequenceCropRect(config?.['bbox']) ??
+      (fallback.type === 'crop_center' ? fallback.config.bbox : null);
+    const polygon =
+      normalizeSequencePolygon(config?.['polygon']) ??
+      (fallback.type === 'crop_center' ? fallback.config.polygon : null);
 
     return {
       ...base,
@@ -553,18 +544,23 @@ const normalizeSequenceStep = (
       config: {
         source,
         polygons,
-        invert: asBoolean(config?.['invert'], fallback.type === 'mask' ? fallback.config.invert : false),
+        invert: asBoolean(
+          config?.['invert'],
+          fallback.type === 'mask' ? fallback.config.invert : false
+        ),
         feather: clampSequenceFeather(
-          asFiniteNumber(config?.['feather'])
-          ?? (fallback.type === 'mask' ? fallback.config.feather : 0),
+          asFiniteNumber(config?.['feather']) ??
+            (fallback.type === 'mask' ? fallback.config.feather : 0)
         ),
         variant:
           config?.['variant'] === 'black' || config?.['variant'] === 'white'
             ? config['variant']
-            : (fallback.type === 'mask' ? fallback.config.variant : 'white'),
+            : fallback.type === 'mask'
+              ? fallback.config.variant
+              : 'white',
         persistMaskSlot: asBoolean(
           config?.['persistMaskSlot'],
-          fallback.type === 'mask' ? fallback.config.persistMaskSlot : false,
+          fallback.type === 'mask' ? fallback.config.persistMaskSlot : false
         ),
       },
     };
@@ -580,23 +576,25 @@ const normalizeSequenceStep = (
       config: {
         strategy,
         scale: clampImageStudioUpscaleScale(
-          asFiniteNumber(config?.['scale'])
-          ?? (fallback.type === 'upscale' ? fallback.config.scale : 2),
+          asFiniteNumber(config?.['scale']) ??
+            (fallback.type === 'upscale' ? fallback.config.scale : 2)
         ),
         targetWidth: clampImageStudioUpscaleResolutionSide(
-          asInteger(config?.['targetWidth'])
-          ?? (fallback.type === 'upscale' ? fallback.config.targetWidth : 2048),
+          asInteger(config?.['targetWidth']) ??
+            (fallback.type === 'upscale' ? fallback.config.targetWidth : 2048)
         ),
         targetHeight: clampImageStudioUpscaleResolutionSide(
-          asInteger(config?.['targetHeight'])
-          ?? (fallback.type === 'upscale' ? fallback.config.targetHeight : 2048),
+          asInteger(config?.['targetHeight']) ??
+            (fallback.type === 'upscale' ? fallback.config.targetHeight : 2048)
         ),
         smoothingQuality:
           config?.['smoothingQuality'] === 'low' ||
           config?.['smoothingQuality'] === 'medium' ||
           config?.['smoothingQuality'] === 'high'
             ? config['smoothingQuality']
-            : (fallback.type === 'upscale' ? fallback.config.smoothingQuality : 'high'),
+            : fallback.type === 'upscale'
+              ? fallback.config.smoothingQuality
+              : 'high',
       },
     };
   }
@@ -613,13 +611,15 @@ const normalizeSequenceStep = (
     type,
     config: {
       promptMode,
-      promptTemplate: asTrimmedString(config?.['promptTemplate'])
-        ?? (fallback.type === type ? fallback.config.promptTemplate : null),
-      modelOverride: asTrimmedString(config?.['modelOverride'])
-        ?? (fallback.type === type ? fallback.config.modelOverride : null),
+      promptTemplate:
+        asTrimmedString(config?.['promptTemplate']) ??
+        (fallback.type === type ? fallback.config.promptTemplate : null),
+      modelOverride:
+        asTrimmedString(config?.['modelOverride']) ??
+        (fallback.type === type ? fallback.config.modelOverride : null),
       outputCount: clampSequenceOutputCount(
-        asInteger(config?.['outputCount'])
-        ?? (fallback.type === type ? fallback.config.outputCount : null),
+        asInteger(config?.['outputCount']) ??
+          (fallback.type === type ? fallback.config.outputCount : null)
       ),
       referencePolicy,
     },
@@ -655,7 +655,7 @@ export const buildSequenceStepsFromOperations = (
     upscaleScale?: number;
     upscaleTargetWidth?: number;
     upscaleTargetHeight?: number;
-  },
+  }
 ): ImageStudioSequenceStep[] => {
   const sequence =
     operations.length > 0
@@ -671,10 +671,10 @@ export const buildSequenceStepsFromOperations = (
         strategy: params?.upscaleStrategy === 'target_resolution' ? 'target_resolution' : 'scale',
         scale: clampImageStudioUpscaleScale(params?.upscaleScale ?? baseStep.config.scale),
         targetWidth: clampImageStudioUpscaleResolutionSide(
-          params?.upscaleTargetWidth ?? baseStep.config.targetWidth,
+          params?.upscaleTargetWidth ?? baseStep.config.targetWidth
         ),
         targetHeight: clampImageStudioUpscaleResolutionSide(
-          params?.upscaleTargetHeight ?? baseStep.config.targetHeight,
+          params?.upscaleTargetHeight ?? baseStep.config.targetHeight
         ),
       },
     };
@@ -690,17 +690,13 @@ export const deriveOperationsFromSteps = (
     if (unique.includes(step.type)) continue;
     unique.push(step.type);
   }
-  return unique.length > 0
-    ? unique
-    : [...IMAGE_STUDIO_SEQUENCE_DEFAULT_OPERATIONS];
+  return unique.length > 0 ? unique : [...IMAGE_STUDIO_SEQUENCE_DEFAULT_OPERATIONS];
 };
 
 export function normalizeImageStudioSequenceOperations(
   input: ImageStudioSequenceOperation[] | null | undefined
 ): ImageStudioSequenceOperation[] {
-  const allowed = new Set<ImageStudioSequenceOperation>(
-    IMAGE_STUDIO_SEQUENCE_OPERATIONS
-  );
+  const allowed = new Set<ImageStudioSequenceOperation>(IMAGE_STUDIO_SEQUENCE_OPERATIONS);
   const normalized: ImageStudioSequenceOperation[] = [];
   if (Array.isArray(input)) {
     for (const entry of input) {
@@ -709,9 +705,7 @@ export function normalizeImageStudioSequenceOperations(
       normalized.push(entry);
     }
   }
-  return normalized.length > 0
-    ? normalized
-    : [...IMAGE_STUDIO_SEQUENCE_DEFAULT_OPERATIONS];
+  return normalized.length > 0 ? normalized : [...IMAGE_STUDIO_SEQUENCE_DEFAULT_OPERATIONS];
 }
 
 export function normalizeImageStudioSequenceSteps(
@@ -722,7 +716,7 @@ export function normalizeImageStudioSequenceSteps(
     upscaleScale?: number;
     upscaleTargetWidth?: number;
     upscaleTargetHeight?: number;
-  },
+  }
 ): ImageStudioSequenceStep[] {
   const operations = normalizeImageStudioSequenceOperations(params?.fallbackOperations);
   const fallbackStepParams: {
@@ -732,9 +726,7 @@ export function normalizeImageStudioSequenceSteps(
     upscaleTargetHeight?: number;
   } = {
     ...(params?.upscaleStrategy ? { upscaleStrategy: params.upscaleStrategy } : {}),
-    ...(typeof params?.upscaleScale === 'number'
-      ? { upscaleScale: params.upscaleScale }
-      : {}),
+    ...(typeof params?.upscaleScale === 'number' ? { upscaleScale: params.upscaleScale } : {}),
     ...(typeof params?.upscaleTargetWidth === 'number'
       ? { upscaleTargetWidth: params.upscaleTargetWidth }
       : {}),
@@ -748,9 +740,7 @@ export function normalizeImageStudioSequenceSteps(
 
   if (!Array.isArray(input)) {
     return dedupeStepIds(
-      fallbackSteps
-        .slice(0, IMAGE_STUDIO_SEQUENCE_MAX_STEPS)
-        .map((step) => cloneStep(step)),
+      fallbackSteps.slice(0, IMAGE_STUDIO_SEQUENCE_MAX_STEPS).map((step) => cloneStep(step))
     );
   }
   if (input.length === 0) {
@@ -771,23 +761,19 @@ export function normalizeImageStudioSequenceSteps(
 
   if (normalized.length === 0) {
     return dedupeStepIds(
-      fallbackSteps
-        .slice(0, IMAGE_STUDIO_SEQUENCE_MAX_STEPS)
-        .map((step) => cloneStep(step)),
+      fallbackSteps.slice(0, IMAGE_STUDIO_SEQUENCE_MAX_STEPS).map((step) => cloneStep(step))
     );
   }
 
   return dedupeStepIds(
-    normalized
-      .slice(0, IMAGE_STUDIO_SEQUENCE_MAX_STEPS)
-      .map((step) => cloneStep(step)),
+    normalized.slice(0, IMAGE_STUDIO_SEQUENCE_MAX_STEPS).map((step) => cloneStep(step))
   );
 }
 
 const normalizeSequencePreset = (
   input: unknown,
   index: number,
-  fallbackSteps: ImageStudioSequenceStep[],
+  fallbackSteps: ImageStudioSequenceStep[]
 ): ImageStudioSequencePreset | null => {
   const record = asRecord(input);
   if (!record) return null;
@@ -800,18 +786,38 @@ const normalizeSequencePreset = (
 
   const steps = normalizeImageStudioSequenceSteps(record['steps'], {
     fallbackOperations: deriveOperationsFromSteps(fallbackSteps),
-    upscaleStrategy: fallbackSteps.find((step) => step.type === 'upscale' && step.enabled)?.type === 'upscale'
-      ? (fallbackSteps.find((step) => step.type === 'upscale' && step.enabled) as ImageStudioSequenceUpscaleStep).config.strategy
-      : 'scale',
-    upscaleScale: fallbackSteps.find((step) => step.type === 'upscale' && step.enabled)?.type === 'upscale'
-      ? (fallbackSteps.find((step) => step.type === 'upscale' && step.enabled) as ImageStudioSequenceUpscaleStep).config.scale
-      : 2,
-    upscaleTargetWidth: fallbackSteps.find((step) => step.type === 'upscale' && step.enabled)?.type === 'upscale'
-      ? (fallbackSteps.find((step) => step.type === 'upscale' && step.enabled) as ImageStudioSequenceUpscaleStep).config.targetWidth
-      : 2048,
-    upscaleTargetHeight: fallbackSteps.find((step) => step.type === 'upscale' && step.enabled)?.type === 'upscale'
-      ? (fallbackSteps.find((step) => step.type === 'upscale' && step.enabled) as ImageStudioSequenceUpscaleStep).config.targetHeight
-      : 2048,
+    upscaleStrategy:
+      fallbackSteps.find((step) => step.type === 'upscale' && step.enabled)?.type === 'upscale'
+        ? (
+            fallbackSteps.find(
+              (step) => step.type === 'upscale' && step.enabled
+            ) as ImageStudioSequenceUpscaleStep
+        ).config.strategy
+        : 'scale',
+    upscaleScale:
+      fallbackSteps.find((step) => step.type === 'upscale' && step.enabled)?.type === 'upscale'
+        ? (
+            fallbackSteps.find(
+              (step) => step.type === 'upscale' && step.enabled
+            ) as ImageStudioSequenceUpscaleStep
+        ).config.scale
+        : 2,
+    upscaleTargetWidth:
+      fallbackSteps.find((step) => step.type === 'upscale' && step.enabled)?.type === 'upscale'
+        ? (
+            fallbackSteps.find(
+              (step) => step.type === 'upscale' && step.enabled
+            ) as ImageStudioSequenceUpscaleStep
+        ).config.targetWidth
+        : 2048,
+    upscaleTargetHeight:
+      fallbackSteps.find((step) => step.type === 'upscale' && step.enabled)?.type === 'upscale'
+        ? (
+            fallbackSteps.find(
+              (step) => step.type === 'upscale' && step.enabled
+            ) as ImageStudioSequenceUpscaleStep
+        ).config.targetHeight
+        : 2048,
   });
 
   return {
@@ -825,7 +831,7 @@ const normalizeSequencePreset = (
 
 export function normalizeImageStudioSequencePresets(
   input: unknown,
-  fallbackSteps: ImageStudioSequenceStep[],
+  fallbackSteps: ImageStudioSequenceStep[]
 ): ImageStudioSequencePreset[] {
   if (!Array.isArray(input)) return [];
 
@@ -841,14 +847,14 @@ export function normalizeImageStudioSequencePresets(
 }
 
 export function resolveImageStudioSequenceActivePreset(
-  sequencing: Pick<ImageStudioProjectSequencingSettings, 'activePresetId' | 'presets'>,
+  sequencing: Pick<ImageStudioProjectSequencingSettings, 'activePresetId' | 'presets'>
 ): ImageStudioSequencePreset | null {
   if (!sequencing.activePresetId) return null;
   return sequencing.presets.find((preset) => preset.id === sequencing.activePresetId) ?? null;
 }
 
 export function resolveImageStudioSequenceActiveSteps(
-  sequencing: Pick<ImageStudioProjectSequencingSettings, 'steps' | 'presets' | 'activePresetId'>,
+  sequencing: Pick<ImageStudioProjectSequencingSettings, 'steps' | 'presets' | 'activePresetId'>
 ): ImageStudioSequenceStep[] {
   const activePreset = resolveImageStudioSequenceActivePreset(sequencing);
   if (!activePreset) {

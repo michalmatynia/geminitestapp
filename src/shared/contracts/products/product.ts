@@ -189,4 +189,3 @@ export const productWithImagesSchema = productSchema.extend({
 });
 export type ProductWithImagesDto = z.infer<typeof productWithImagesSchema>;
 export type ProductWithImages = ProductWithImagesDto;
-

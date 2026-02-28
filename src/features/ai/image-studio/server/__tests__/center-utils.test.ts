@@ -44,7 +44,9 @@ describe('center-utils', () => {
     });
 
     expect(clientFingerprint).toBe(serverFingerprint);
-    expect(buildCenterFingerprintRelationType(clientFingerprint)).toMatch(/^center:output:[a-f0-9]{20}$/);
+    expect(buildCenterFingerprintRelationType(clientFingerprint)).toMatch(
+      /^center:output:[a-f0-9]{20}$/
+    );
   });
 
   it('produces distinct fingerprints for alpha-center and object-layout pipelines', () => {

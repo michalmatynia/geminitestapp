@@ -20,9 +20,7 @@ export function ThemeCustomCssSection(): React.JSX.Element {
           },
         ]}
         values={theme}
-        onChange={(values) =>
-          update('customCssSelectors', values.customCssSelectors as string)
-        }
+        onChange={(values) => update('customCssSelectors', values.customCssSelectors as string)}
       />
       <div className='space-y-1.5'>
         <Label className='text-xs text-gray-400'>CSS Code</Label>

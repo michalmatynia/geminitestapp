@@ -12,8 +12,7 @@ export const AI_PATHS_VALIDATION_DOCS_SOURCES_KEY = 'ai_paths_validation_docs_so
 export const AI_PATHS_VALIDATION_ENTITY_COLLECTION_MAP_KEY =
   'ai_paths_validation_entity_collection_map';
 export const AI_PATHS_HISTORY_RETENTION_KEY = 'ai_paths_history_retention_passes';
-export const AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY =
-  'ai_paths_history_retention_options_max';
+export const AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY = 'ai_paths_history_retention_options_max';
 export const AI_PATHS_HISTORY_RETENTION_MIN = 1;
 export const AI_PATHS_HISTORY_RETENTION_MAX = 50;
 export const AI_PATHS_HISTORY_RETENTION_DEFAULT = 3;

@@ -44,10 +44,7 @@ export const matchesTemplateField = (value: string, fields: Set<string>): boolea
   return fields.has(normalized);
 };
 
-export const isMissingExternalEntity = (
-  name: unknown,
-  kind: 'category' | 'producer'
-): boolean => {
+export const isMissingExternalEntity = (name: unknown, kind: 'category' | 'producer'): boolean => {
   if (typeof name !== 'string') return false;
   const normalized = name.trim().toLowerCase();
   if (kind === 'category') {
@@ -63,10 +60,7 @@ export const toTimeMs = (value: unknown): number => {
   return 0;
 };
 
-export const autoScaleBadRequest = (
-  message: string,
-  meta?: Record<string, unknown>
-): Error => {
+export const autoScaleBadRequest = (message: string, meta?: Record<string, unknown>): Error => {
   return badRequestError(message, { autoScaleErrorCode: 'INVALID_PAYLOAD', ...meta });
 };
 

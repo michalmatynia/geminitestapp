@@ -454,12 +454,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     setFormatterEnabledState(defaultFormatterEnabled);
     setValidatorInitialized(typeof configEnabledByDefault === 'boolean');
     setValidatorManuallyChanged(false);
-  }, [
-    configEnabledByDefault,
-    defaultFormatterEnabled,
-    defaultValidatorEnabled,
-    entityIdentity,
-  ]);
+  }, [configEnabledByDefault, defaultFormatterEnabled, defaultValidatorEnabled, entityIdentity]);
 
   useEffect(() => {
     if (validatorEnabled) return;

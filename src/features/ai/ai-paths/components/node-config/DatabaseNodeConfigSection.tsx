@@ -130,7 +130,9 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     })),
     codeSnippets: state.codeSnippets,
     selectedSnippetIndex: state.selectedSnippetIndex ?? 0,
-    setSelectedSnippetIndex: state.setSelectedSnippetIndex as React.Dispatch<React.SetStateAction<number>>,
+    setSelectedSnippetIndex: state.setSelectedSnippetIndex as React.Dispatch<
+      React.SetStateAction<number>
+    >,
     insertTemplateSnippet: state.insertTemplateSnippet,
     applyQueryTemplateUpdate: state.applyQueryTemplateUpdate,
     insertQueryPlaceholder: state.insertQueryPlaceholder,

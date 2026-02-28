@@ -1,5 +1,3 @@
-
-
 import type { UnifiedCollection } from '@/shared/contracts/database';
 import { Button, StatusBadge, DataTableSortableHeader, SelectSimple } from '@/shared/ui';
 

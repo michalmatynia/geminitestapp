@@ -1,6 +1,4 @@
-import {
-  type ImageStudioCenterObjectBounds,
-} from '@/shared/contracts/image-studio';
+import { type ImageStudioCenterObjectBounds } from '@/shared/contracts/image-studio';
 import {
   type PixelData,
   type NormalizedImageStudioAnalysisLayoutConfig,
@@ -9,7 +7,10 @@ import {
   type ImageStudioAutoScalePlan,
 } from './types';
 import { resolveAlphaObjectBoundsFromRgba } from './alpha-detection';
-import { resolveWhiteForegroundObjectDetectionFromRgba, resolveWhiteBgSimpleBboxFromRgba } from './white-bg-detection';
+import {
+  resolveWhiteForegroundObjectDetectionFromRgba,
+  resolveWhiteBgSimpleBboxFromRgba,
+} from './white-bg-detection';
 import { decideObjectDetectionCandidate } from '@/features/ai/image-studio/analysis/policy';
 
 export const computeObjectWhitespaceMetrics = (
@@ -132,7 +133,14 @@ export const computeAutoScalePlanFromBounds = (params: {
   sourceWhitespace: ImageStudioObjectWhitespaceMetrics;
   sourceObjectAreaPercent: number;
 }): ImageStudioAutoScalePlan => {
-  const { sourceWidth, sourceHeight, objectBounds, layout, sourceWhitespace, sourceObjectAreaPercent } = params;
+  const {
+    sourceWidth,
+    sourceHeight,
+    objectBounds,
+    layout,
+    sourceWhitespace,
+    sourceObjectAreaPercent,
+  } = params;
 
   const targetWidth = layout.targetCanvasWidth ?? sourceWidth;
   const targetHeight = layout.targetCanvasHeight ?? sourceHeight;
@@ -160,7 +168,11 @@ export const computeAutoScalePlanFromBounds = (params: {
     height: targetObjHeight,
   };
 
-  const whitespaceAfter = computeObjectWhitespaceMetrics(targetObjectBounds, targetWidth, targetHeight);
+  const whitespaceAfter = computeObjectWhitespaceMetrics(
+    targetObjectBounds,
+    targetWidth,
+    targetHeight
+  );
 
   return {
     targetWidth,

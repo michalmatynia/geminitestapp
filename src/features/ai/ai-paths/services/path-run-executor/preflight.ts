@@ -4,12 +4,12 @@ import {
   evaluateDisabledNodeTypesPolicy,
   formatDisabledNodeTypesPolicyMessage,
 } from '../path-run-policy';
-import { 
-  AiNode, 
-  Edge, 
-  RuntimeState, 
+import {
+  AiNode,
+  Edge,
+  RuntimeState,
   AiPathRunRecord,
-  AiPathRunRepository
+  AiPathRunRepository,
 } from '@/shared/contracts/ai-paths';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine/defaults';
 

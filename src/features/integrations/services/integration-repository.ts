@@ -1,8 +1,5 @@
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import {
-  IntegrationRepository,
-  IntegrationWithConnections,
-} from '../types/integrations';
+import { IntegrationRepository, IntegrationWithConnections } from '../types/integrations';
 
 import { getPrismaIntegrationRepository } from './integration-repository/prisma-impl';
 import { getMongoIntegrationRepository } from './integration-repository/mongo-impl';

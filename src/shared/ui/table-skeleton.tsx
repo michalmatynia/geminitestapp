@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 
 import { Skeleton, TableRow, TableCell } from '@/shared/ui';

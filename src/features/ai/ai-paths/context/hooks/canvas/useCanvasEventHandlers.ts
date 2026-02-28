@@ -16,7 +16,7 @@ export function useCanvasEventHandlers(args: {
   resolveViewportPointFromClient: (x: number, y: number) => { x: number; y: number } | null;
 }): UseCanvasEventHandlersValue {
   const { nav, resolveViewportPointFromClient, updateLastPointerCanvasPosFromClient } = args;
-  
+
   const wheelGestureActiveUntilRef = useRef(0);
 
   const isPointInsideCanvas = useCallback(

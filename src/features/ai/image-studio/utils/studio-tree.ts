@@ -35,12 +35,18 @@ export function expandFolderPath(path: string): string[] {
   return parts.map((_: string, idx: number) => parts.slice(0, idx + 1).join('/'));
 }
 
-export function normalizeTree(input: ImageStudioFolderTree | null | undefined): ImageStudioFolderTree {
+export function normalizeTree(
+  input: ImageStudioFolderTree | null | undefined
+): ImageStudioFolderTree {
   const rawFolders = input?.folders ?? [];
-  const folders = normalizeFolderPaths(rawFolders.flatMap((path: string) => expandFolderPath(path)));
+  const folders = normalizeFolderPaths(
+    rawFolders.flatMap((path: string) => expandFolderPath(path))
+  );
   const fileMap = Object.fromEntries(
     Object.entries(input?.fileMap ?? {})
-      .filter(([id, folder]: [string, string]) => typeof id === 'string' && typeof folder === 'string')
+      .filter(
+        ([id, folder]: [string, string]) => typeof id === 'string' && typeof folder === 'string'
+      )
       .map(([id, folder]: [string, string]) => [id, normalizeFolderPath(folder)])
   ) as Record<string, string>;
   return { version: 1, folders, fileMap };

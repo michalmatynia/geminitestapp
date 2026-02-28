@@ -1,6 +1,9 @@
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
 
-import { SYSTEM_LOG_FILTER_DEFAULTS, type SystemLogFilterFormValues } from '@/shared/lib/observability/log-triage-presets';
+import {
+  SYSTEM_LOG_FILTER_DEFAULTS,
+  type SystemLogFilterFormValues,
+} from '@/shared/lib/observability/log-triage-presets';
 
 export type SystemLogUrlState = SystemLogFilterFormValues & {
   page: number;

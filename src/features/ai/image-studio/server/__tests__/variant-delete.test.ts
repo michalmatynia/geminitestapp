@@ -53,7 +53,7 @@ describe('deleteImageStudioVariant', () => {
         generationOutputIndex: 1,
         sourceSlotId: 'root-1',
       },
-      deps,
+      deps
     );
 
     expect(result.modeUsed).toBe('slot_cascade');
@@ -77,7 +77,10 @@ describe('deleteImageStudioVariant', () => {
       listSlots: vi.fn(async () => [matchedSlot]),
       deleteSlotCascade: vi.fn(async () => ({ deleted: false, deletedSlotIds: [] })),
       removeRunOutputs: vi.fn(async () => 0),
-      getImageFileById: vi.fn(async () => ({ id: 'img-stuck', filepath: '/uploads/studio/proj-1/stuck.png' })),
+      getImageFileById: vi.fn(async () => ({
+        id: 'img-stuck',
+        filepath: '/uploads/studio/proj-1/stuck.png',
+      })),
       deleteImageFileById: vi.fn(async () => undefined),
       countProductsByImageFileId: vi.fn(async () => 0),
       deleteDiskPath: vi.fn(async () => true),
@@ -92,7 +95,7 @@ describe('deleteImageStudioVariant', () => {
         assetId: 'img-stuck',
         filepath: '/uploads/studio/proj-1/stuck.png',
       },
-      deps,
+      deps
     );
 
     expect(result.modeUsed).toBe('noop');
@@ -123,7 +126,7 @@ describe('deleteImageStudioVariant', () => {
         projectId: 'proj-1',
         assetId: 'img-orphan',
       },
-      deps,
+      deps
     );
 
     expect(result.modeUsed).toBe('asset_only');
@@ -152,7 +155,7 @@ describe('deleteImageStudioVariant', () => {
         projectId: 'proj-1',
         assetId: 'img-product-ref',
       },
-      deps,
+      deps
     );
 
     expect(result.modeUsed).toBe('noop');
@@ -160,8 +163,8 @@ describe('deleteImageStudioVariant', () => {
     expect(result.deletedFilepaths).toEqual([]);
     expect(
       result.warnings.some((warning) =>
-        warning.includes('still referenced by Product Studio image slots'),
-      ),
+        warning.includes('still referenced by Product Studio image slots')
+      )
     ).toBe(true);
     expect(deps.deleteImageFileById).not.toHaveBeenCalled();
     expect(deps.deleteDiskPath).not.toHaveBeenCalled();
@@ -190,13 +193,15 @@ describe('deleteImageStudioVariant', () => {
         sourceSlotId: 'root-slot',
         assetId: 'img-variant-intent',
       },
-      deps,
+      deps
     );
 
     expect(result.modeUsed).toBe('noop');
     expect(result.deletedFileIds).toEqual([]);
     expect(result.deletedFilepaths).toEqual([]);
-    expect(result.warnings.some((warning) => warning.includes('expects a slot/node match'))).toBe(true);
+    expect(result.warnings.some((warning) => warning.includes('expects a slot/node match'))).toBe(
+      true
+    );
     expect(deps.deleteImageFileById).not.toHaveBeenCalled();
     expect(deps.deleteDiskPath).not.toHaveBeenCalled();
   });
@@ -236,7 +241,7 @@ describe('deleteImageStudioVariant', () => {
         generationOutputIndex: 3,
         sourceSlotId: 'root-slot',
       },
-      deps,
+      deps
     );
 
     expect(result.modeUsed).toBe('slot_cascade');
@@ -280,7 +285,7 @@ describe('deleteImageStudioVariant', () => {
         generationOutputIndex: 2,
         sourceSlotId: 'root-sequence',
       },
-      deps,
+      deps
     );
 
     expect(result.modeUsed).toBe('slot_cascade');
@@ -327,7 +332,7 @@ describe('deleteImageStudioVariant', () => {
         assetId: 'img-race',
         filepath: '/uploads/studio/proj-1/race.png',
       },
-      deps,
+      deps
     );
 
     expect(result.modeUsed).toBe('slot_cascade');
@@ -367,7 +372,7 @@ describe('deleteImageStudioVariant', () => {
         generationOutputIndex: 1,
         sourceSlotId: 'root-output-mismatch',
       },
-      deps,
+      deps
     );
 
     expect(result.modeUsed).toBe('slot_cascade');
@@ -414,7 +419,7 @@ describe('deleteImageStudioVariant', () => {
         generationRunId: 'run-stub',
         sourceSlotId: 'root-stub',
       },
-      deps,
+      deps
     );
 
     expect(result.modeUsed).toBe('slot_cascade');

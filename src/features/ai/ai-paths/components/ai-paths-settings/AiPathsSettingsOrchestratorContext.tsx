@@ -4,7 +4,9 @@ import { createContext, useContext, type ReactNode } from 'react';
 
 import type { UseAiPathsSettingsStateReturn } from './types';
 
-const AiPathsSettingsOrchestratorContext = createContext<UseAiPathsSettingsStateReturn | null>(null);
+const AiPathsSettingsOrchestratorContext = createContext<UseAiPathsSettingsStateReturn | null>(
+  null
+);
 
 interface AiPathsSettingsOrchestratorProviderProps {
   value: UseAiPathsSettingsStateReturn;

@@ -1,9 +1,7 @@
 import { randomUUID } from 'crypto';
 import type { Filter, WithId } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type {
-  ThemeDocument,
-} from '@/features/notesapp/services/notes/types/mongo-note-types';
+import type { ThemeDocument } from '@/features/notesapp/services/notes/types/mongo-note-types';
 import type {
   NoteThemeDto as ThemeRecord,
   CreateNoteThemeDto as ThemeCreateInput,
@@ -17,7 +15,10 @@ export const mongoThemeImpl = {
     const db = await getMongoDb();
     const collection = db.collection<ThemeDocument>(themeCollectionName);
     const filter = notebookId ? { notebookId } : {};
-    const docs = await collection.find(filter as Filter<ThemeDocument>).sort({ name: 1 }).toArray();
+    const docs = await collection
+      .find(filter as Filter<ThemeDocument>)
+      .sort({ name: 1 })
+      .toArray();
     return docs.map(toThemeResponse);
   },
 

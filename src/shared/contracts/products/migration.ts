@@ -30,4 +30,3 @@ export const productMigrationBatchResultSchema = z.object({
 
 export type ProductMigrationBatchResultDto = z.infer<typeof productMigrationBatchResultSchema>;
 export type ProductMigrationBatchResult = ProductMigrationBatchResultDto;
-

@@ -1,17 +1,21 @@
 import { useCallback, useRef } from 'react';
 import type { AiNode, RuntimeState, Edge } from '@/shared/lib/ai-paths';
 import type { Toast } from '@/shared/contracts/ui';
-import { 
-  getMarqueeRect, 
-  setPointerCaptureSafe 
-} from '../useCanvasInteractions.helpers';
+import { getMarqueeRect, setPointerCaptureSafe } from '../useCanvasInteractions.helpers';
 import type { MarqueeMode, MarqueeSelectionState } from '../useCanvasInteractions.helpers';
 
 export interface UseCanvasStateHandlersValue {
   notifyLocked: () => void;
-  resolveViewportPointFromClient: (clientX: number, clientY: number) => { x: number; y: number } | null;
+  resolveViewportPointFromClient: (
+    clientX: number,
+    clientY: number
+  ) => { x: number; y: number } | null;
   updateLastPointerCanvasPosFromClient: (clientX: number, clientY: number) => void;
-  pruneRuntimeInputsInternal: (state: RuntimeState, removedEdges: Edge[], remainingEdges: Edge[]) => RuntimeState;
+  pruneRuntimeInputsInternal: (
+    state: RuntimeState,
+    removedEdges: Edge[],
+    remainingEdges: Edge[]
+  ) => RuntimeState;
   resolveActiveNodeSelectionIds: () => string[];
   resolveNodesWithinMarquee: (
     rect: { left: number; top: number; width: number; height: number },
@@ -115,7 +119,7 @@ export function useCanvasStateHandlers(args: {
 
   const resolveActiveNodeSelectionIds = useCallback((): string[] => {
     return args.nodes
-      .filter((node: AiNode): boolean => args.nodes.some(n => n.id === node.id)) // Placeholder for selection logic
+      .filter((node: AiNode): boolean => args.nodes.some((n) => n.id === node.id)) // Placeholder for selection logic
       .map((node: AiNode): string => node.id);
   }, [args.nodes]);
 

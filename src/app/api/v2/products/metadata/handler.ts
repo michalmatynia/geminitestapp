@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
+import {
   getProducerRepository,
   getTagRepository,
   getParameterRepository,
@@ -9,7 +9,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function GET_products_metadata_handler(
-  _req: NextRequest, 
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {
@@ -38,7 +38,7 @@ export async function GET_products_metadata_handler(
 }
 
 export async function POST_products_metadata_handler(
-  _req: NextRequest, 
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {

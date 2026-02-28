@@ -4,7 +4,6 @@ import { normalizeTreePath } from '@/shared/utils/tree-operations';
 
 import { normalizeFolderPaths } from './studio-tree';
 
-
 const FOLDER_NODE_PREFIX = 'folder:';
 const SLOT_NODE_PREFIX = 'card:';
 
@@ -26,19 +25,15 @@ type SlotTreeNode = {
 export const toFolderMasterNodeId = (folderPath: string): string =>
   `${FOLDER_NODE_PREFIX}${normalizeTreePath(folderPath)}`;
 
-export const toSlotMasterNodeId = (slotId: string): string =>
-  `${SLOT_NODE_PREFIX}${slotId}`;
+export const toSlotMasterNodeId = (slotId: string): string => `${SLOT_NODE_PREFIX}${slotId}`;
 
 export const isFolderMasterNodeId = (value: string): boolean =>
   value.startsWith(FOLDER_NODE_PREFIX);
 
-export const isSlotMasterNodeId = (value: string): boolean =>
-  value.startsWith(SLOT_NODE_PREFIX);
+export const isSlotMasterNodeId = (value: string): boolean => value.startsWith(SLOT_NODE_PREFIX);
 
 export const fromFolderMasterNodeId = (value: string): string | null =>
-  isFolderMasterNodeId(value)
-    ? normalizeTreePath(value.slice(FOLDER_NODE_PREFIX.length))
-    : null;
+  isFolderMasterNodeId(value) ? normalizeTreePath(value.slice(FOLDER_NODE_PREFIX.length)) : null;
 
 export const fromSlotMasterNodeId = (value: string): string | null =>
   isSlotMasterNodeId(value) ? value.slice(SLOT_NODE_PREFIX.length) : null;
@@ -58,7 +53,8 @@ export const decodeImageStudioMasterNodeId = (value: string): ImageStudioMasterN
 };
 
 const getSlotMetadata = (slot: ImageStudioSlotRecord): Record<string, unknown> | null => {
-  if (!slot.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata)) return null;
+  if (!slot.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata))
+    return null;
   return slot.metadata;
 };
 
@@ -90,7 +86,8 @@ const getRoleLabel = (slot: ImageStudioSlotRecord, derivedFromCard: boolean): st
   const metadata = getSlotMetadata(slot);
   const role = getSlotRole(slot);
   if (role === 'mask') {
-    const variant = typeof metadata?.['variant'] === 'string' ? metadata['variant'].trim().toLowerCase() : '';
+    const variant =
+      typeof metadata?.['variant'] === 'string' ? metadata['variant'].trim().toLowerCase() : '';
     const inverted = Boolean(metadata?.['inverted']);
     if (variant) return inverted ? `mask ${variant} inv` : `mask ${variant}`;
     return inverted ? 'mask inv' : 'mask';
@@ -153,10 +150,7 @@ const ensureFolderNode = (parent: SlotTreeNode, folderPath: string): SlotTreeNod
   return created;
 };
 
-const buildStudioTreeRoot = (
-  slots: ImageStudioSlotRecord[],
-  folders: string[]
-): SlotTreeNode => {
+const buildStudioTreeRoot = (slots: ImageStudioSlotRecord[], folders: string[]): SlotTreeNode => {
   const root: SlotTreeNode = {
     id: '__root__',
     name: 'root',
@@ -170,7 +164,10 @@ const buildStudioTreeRoot = (
     .filter((slot: ImageStudioSlotRecord) => !isGenerationDerivedTreeSlot(slot))
     .sort(compareSlots);
   const visibleSlotById = new Map<string, ImageStudioSlotRecord>(
-    visibleSlots.map((slot: ImageStudioSlotRecord): [string, ImageStudioSlotRecord] => [slot.id, slot])
+    visibleSlots.map((slot: ImageStudioSlotRecord): [string, ImageStudioSlotRecord] => [
+      slot.id,
+      slot,
+    ])
   );
   const sourceBySlotId = new Map<string, string>();
   visibleSlots.forEach((slot: ImageStudioSlotRecord) => {
@@ -207,7 +204,9 @@ const buildStudioTreeRoot = (
     const sourceSlot = visibleSlotById.get(sourceSlotId);
     if (!sourceSlot) return false;
     if (hasDerivationCycle(slot.id, sourceSlotId)) return false;
-    return normalizeSlotFolderPath(sourceSlot.folderPath) === normalizeSlotFolderPath(slot.folderPath);
+    return (
+      normalizeSlotFolderPath(sourceSlot.folderPath) === normalizeSlotFolderPath(slot.folderPath)
+    );
   };
 
   const slotNodeById = new Map<string, SlotTreeNode>();
@@ -309,10 +308,7 @@ export const buildMasterNodesFromStudioTree = (
 const createMasterNodeMap = (nodes: MasterTreeNode[]): Map<string, MasterTreeNode> =>
   new Map(nodes.map((node: MasterTreeNode) => [node.id, node]));
 
-export const findMasterNodeAncestorIds = (
-  nodes: MasterTreeNode[],
-  nodeId: string
-): string[] => {
+export const findMasterNodeAncestorIds = (nodes: MasterTreeNode[], nodeId: string): string[] => {
   const byId = createMasterNodeMap(nodes);
   const ancestors: string[] = [];
 

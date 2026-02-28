@@ -1,4 +1,9 @@
-import type { PromptValidationRule, PromptValidationSettings, PromptValidationSeverity, PromptValidationSimilarPattern } from '@/shared/lib/prompt-engine/settings';
+import type {
+  PromptValidationRule,
+  PromptValidationSettings,
+  PromptValidationSeverity,
+  PromptValidationSimilarPattern,
+} from '@/shared/lib/prompt-engine/settings';
 
 import { extractParamsFromPrompt } from './prompt-params';
 
@@ -24,7 +29,10 @@ function compileRegex(pattern: string, flags: string | undefined): RegExp | null
   }
 }
 
-function findSuggestions(prompt: string, rule: Pick<PromptValidationRule, 'similar'>): PromptValidationSuggestion[] {
+function findSuggestions(
+  prompt: string,
+  rule: Pick<PromptValidationRule, 'similar'>
+): PromptValidationSuggestion[] {
   const suggestions: PromptValidationSuggestion[] = [];
 
   (rule.similar ?? []).forEach((sim: PromptValidationSimilarPattern) => {
@@ -55,10 +63,7 @@ export function validateProgrammaticPrompt(
   if (!settings.enabled) return [];
   if (!prompt.trim()) return [];
 
-  const rules: PromptValidationRule[] = [
-    ...settings.rules,
-    ...(settings.learnedRules ?? []),
-  ];
+  const rules: PromptValidationRule[] = [...settings.rules, ...(settings.learnedRules ?? [])];
 
   const issues: PromptValidationIssue[] = [];
 
@@ -99,8 +104,7 @@ export function validateProgrammaticPrompt(
       // Add a few built-in suggestions based on common failure modes.
       if (result.error.includes('Could not find `params = {')) {
         suggestions.push({
-          suggestion:
-            'Add a `params = { ... }` block (JSON-like: double-quoted keys/strings).',
+          suggestion: 'Add a `params = { ... }` block (JSON-like: double-quoted keys/strings).',
         });
       } else if (result.error.includes('unbalanced braces')) {
         suggestions.push({

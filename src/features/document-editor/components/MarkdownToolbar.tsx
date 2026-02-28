@@ -64,7 +64,11 @@ export function MarkdownToolbar({
   onApplySpanStyle,
 }: MarkdownToolbarProps): React.JSX.Element {
   return (
-    <Card variant='subtle-compact' padding='none' className='mb-2 flex flex-wrap items-center gap-2 border bg-card/40 px-3 py-2'>
+    <Card
+      variant='subtle-compact'
+      padding='none'
+      className='mb-2 flex flex-wrap items-center gap-2 border bg-card/40 px-3 py-2'
+    >
       <div className='flex items-center gap-2'>
         {isModeLocked ? (
           <>
@@ -282,7 +286,9 @@ export function MarkdownToolbar({
           </Button>
           <Button
             type='button'
-            onClick={(): void => onInsertAtCursor('\n| Header | Header |\n| --- | --- |\n| Cell | Cell |\n')}
+            onClick={(): void =>
+              onInsertAtCursor('\n| Header | Header |\n| --- | --- |\n| Cell | Cell |\n')
+            }
             variant='outline'
             className='h-7 px-2 text-xs text-gray-200'
             title='Table'
@@ -291,7 +297,8 @@ export function MarkdownToolbar({
           </Button>
 
           {fileReferenceOptions && fileReferenceOptions.length > 0 && onInsertFileReference ? (
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value=''
               onValueChange={(value: string): void => {
                 onInsertFileReference(value);
@@ -305,7 +312,8 @@ export function MarkdownToolbar({
 
           <div className='ml-2 flex items-center gap-2 border-l border-border pl-2'>
             <Label className='text-xs text-gray-400'>Font</Label>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={fontFamily}
               onValueChange={onFontFamilyChange}
               options={[

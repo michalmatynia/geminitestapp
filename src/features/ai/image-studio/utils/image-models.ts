@@ -16,11 +16,7 @@ const IMAGE_SIZE_OPTIONS_GPT = [
   '1024x1792',
 ] as const;
 
-const IMAGE_SIZE_OPTIONS_DALLE = [
-  '1024x1024',
-  '1792x1024',
-  '1024x1792',
-] as const;
+const IMAGE_SIZE_OPTIONS_DALLE = ['1024x1024', '1792x1024', '1024x1792'] as const;
 
 const IMAGE_QUALITY_OPTIONS_GPT = ['auto', 'low', 'medium', 'high'] as const;
 const IMAGE_QUALITY_OPTIONS_DALLE = ['standard', 'hd'] as const;
@@ -164,13 +160,9 @@ export function isLikelyImageOutputModelId(modelId: string): boolean {
 }
 
 export function uniqueSortedModelIds(modelIds: readonly string[]): string[] {
-  return Array.from(
-    new Set(
-      modelIds
-        .map((modelId) => modelId.trim())
-        .filter(Boolean)
-    )
-  ).sort((a, b) => a.localeCompare(b));
+  return Array.from(new Set(modelIds.map((modelId) => modelId.trim()).filter(Boolean))).sort(
+    (a, b) => a.localeCompare(b)
+  );
 }
 
 export function toLikelyImageModelIds(modelIds: readonly string[]): string[] {

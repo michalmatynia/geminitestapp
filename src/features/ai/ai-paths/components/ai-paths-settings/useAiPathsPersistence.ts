@@ -2,11 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type {
-  PathConfig,
-  PathMeta,
-  AiPathsValidationConfig,
-} from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta, AiPathsValidationConfig } from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
@@ -41,7 +37,9 @@ import { usePreferencePersistence } from './hooks/persistence/usePreferencePersi
 import { usePathPersistence } from './hooks/persistence/usePathPersistence';
 import { usePresetPersistence } from './hooks/persistence/usePresetPersistence';
 
-export function useAiPathsPersistence(args: UseAiPathsPersistenceArgs): UseAiPathsPersistenceResult {
+export function useAiPathsPersistence(
+  args: UseAiPathsPersistenceArgs
+): UseAiPathsPersistenceResult {
   const {
     activePathId,
     expandedPaletteGroups,
@@ -107,12 +105,14 @@ export function useAiPathsPersistence(args: UseAiPathsPersistenceArgs): UseAiPat
       try {
         const settings = await fetchAiPathsSettingsCached();
         const userPrefs = await prefs.resolveUserPreferences();
-        
+
         const pathIndexItem = settings.find((s) => s.key === PATH_INDEX_KEY);
         let rawPaths: PathMeta[] = [];
         try {
           if (pathIndexItem?.value) rawPaths = JSON.parse(pathIndexItem.value) as PathMeta[];
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         const loadedPaths = normalizeLoadedPathMetas(rawPaths);
         setPaths(loadedPaths);
 
@@ -174,7 +174,7 @@ export function useAiPathsPersistence(args: UseAiPathsPersistenceArgs): UseAiPat
     prefs.lastUiStatePayloadRef.current = payloadKey;
     const nextActivePathId = activePathId ?? null;
     const shouldPersistUserPrefs = nextActivePathId !== prefs.lastUserPrefsActivePathIdRef.current;
-    
+
     const timeout = setTimeout((): void => {
       void prefs.persistUiState(uiState).catch((error: unknown) => {
         logClientError(error, {
@@ -182,7 +182,8 @@ export function useAiPathsPersistence(args: UseAiPathsPersistenceArgs): UseAiPat
         });
       });
       if (shouldPersistUserPrefs) {
-        void prefs.persistUserPreferences(nextActivePathId)
+        void prefs
+          .persistUserPreferences(nextActivePathId)
           .then(() => {
             prefs.lastUserPrefsActivePathIdRef.current = nextActivePathId;
           })
@@ -256,7 +257,9 @@ export function useAiPathsPersistence(args: UseAiPathsPersistenceArgs): UseAiPat
           const activeConfig = pathConfigs[activePathId] ?? createDefaultPathConfig(activePathId);
           await path.persistPathSettings(nextPaths, activePathId, activeConfig);
         } else {
-          await presets.persistSettingsBulk([{ key: 'ai_paths_index_v1', value: JSON.stringify(nextPaths) }]);
+          await presets.persistSettingsBulk([
+            { key: 'ai_paths_index_v1', value: JSON.stringify(nextPaths) },
+          ]);
         }
         toast('Path list saved.', { variant: 'success' });
       } catch (error) {

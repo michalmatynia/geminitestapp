@@ -1,15 +1,6 @@
 import { useState } from 'react';
-import type {
-  AiNode,
-  Edge,
-  PathConfig,
-  PathMeta,
-} from '@/shared/lib/ai-paths';
-import {
-  initialEdges,
-  initialNodes,
-  triggers,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import { initialEdges, initialNodes, triggers } from '@/shared/lib/ai-paths';
 
 export function useCoreSettingsState() {
   const [nodes, setNodes] = useState<AiNode[]>(initialNodes);

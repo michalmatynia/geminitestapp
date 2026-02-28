@@ -1,7 +1,5 @@
 import { useCallback, useRef } from 'react';
-import {
-  AI_PATHS_UI_STATE_KEY,
-} from '@/shared/lib/ai-paths';
+import { AI_PATHS_UI_STATE_KEY } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   USER_PREFERENCES_STALE_MS,
@@ -10,11 +8,14 @@ import {
   type UseAiPathsPersistenceArgs,
 } from '../../useAiPathsPersistence.types';
 
-import { fetchAiPathsSettingsCached, updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
+import {
+  fetchAiPathsSettingsCached,
+  updateAiPathsSettingsBulk,
+} from '@/shared/lib/ai-paths/settings-store-client';
 
 export function usePreferencePersistence(
   _args: UseAiPathsPersistenceArgs,
-  core: { 
+  core: {
     enqueueSettingsWrite: <T>(operation: () => Promise<T>) => Promise<T>;
     stringifyForStorage: (value: unknown, label: string) => string;
   }
@@ -54,7 +55,11 @@ export function usePreferencePersistence(
         await persistUserPreferences(pathId);
       } catch (error) {
         logClientError(error, {
-          context: { source: 'useAiPathsPersistence', action: 'persistActivePathPreference', pathId },
+          context: {
+            source: 'useAiPathsPersistence',
+            action: 'persistActivePathPreference',
+            pathId,
+          },
         });
       }
     },

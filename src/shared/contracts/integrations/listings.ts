@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { dtoBaseSchema } from '../base';
-import { productCategorySchema, productTagSchema, type ProductCategory, type ProductTag } from '../products';
+import {
+  productCategorySchema,
+  productTagSchema,
+  type ProductCategory,
+  type ProductTag,
+} from '../products';
 
 export const productListingExportEventSchema = z.object({
   exportedAt: z.string(),

@@ -1,8 +1,5 @@
 import { type RuntimeState } from '@/shared/contracts/ai-paths';
-import {
-  type NodeType,
-  type DbQueryConfig,
-} from '@/shared/contracts/ai-paths-core';
+import { type NodeType, type DbQueryConfig } from '@/shared/contracts/ai-paths-core';
 
 export const EMPTY_RUNTIME_STATE: RuntimeState = {
   status: 'idle',

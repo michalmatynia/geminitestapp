@@ -85,7 +85,10 @@ const readEnvironmentReferenceAsset = (
 };
 
 function getValueAtPath(root: Record<string, unknown>, path: string): unknown {
-  const keys = path.split('.').map((key) => key.trim()).filter(Boolean);
+  const keys = path
+    .split('.')
+    .map((key) => key.trim())
+    .filter(Boolean);
   let cursor: unknown = root;
   for (const key of keys) {
     if (!cursor || typeof cursor !== 'object' || Array.isArray(cursor)) return undefined;
@@ -94,7 +97,10 @@ function getValueAtPath(root: Record<string, unknown>, path: string): unknown {
   return cursor;
 }
 
-export function resolvePromptPlaceholders(prompt: string, paramsState: Record<string, unknown> | null): string {
+export function resolvePromptPlaceholders(
+  prompt: string,
+  paramsState: Record<string, unknown> | null
+): string {
   if (!paramsState) return prompt;
   return prompt.replace(/{{\s*([^}]+)\s*}}/g, (_match: string, rawToken: string) => {
     const key = String(rawToken || '').trim();
@@ -155,7 +161,11 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
   }
 
   const eligibleShapes = maskShapes.filter(
-    (shape) => shape.visible && shape.closed && (shape.type === 'polygon' || shape.type === 'lasso') && shape.points.length >= 3
+    (shape) =>
+      shape.visible &&
+      shape.closed &&
+      (shape.type === 'polygon' || shape.type === 'lasso') &&
+      shape.points.length >= 3
   );
   const mask: RunStudioPayload['mask'] =
     hasSourceAsset && eligibleShapes.length > 0
@@ -179,12 +189,16 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
       filepath: readSlotImagePath(slot),
     }))
     .filter((asset) => Boolean(asset.filepath));
-  const environmentReferenceAsset = hasSourceAsset ? readEnvironmentReferenceAsset(workingSlot) : null;
+  const environmentReferenceAsset = hasSourceAsset
+    ? readEnvironmentReferenceAsset(workingSlot)
+    : null;
   if (environmentReferenceAsset) {
     const exists = referenceAssets.some(
       (asset) =>
         asset.filepath === environmentReferenceAsset.filepath ||
-        Boolean(asset.id && environmentReferenceAsset.id && asset.id === environmentReferenceAsset.id)
+        Boolean(
+          asset.id && environmentReferenceAsset.id && asset.id === environmentReferenceAsset.id
+        )
     );
     if (!exists) {
       referenceAssets.push({
@@ -217,7 +231,9 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
     const exists = images.some(
       (image) =>
         image.filepath === environmentReferenceAsset.filepath ||
-        Boolean(image.id && environmentReferenceAsset.id && image.id === environmentReferenceAsset.id)
+        Boolean(
+          image.id && environmentReferenceAsset.id && image.id === environmentReferenceAsset.id
+        )
     );
     if (!exists) {
       images.push({

@@ -3,13 +3,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { fetchAssets3D, fetchCategories, fetchTags, reindexAssets3DFromDisk } from '@/features/viewer3d/api';
-import type { 
-  ListQuery, 
-  SingleQuery, 
-  DeleteMutation, 
-  UpdateMutation 
-} from '@/shared/contracts/ui';
+import {
+  fetchAssets3D,
+  fetchCategories,
+  fetchTags,
+  reindexAssets3DFromDisk,
+} from '@/features/viewer3d/api';
+import type { ListQuery, SingleQuery, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -18,12 +18,8 @@ import {
   createDeleteMutationV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
-import {
-  invalidateAsset3d,
-  invalidateAsset3dDetail,
-} from '@/shared/lib/query-invalidation';
+import { invalidateAsset3d, invalidateAsset3dDetail } from '@/shared/lib/query-invalidation';
 import { viewer3dKeys as asset3dKeys } from '@/shared/lib/query-key-exports';
-
 
 export { asset3dKeys };
 
@@ -33,17 +29,14 @@ const ASSET_DETAIL_STALE_TIME_MS = 2 * 60 * 1000;
 
 function normalizeAsset3DListFilters(filters: Asset3DListFilters): Asset3DListFilters {
   const normalizedFilename = typeof filters.filename === 'string' ? filters.filename.trim() : '';
-  const normalizedCategory = typeof filters.categoryId === 'string' && filters.categoryId.trim().length > 0
-    ? filters.categoryId.trim()
-    : '';
+  const normalizedCategory =
+    typeof filters.categoryId === 'string' && filters.categoryId.trim().length > 0
+      ? filters.categoryId.trim()
+      : '';
   const normalizedSearch = typeof filters.search === 'string' ? filters.search.trim() : '';
   const normalizedTags = Array.isArray(filters.tags)
     ? Array.from(
-      new Set(
-        filters.tags
-          .map((tag) => tag.trim())
-          .filter((tag) => tag.length > 0)
-      )
+      new Set(filters.tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0))
     ).sort((left, right) => left.localeCompare(right))
     : [];
 
@@ -55,7 +48,6 @@ function normalizeAsset3DListFilters(filters: Asset3DListFilters): Asset3DListFi
     ...(typeof filters.isPublic === 'boolean' ? { isPublic: filters.isPublic } : {}),
   };
 }
-
 
 export function useAssets3D(filters: Asset3DListFilters): ListQuery<Asset3DRecord> {
   const normalizedFilters = useMemo(
@@ -164,10 +156,14 @@ export function useDeleteAsset3DMutation(): DeleteMutation {
   });
 }
 
-export function useUpdateAsset3DMutation(): UpdateMutation<Asset3DRecord, { id: string; data: Partial<Asset3DRecord> }> {
+export function useUpdateAsset3DMutation(): UpdateMutation<
+  Asset3DRecord,
+  { id: string; data: Partial<Asset3DRecord> }
+  > {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Asset3DRecord> }) => api.patch<Asset3DRecord>(`/api/assets3d/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<Asset3DRecord> }) =>
+      api.patch<Asset3DRecord>(`/api/assets3d/${id}`, data),
     mutationKey: asset3dKeys.all,
     meta: {
       source: 'viewer3d.hooks.useUpdateAsset3DMutation',

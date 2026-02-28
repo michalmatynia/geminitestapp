@@ -8,15 +8,14 @@ import type { Asset3dViewMode, Asset3DRecord } from '@/shared/contracts/viewer3d
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 
-import { 
-  useAssets3D, 
-  useAsset3DCategories, 
+import {
+  useAssets3D,
+  useAsset3DCategories,
   useAsset3DTags,
   useDeleteAsset3DMutation,
   useReindexAssets3DMutation,
-  asset3dKeys
+  asset3dKeys,
 } from '../hooks/useAsset3dQueries';
-
 
 export type ViewMode = Asset3dViewMode;
 
@@ -56,39 +55,58 @@ export function useAdmin3DAssetsState() {
   const categories = categoriesQuery.data ?? [];
   const allTags = tagsQuery.data ?? [];
 
-  const handleUpload = useCallback((_asset: Asset3DRecord) => {
-    setShowUploader(false);
-    void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
-  }, [queryClient]);
+  const handleUpload = useCallback(
+    (_asset: Asset3DRecord) => {
+      setShowUploader(false);
+      void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
+    },
+    [queryClient]
+  );
 
-  const handleEdit = useCallback((_updated: Asset3DRecord) => {
-    void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
-  }, [queryClient]);
+  const handleEdit = useCallback(
+    (_updated: Asset3DRecord) => {
+      void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
+    },
+    [queryClient]
+  );
 
-  const handleDelete = useCallback(async (asset: Asset3DRecord) => {
-    confirm({
-      title: 'Delete 3D Asset?',
-      message: `Are you sure you want to delete "${asset.name || asset.filename}"? This action cannot be undone.`,
-      confirmText: 'Delete',
-      isDangerous: true,
-      onConfirm: async () => {
-        try {
-          await deleteMutation.mutateAsync(asset.id);
-          toast(`Asset "${asset.name || asset.filename}" deleted.`, { variant: 'success' });
-        } catch (err) {
-          logClientError(err, { context: { source: 'useAdmin3DAssetsState', action: 'deleteAsset', assetId: asset.id } });
-          toast(err instanceof Error ? err.message : 'Failed to delete asset', { variant: 'error' });
-        }
-      }
-    });
-  }, [confirm, deleteMutation, toast]);
+  const handleDelete = useCallback(
+    async (asset: Asset3DRecord) => {
+      confirm({
+        title: 'Delete 3D Asset?',
+        message: `Are you sure you want to delete "${asset.name || asset.filename}"? This action cannot be undone.`,
+        confirmText: 'Delete',
+        isDangerous: true,
+        onConfirm: async () => {
+          try {
+            await deleteMutation.mutateAsync(asset.id);
+            toast(`Asset "${asset.name || asset.filename}" deleted.`, { variant: 'success' });
+          } catch (err) {
+            logClientError(err, {
+              context: {
+                source: 'useAdmin3DAssetsState',
+                action: 'deleteAsset',
+                assetId: asset.id,
+              },
+            });
+            toast(err instanceof Error ? err.message : 'Failed to delete asset', {
+              variant: 'error',
+            });
+          }
+        },
+      });
+    },
+    [confirm, deleteMutation, toast]
+  );
 
   const handleReindex = useCallback(async () => {
     try {
       await reindexMutation.mutateAsync();
       toast('Assets reindexed successfully.', { variant: 'success' });
     } catch (err) {
-      logClientError(err, { context: { source: 'useAdmin3DAssetsState', action: 'reindexAssets' } });
+      logClientError(err, {
+        context: { source: 'useAdmin3DAssetsState', action: 'reindexAssets' },
+      });
       toast(err instanceof Error ? err.message : 'Failed to reindex assets', { variant: 'error' });
     }
   }, [reindexMutation, toast]);
@@ -102,14 +120,22 @@ export function useAdmin3DAssetsState() {
   const hasActiveFilters = Boolean(searchQuery || selectedCategory || selectedTags.length > 0);
 
   return {
-    showUploader, setShowUploader,
-    previewAsset, setPreviewAsset,
-    editAsset, setEditAsset,
-    viewMode, setViewMode,
-    searchQuery, setSearchQuery,
-    selectedCategory, setSelectedCategory,
-    selectedTags, setSelectedTags,
-    showFilters, setShowFilters,
+    showUploader,
+    setShowUploader,
+    previewAsset,
+    setPreviewAsset,
+    editAsset,
+    setEditAsset,
+    viewMode,
+    setViewMode,
+    searchQuery,
+    setSearchQuery,
+    selectedCategory,
+    setSelectedCategory,
+    selectedTags,
+    setSelectedTags,
+    showFilters,
+    setShowFilters,
     assets,
     loading,
     error,

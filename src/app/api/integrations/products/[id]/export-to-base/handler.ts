@@ -17,7 +17,7 @@ import {
 } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { 
+import {
   parseJsonBody,
   getProductRepository,
   type ProductWithImagesDto as ProductWithImages,
@@ -41,7 +41,8 @@ import {
   type BaseExportRequestData,
   type BaseFieldMapping,
   type BaseExportProductLike,
-} from './helpers';import {
+} from './helpers';
+import {
   isBaseImageError,
   buildImageDiagnosticsLogger,
   logImageDiagnostics,
@@ -464,21 +465,22 @@ export async function postExportToBaseHandler(
       includeStockWithoutWarehouse = false
     ) => {
       const exportData = (await buildBaseProductData(
-                exportProduct as unknown as ProductWithImages,
-                activeMappings,
-                targetWarehouseId,
-                {          imageBaseUrl,
-                  includeStockWithoutWarehouse,
-                  ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
-                  ...(producerNameById ? { producerNameById } : {}),
-                  ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
-                  ...(tagNameById ? { tagNameById } : {}),
-                  ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
-                  exportImagesAsBase64: exportImagesAsBase64,
-                  imageBase64Mode,
-                  imageTransform,
-                  imagesOnly,
-                }
+        exportProduct as unknown as ProductWithImages,
+        activeMappings,
+        targetWarehouseId,
+        {
+          imageBaseUrl,
+          includeStockWithoutWarehouse,
+          ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+          ...(producerNameById ? { producerNameById } : {}),
+          ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
+          ...(tagNameById ? { tagNameById } : {}),
+          ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
+          exportImagesAsBase64: exportImagesAsBase64,
+          imageBase64Mode,
+          imageTransform,
+          imagesOnly,
+        }
       )) as Record<string, unknown> & {
         text_fields?: Record<string, unknown>;
         prices?: Record<string, unknown>;
@@ -517,7 +519,7 @@ export async function postExportToBaseHandler(
       ? await exportProductImagesToBase(
         token,
         targetInventoryId,
-        exportProduct as unknown as ProductWithImages,
+          exportProduct as unknown as ProductWithImages,
           listingExternalId as string,
           {
             imageBaseUrl,
@@ -530,23 +532,23 @@ export async function postExportToBaseHandler(
       : await exportProductToBase(
         token,
         targetInventoryId,
-        exportProduct as unknown as ProductWithImages,
-        effectiveMappings,
-        warehouseId,
-        {
-          imageBaseUrl,
-          includeStockWithoutWarehouse,
-          ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
-          ...(producerNameById ? { producerNameById } : {}),
-          ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
-          ...(tagNameById ? { tagNameById } : {}),
-          ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
-          exportImagesAsBase64: exportImagesAsBase64,
-          ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
-          imageBase64Mode,
-          imageTransform,
-          existingProductId: listingExternalId ?? undefined,
-        }
+          exportProduct as unknown as ProductWithImages,
+          effectiveMappings,
+          warehouseId,
+          {
+            imageBaseUrl,
+            includeStockWithoutWarehouse,
+            ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+            ...(producerNameById ? { producerNameById } : {}),
+            ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
+            ...(tagNameById ? { tagNameById } : {}),
+            ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
+            exportImagesAsBase64: exportImagesAsBase64,
+            ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
+            imageBase64Mode,
+            imageTransform,
+            existingProductId: listingExternalId ?? undefined,
+          }
       );
 
     const isWarehouseMismatch = (message: string | undefined) =>
@@ -575,7 +577,11 @@ export async function postExportToBaseHandler(
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
-        (mapping: BaseFieldMapping) => !String(mapping['sourceKey'] ?? '').trim().toLowerCase().startsWith('stock')
+        (mapping: BaseFieldMapping) =>
+          !String(mapping['sourceKey'] ?? '')
+            .trim()
+            .toLowerCase()
+            .startsWith('stock')
       );
       includeStockWithoutWarehouse = false;
       ({ exportFields } = await buildExportSnapshot(
@@ -629,7 +635,11 @@ export async function postExportToBaseHandler(
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
-        (mapping: BaseFieldMapping) => !String(mapping['sourceKey'] ?? '').trim().toLowerCase().startsWith('stock')
+        (mapping: BaseFieldMapping) =>
+          !String(mapping['sourceKey'] ?? '')
+            .trim()
+            .toLowerCase()
+            .startsWith('stock')
       );
       includeStockWithoutWarehouse = false;
       ({ exportFields } = await buildExportSnapshot(
@@ -709,7 +719,7 @@ export async function postExportToBaseHandler(
             ? await exportProductImagesToBase(
               token,
               targetInventoryId,
-              exportProduct as unknown as ProductWithImages,
+                exportProduct as unknown as ProductWithImages,
                 listingExternalId as string,
                 {
                   imageBaseUrl,
@@ -722,23 +732,23 @@ export async function postExportToBaseHandler(
             : await exportProductToBase(
               token,
               targetInventoryId,
-              exportProduct as unknown as ProductWithImages,
-              effectiveMappings,
-              warehouseId,
-              {
-                imageBaseUrl,
-                includeStockWithoutWarehouse,
-                ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
-                ...(producerNameById ? { producerNameById } : {}),
-                ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
-                ...(tagNameById ? { tagNameById } : {}),
-                ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
-                exportImagesAsBase64: exportImagesAsBase64,
-                imageDiagnostics,
-                imageBase64Mode,
-                imageTransform,
-                existingProductId: listingExternalId ?? undefined,
-              }
+                exportProduct as unknown as ProductWithImages,
+                effectiveMappings,
+                warehouseId,
+                {
+                  imageBaseUrl,
+                  includeStockWithoutWarehouse,
+                  ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+                  ...(producerNameById ? { producerNameById } : {}),
+                  ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
+                  ...(tagNameById ? { tagNameById } : {}),
+                  ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
+                  exportImagesAsBase64: exportImagesAsBase64,
+                  imageDiagnostics,
+                  imageBase64Mode,
+                  imageTransform,
+                  existingProductId: listingExternalId ?? undefined,
+                }
             );
         } else {
           let existingExternalProductId: string | null = null;

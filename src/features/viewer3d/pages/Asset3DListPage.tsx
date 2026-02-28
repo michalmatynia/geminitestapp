@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  Box,
-  Grid,
-  List
-} from 'lucide-react';
+import { Box, Grid, List } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
@@ -22,7 +18,6 @@ import {
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
 import { useAsset3DListState } from '../hooks/useAsset3DListState';
-
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -62,82 +57,114 @@ export function Asset3DListPage(): React.JSX.Element {
     refetch,
   } = useAsset3DListState();
 
-  const columns = useMemo<ColumnDef<Asset3DRecord>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Name',
-      cell: ({ row }) => (
-        <div className='flex items-center gap-3'>
-          <div className='flex h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/40'>
-            <Box className='h-4 w-4 text-muted-foreground' />
+  const columns = useMemo<ColumnDef<Asset3DRecord>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Name',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-3'>
+            <div className='flex h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/40'>
+              <Box className='h-4 w-4 text-muted-foreground' />
+            </div>
+            <span className='text-sm font-medium text-foreground truncate'>
+              {row.original.name || row.original.filename}
+            </span>
           </div>
-          <span className='text-sm font-medium text-foreground truncate'>
-            {row.original.name || row.original.filename}
+        ),
+      },
+      {
+        accessorKey: 'categoryId',
+        header: 'Category',
+        cell: ({ row }) =>
+          row.original.categoryId ? (
+            <StatusBadge
+              status={row.original.categoryId}
+              variant='info'
+              size='sm'
+              className='font-medium'
+            />
+          ) : (
+            <span className='text-muted-foreground'>-</span>
+          ),
+      },
+      {
+        accessorKey: 'tags',
+        header: 'Tags',
+        cell: ({ row }) => (
+          <div className='flex flex-wrap gap-1'>
+            {(row.original.tags || []).slice(0, 2).map((tag) => (
+              <StatusBadge
+                key={tag}
+                status={tag}
+                variant='neutral'
+                size='sm'
+                className='font-medium'
+              />
+            ))}
+            {(row.original.tags || []).length > 2 && (
+              <StatusBadge
+                status={'+' + ((row.original.tags || []).length - 2)}
+                variant='neutral'
+                size='sm'
+                className='font-bold'
+              />
+            )}
+            {(row.original.tags || []).length === 0 && (
+              <span className='text-muted-foreground'>-</span>
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'size',
+        header: 'Size',
+        cell: ({ row }) => (
+          <span className='text-xs text-muted-foreground'>
+            {formatFileSize(row.original.size || 0)}
           </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'categoryId',
-      header: 'Category',
-      cell: ({ row }) => row.original.categoryId ? (
-        <StatusBadge status={row.original.categoryId} variant='info' size='sm' className='font-medium' />
-      ) : <span className='text-muted-foreground'>-</span>,
-    },
-    {
-      accessorKey: 'tags',
-      header: 'Tags',
-      cell: ({ row }) => (
-        <div className='flex flex-wrap gap-1'>
-          {(row.original.tags || []).slice(0, 2).map((tag) => (
-            <StatusBadge key={tag} status={tag} variant='neutral' size='sm' className='font-medium' />
-          ))}
-          {(row.original.tags || []).length > 2 && (
-            <StatusBadge status={'+' + ((row.original.tags || []).length - 2)} variant='neutral' size='sm' className='font-bold' />
-          )}
-          {(row.original.tags || []).length === 0 && <span className='text-muted-foreground'>-</span>}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'size',
-      header: 'Size',
-      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatFileSize(row.original.size || 0)}</span>,
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Date',
-      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{row.original.createdAt ? formatDate(row.original.createdAt) : ''}</span>,
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Action</div>,
-      cell: ({ row }) => (
-        <div className='text-right'>
-          <Button
-            variant='outline'
-            size='xs'
-            onClick={() => setPreviewAsset(row.original)}
-          >
-            View
-          </Button>
-        </div>
-      ),
-    },
-  ], [setPreviewAsset]);
+        ),
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Date',
+        cell: ({ row }) => (
+          <span className='text-xs text-muted-foreground'>
+            {row.original.createdAt ? formatDate(row.original.createdAt) : ''}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Action</div>,
+        cell: ({ row }) => (
+          <div className='text-right'>
+            <Button variant='outline' size='xs' onClick={() => setPreviewAsset(row.original)}>
+              View
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [setPreviewAsset]
+  );
 
-  const stats = !loading && assets.length > 0 ? (
-    <div className='text-xs text-muted-foreground'>
-      {assets.length} asset{assets.length !== 1 ? 's' : ''}
-      {searchQuery || selectedCategory || selectedTags.length > 0 ? ' (filtered)' : ''}
-    </div>
-  ) : null;
+  const stats =
+    !loading && assets.length > 0 ? (
+      <div className='text-xs text-muted-foreground'>
+        {assets.length} asset{assets.length !== 1 ? 's' : ''}
+        {searchQuery || selectedCategory || selectedTags.length > 0 ? ' (filtered)' : ''}
+      </div>
+    ) : null;
 
-  const searchConfig = useMemo(() => ({
-    value: searchQuery,
-    onChange: (val: string) => setSearchQuery(val),
-    placeholder: 'Search assets...',
-  }), [searchQuery, setSearchQuery]);
+  const searchConfig = useMemo(
+    () => ({
+      value: searchQuery,
+      onChange: (val: string) => setSearchQuery(val),
+      placeholder: 'Search assets...',
+    }),
+    [searchQuery, setSearchQuery]
+  );
 
   return (
     <StandardDataTablePanel
@@ -163,38 +190,44 @@ export function Asset3DListPage(): React.JSX.Element {
             }}
             onFilterChange={(key, val) => {
               if (key === 'category') {
-                setSelectedCategory(val === '__all__' ? null : val as string);
+                setSelectedCategory(val === '__all__' ? null : (val as string));
               }
             }}
             filters={[
-              ...(categories.length > 0 ? [{
-                key: 'category',
-                label: 'Category',
-                type: 'select' as const,
-                options: [
-                  { value: '__all__', label: 'All categories' },
-                  ...((categories).map((cat: string) => ({ value: cat, label: cat }))),
-                ],
-                width: '180px',
-              }] : []),
+              ...(categories.length > 0
+                ? [
+                  {
+                    key: 'category',
+                    label: 'Category',
+                    type: 'select' as const,
+                    options: [
+                      { value: '__all__', label: 'All categories' },
+                      ...categories.map((cat: string) => ({ value: cat, label: cat })),
+                    ],
+                    width: '180px',
+                  },
+                ]
+                : []),
             ]}
             headerAction={
-              <div className='flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>                <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size='icon'
-                className='h-8 w-8 rounded-none'
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid className='h-4 w-4' />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size='icon'
-                className='h-8 w-8 rounded-none'
-                onClick={() => setViewMode('list')}
-              >
-                <List className='h-4 w-4' />
-              </Button>
+              <div className='flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
+                {' '}
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size='icon'
+                  className='h-8 w-8 rounded-none'
+                  onClick={() => setViewMode('grid')}
+                >
+                  <Grid className='h-4 w-4' />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size='icon'
+                  className='h-8 w-8 rounded-none'
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className='h-4 w-4' />
+                </Button>
               </div>
             }
           />
@@ -224,9 +257,7 @@ export function Asset3DListPage(): React.JSX.Element {
       data={assets}
       isLoading={loading}
     >
-      {loading && (
-        <LoadingState className='py-16' />
-      )}
+      {loading && <LoadingState className='py-16' />}
 
       {!loading && assets.length === 0 && (
         <EmptyState
@@ -242,7 +273,9 @@ export function Asset3DListPage(): React.JSX.Element {
               <Button
                 variant='outline'
                 disabled={reindexing}
-                onClick={() => { void handleReindex(); }}
+                onClick={() => {
+                  void handleReindex();
+                }}
               >
                 {reindexing ? 'Reindexing...' : 'Reindex local uploads'}
               </Button>
@@ -266,19 +299,31 @@ export function Asset3DListPage(): React.JSX.Element {
                     <div className='flex size-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg'>
                       <Box className='size-5' />
                     </div>
-                    <span className='text-[10px] font-bold uppercase tracking-wider text-blue-400'>Preview</span>
+                    <span className='text-[10px] font-bold uppercase tracking-wider text-blue-400'>
+                      Preview
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div className='p-3'>
-                <p className='text-sm font-medium text-foreground truncate' title={asset.name || asset.filename}>
+                <p
+                  className='text-sm font-medium text-foreground truncate'
+                  title={asset.name || asset.filename}
+                >
                   {asset.name || asset.filename}
                 </p>
                 <div className='mt-2 flex items-center justify-between'>
                   {asset.categoryId ? (
-                    <StatusBadge status={asset.categoryId} variant='info' size='sm' className='font-medium' />
-                  ) : <div />}
+                    <StatusBadge
+                      status={asset.categoryId}
+                      variant='info'
+                      size='sm'
+                      className='font-medium'
+                    />
+                  ) : (
+                    <div />
+                  )}
                   <span className='text-[10px] text-muted-foreground font-medium'>
                     {formatFileSize(asset.size || 0)}
                   </span>

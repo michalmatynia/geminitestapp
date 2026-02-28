@@ -959,5 +959,4 @@ export const mongoNoteRepository: NoteRepository = {
     } as Filter<NotebookDocument>);
     return result.deletedCount > 0;
   },
-
 };

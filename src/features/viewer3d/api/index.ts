@@ -1,7 +1,10 @@
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { Asset3DRecord, Asset3DUpdateInput, Asset3DListFilters } from '@/shared/contracts/viewer3d';
+import type {
+  Asset3DRecord,
+  Asset3DUpdateInput,
+  Asset3DListFilters,
+} from '@/shared/contracts/viewer3d';
 import { api } from '@/shared/lib/api-client';
-
 
 const API_BASE = '/api/assets3d';
 
@@ -24,7 +27,13 @@ export async function fetchAsset3DById(id: string): Promise<Asset3DRecord> {
 
 export async function uploadAsset3DFile(
   file: File,
-  data?: { name?: string; description?: string; category?: string; tags?: string[]; isPublic?: boolean },
+  data?: {
+    name?: string;
+    description?: string;
+    category?: string;
+    tags?: string[];
+    isPublic?: boolean;
+  },
   onProgress?: (loaded: number, total?: number) => void
 ): Promise<Asset3DRecord> {
   const formData = new FormData();
@@ -51,7 +60,9 @@ export async function uploadAsset3DFile(
 
     return result.data;
   } catch (error) {
-    logClientError(error as Error, { context: { source: 'uploadAsset3DFile', filename: file.name } });
+    logClientError(error as Error, {
+      context: { source: 'uploadAsset3DFile', filename: file.name },
+    });
     throw error;
   }
 }

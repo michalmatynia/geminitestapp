@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  Box,
-  Upload,
-  Grid,
-  List,
-  Filter,
-  X
-} from 'lucide-react';
+import { Box, Upload, Grid, List, Filter, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
@@ -52,14 +45,22 @@ const formatDate = (date: Date | string): string => {
 
 function Admin3DAssetsContent(): React.JSX.Element {
   const {
-    showUploader, setShowUploader,
-    previewAsset, setPreviewAsset,
-    editAsset, setEditAsset,
-    viewMode, setViewMode,
-    searchQuery, setSearchQuery,
-    selectedCategory, setSelectedCategory,
-    selectedTags, setSelectedTags,
-    showFilters, setShowFilters,
+    showUploader,
+    setShowUploader,
+    previewAsset,
+    setPreviewAsset,
+    editAsset,
+    setEditAsset,
+    viewMode,
+    setViewMode,
+    searchQuery,
+    setSearchQuery,
+    selectedCategory,
+    setSelectedCategory,
+    selectedTags,
+    setSelectedTags,
+    showFilters,
+    setShowFilters,
     assets,
     loading,
     error,
@@ -76,101 +77,136 @@ function Admin3DAssetsContent(): React.JSX.Element {
     isFetching,
   } = useAdmin3DAssetsContext();
 
-  const columns = useMemo<ColumnDef<Asset3DRecord>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Name',
-      cell: ({ row }) => (
-        <div className='flex items-center gap-3'>
-          <div
-            className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors'
-            onClick={() => setPreviewAsset(row.original)}
-          >
-            <Box className='h-4 w-4 text-muted-foreground' />
+  const columns = useMemo<ColumnDef<Asset3DRecord>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Name',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-3'>
+            <div
+              className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors'
+              onClick={() => setPreviewAsset(row.original)}
+            >
+              <Box className='h-4 w-4 text-muted-foreground' />
+            </div>
+            <span className='text-sm font-medium text-foreground truncate'>
+              {row.original.name || row.original.filename}
+            </span>
           </div>
-          <span className='text-sm font-medium text-foreground truncate'>
-            {row.original.name || row.original.filename}
+        ),
+      },
+      {
+        accessorKey: 'categoryId',
+        header: 'Category',
+        cell: ({ row }) =>
+          row.original.categoryId ? (
+            <StatusBadge
+              status={row.original.categoryId}
+              variant='info'
+              size='sm'
+              className='font-medium'
+            />
+          ) : (
+            <span className='text-muted-foreground'>-</span>
+          ),
+      },
+      {
+        accessorKey: 'tags',
+        header: 'Tags',
+        cell: ({ row }) => (
+          <div className='flex flex-wrap gap-1'>
+            {(row.original.tags || []).slice(0, 2).map((tag) => (
+              <StatusBadge
+                key={tag}
+                status={tag}
+                variant='neutral'
+                size='sm'
+                className='font-medium'
+              />
+            ))}
+            {(row.original.tags || []).length > 2 && (
+              <StatusBadge
+                status={'+' + ((row.original.tags || []).length - 2)}
+                variant='neutral'
+                size='sm'
+                className='font-bold'
+              />
+            )}
+            {(row.original.tags || []).length === 0 && (
+              <span className='text-muted-foreground'>-</span>
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'size',
+        header: 'Size',
+        cell: ({ row }) => (
+          <span className='text-xs text-muted-foreground'>
+            {formatFileSize(row.original.size || 0)}
           </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'categoryId',
-      header: 'Category',
-      cell: ({ row }) => row.original.categoryId ? (
-        <StatusBadge status={row.original.categoryId} variant='info' size='sm' className='font-medium' />
-      ) : <span className='text-muted-foreground'>-</span>,
-    },
-    {
-      accessorKey: 'tags',
-      header: 'Tags',
-      cell: ({ row }) => (
-        <div className='flex flex-wrap gap-1'>
-          {(row.original.tags || []).slice(0, 2).map((tag) => (
-            <StatusBadge key={tag} status={tag} variant='neutral' size='sm' className='font-medium' />
-          ))}
-          {(row.original.tags || []).length > 2 && (
-            <StatusBadge status={'+' + ((row.original.tags || []).length - 2)} variant='neutral' size='sm' className='font-bold' />
-          )}
-          {(row.original.tags || []).length === 0 && <span className='text-muted-foreground'>-</span>}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'size',
-      header: 'Size',
-      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatFileSize(row.original.size || 0)}</span>,
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Date',
-      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{row.original.createdAt ? formatDate(row.original.createdAt) : ''}</span>,
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <ActionMenu ariaLabel={`Actions for asset ${row.original.name || row.original.filename}`}>
-            <DropdownMenuItem
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                setPreviewAsset(row.original);
-              }}
+        ),
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Date',
+        cell: ({ row }) => (
+          <span className='text-xs text-muted-foreground'>
+            {row.original.createdAt ? formatDate(row.original.createdAt) : ''}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end'>
+            <ActionMenu
+              ariaLabel={`Actions for asset ${row.original.name || row.original.filename}`}
             >
-              Preview
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                setEditAsset(row.original);
-              }}
-            >
-              Edit Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className='text-destructive focus:text-destructive'
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                void handleDelete(row.original);
-              }}
-              disabled={isDeleting(row.original.id)}
-            >
-              {isDeleting(row.original.id) ? 'Deleting...' : 'Delete'}
-            </DropdownMenuItem>
-          </ActionMenu>
-        </div>
-      ),
-    },
-  ], [setPreviewAsset, setEditAsset, handleDelete, isDeleting]);
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  setPreviewAsset(row.original);
+                }}
+              >
+                Preview
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  setEditAsset(row.original);
+                }}
+              >
+                Edit Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className='text-destructive focus:text-destructive'
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  void handleDelete(row.original);
+                }}
+                disabled={isDeleting(row.original.id)}
+              >
+                {isDeleting(row.original.id) ? 'Deleting...' : 'Delete'}
+              </DropdownMenuItem>
+            </ActionMenu>
+          </div>
+        ),
+      },
+    ],
+    [setPreviewAsset, setEditAsset, handleDelete, isDeleting]
+  );
 
-  const stats = !loading && assets.length > 0 ? (
-    <div className='text-xs text-muted-foreground font-medium'>
-      Showing {assets.length} asset{assets.length !== 1 ? 's' : ''}
-      {hasActiveFilters && ' (filtered)'}
-    </div>
-  ) : null;
+  const stats =
+    !loading && assets.length > 0 ? (
+      <div className='text-xs text-muted-foreground font-medium'>
+        Showing {assets.length} asset{assets.length !== 1 ? 's' : ''}
+        {hasActiveFilters && ' (filtered)'}
+      </div>
+    ) : null;
 
   return (
     <StandardDataTablePanel
@@ -188,7 +224,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
               label: 'Upload Asset',
               icon: <Upload className='size-3.5' />,
               onClick: () => setShowUploader(true),
-            }
+            },
           ]}
         />
       }
@@ -211,7 +247,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
             className='gap-2 h-8 text-xs'
           >
             <Filter className='h-3.5 w-3.5' />
-              Filters
+            Filters
             {hasActiveFilters && (
               <Badge
                 variant='active'
@@ -225,7 +261,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
           {hasActiveFilters && (
             <Button variant='ghost' size='sm' onClick={clearFilters} className='gap-1 h-8 text-xs'>
               <X className='h-3.5 w-3.5' />
-                Clear
+              Clear
             </Button>
           )}
 
@@ -255,13 +291,10 @@ function Admin3DAssetsContent(): React.JSX.Element {
       isLoading={loading}
     >
       {showFilters && (
-        <FormSection 
-          variant='subtle' 
-          className='p-4 mb-4 border border-border/40'
-        >
+        <FormSection variant='subtle' className='p-4 mb-4 border border-border/40'>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <FormField label='Category'>
-              <SelectSimple 
+              <SelectSimple
                 size='sm'
                 value={selectedCategory ?? '__all__'}
                 onValueChange={(v) => setSelectedCategory(v === '__all__' ? null : v)}
@@ -302,11 +335,16 @@ function Admin3DAssetsContent(): React.JSX.Element {
       {showUploader && (
         <FormSection
           title='Upload 3D Asset'
-          actions={(
-            <Button variant='ghost' size='sm' onClick={() => setShowUploader(false)} className='h-7 text-xs'>
+          actions={
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => setShowUploader(false)}
+              className='h-7 text-xs'
+            >
               Cancel
             </Button>
-          )}
+          }
           className='p-4 mb-6'
           variant='glass'
         >
@@ -319,7 +357,11 @@ function Admin3DAssetsContent(): React.JSX.Element {
       {!loading && assets.length === 0 && (
         <EmptyState
           title={hasActiveFilters ? 'No matching assets' : 'Library is empty'}
-          description={hasActiveFilters ? 'Try adjusting your filters.' : 'Upload your first .glb or .gltf file to get started.'}
+          description={
+            hasActiveFilters
+              ? 'Try adjusting your filters.'
+              : 'Upload your first .glb or .gltf file to get started.'
+          }
           icon={<Box className='h-12 w-12 opacity-60' />}
           action={
             !hasActiveFilters ? (
@@ -331,7 +373,9 @@ function Admin3DAssetsContent(): React.JSX.Element {
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => { void handleReindex(); }}
+                  onClick={() => {
+                    void handleReindex();
+                  }}
                   disabled={isReindexing}
                   loading={isReindexing}
                 >
@@ -346,10 +390,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
       {!loading && assets.length > 0 && viewMode === 'grid' && (
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
           {assets.map((asset) => (
-            <Asset3DCard
-              key={asset.id}
-              asset={asset}
-            />
+            <Asset3DCard key={asset.id} asset={asset} />
           ))}
         </div>
       )}
@@ -365,11 +406,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
       )}
 
       {editAsset && (
-        <Asset3DEditModal
-          isOpen={true}
-          onClose={() => setEditAsset(null)}
-          item={editAsset}
-        />
+        <Asset3DEditModal isOpen={true} onClose={() => setEditAsset(null)} item={editAsset} />
       )}
 
       <ConfirmationModal />

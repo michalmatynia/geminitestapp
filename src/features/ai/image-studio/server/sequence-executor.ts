@@ -1,8 +1,6 @@
 import 'server-only';
 
-import {
-  getImageStudioSlotById,
-} from '@/features/ai/image-studio/server/slot-repository';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
 import {
   normalizeImageStudioSequenceSteps,
   parseImageStudioSettings,
@@ -33,7 +31,7 @@ export type ImageStudioSequenceStepExecutionResult = {
 };
 
 export async function executeImageStudioSequenceStep(
-  context: ImageStudioSequenceStepExecutionContext,
+  context: ImageStudioSequenceStepExecutionContext
 ): Promise<ImageStudioSequenceStepExecutionResult> {
   const currentSlot = await getImageStudioSlotById(context.inputSlotId);
   if (currentSlot?.projectId !== context.run.projectId || !currentSlot) {
@@ -104,12 +102,10 @@ export async function executeImageStudioSequenceStep(
 }
 
 export function resolveSequenceStepsForExecution(
-  run: ImageStudioSequenceRunRecord,
+  run: ImageStudioSequenceRunRecord
 ): ImageStudioSequenceStep[] {
   const parsedSettings = parseImageStudioSettings(
-    run.request.studioSettings
-      ? JSON.stringify(run.request.studioSettings)
-      : null,
+    run.request.studioSettings ? JSON.stringify(run.request.studioSettings) : null
   );
 
   if (Array.isArray(run.request.steps) && run.request.steps.length > 0) {

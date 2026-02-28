@@ -4,7 +4,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function POST_validator_template_handler(
-  _req: NextRequest, 
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {

@@ -1,16 +1,12 @@
 import { createMasterFolderTreeAdapter } from '@/features/foldertree';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import {
-  canMoveTreePath,
-  normalizeTreePath,
-} from '@/shared/utils/tree-operations';
+import { canMoveTreePath, normalizeTreePath } from '@/shared/utils/tree-operations';
 
 import {
   decodeImageStudioMasterNodeId,
   resolveFolderTargetPathForMasterNode,
 } from './master-folder-tree';
-
 
 export type ImageStudioMasterTreeAdapterOptions = {
   slotById: Map<string, ImageStudioSlotRecord>;
@@ -30,7 +26,12 @@ export const createImageStudioMasterTreeAdapter = ({
   createMasterFolderTreeAdapter({
     decodeNodeId: decodeImageStudioMasterNodeId,
     handlers: {
-      onMove: async ({ operation, context, node, targetParent }): Promise<MasterTreeNode[] | void> => {
+      onMove: async ({
+        operation,
+        context,
+        node,
+        targetParent,
+      }): Promise<MasterTreeNode[] | void> => {
         const targetFolder =
           targetParent?.entity === 'folder'
             ? targetParent.id
@@ -85,10 +86,10 @@ export const createImageStudioMasterTreeAdapter = ({
           return;
         }
 
-        const parentPath = node.id.includes('/')
-          ? node.id.slice(0, node.id.lastIndexOf('/'))
-          : '';
-        const nextPath = normalizeTreePath(parentPath ? `${parentPath}/${normalizedName}` : normalizedName);
+        const parentPath = node.id.includes('/') ? node.id.slice(0, node.id.lastIndexOf('/')) : '';
+        const nextPath = normalizeTreePath(
+          parentPath ? `${parentPath}/${normalizedName}` : normalizedName
+        );
         if (!canMoveTreePath(node.id, nextPath)) return;
         await renameFolder(node.id, nextPath);
       },

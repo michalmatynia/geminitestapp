@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import RichTextEditorImpl from '@/features/document-editor/components/RichTextEditorImpl';
 
 type UseEditorConfig = {
-  onUpdate?: ((payload: { editor: { getHTML: () => string; isFocused: boolean } }) => void) | undefined;
+  onUpdate?:
+    | ((payload: { editor: { getHTML: () => string; isFocused: boolean } }) => void)
+    | undefined;
 };
 
 let capturedUseEditorConfig: UseEditorConfig | null = null;
@@ -77,12 +79,7 @@ describe('RichTextEditorImpl mount update guard', () => {
 
   it('ignores non-focused initialization updates', () => {
     const onChange = vi.fn();
-    render(
-      <RichTextEditorImpl
-        value='<p>Initial</p>'
-        onChange={onChange}
-      />
-    );
+    render(<RichTextEditorImpl value='<p>Initial</p>' onChange={onChange} />);
 
     expect(capturedUseEditorConfig?.onUpdate).toBeDefined();
 
@@ -105,12 +102,7 @@ describe('RichTextEditorImpl mount update guard', () => {
 
   it('accepts updates once a focused edit has occurred', () => {
     const onChange = vi.fn();
-    render(
-      <RichTextEditorImpl
-        value='<p>Initial</p>'
-        onChange={onChange}
-      />
-    );
+    render(<RichTextEditorImpl value='<p>Initial</p>' onChange={onChange} />);
 
     expect(capturedUseEditorConfig?.onUpdate).toBeDefined();
 

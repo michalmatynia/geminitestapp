@@ -20,7 +20,10 @@ import {
 
 import type { Collection } from 'mongodb';
 
-type CascadeSlotDoc = Pick<ImageStudioSlotDocument, '_id' | 'metadata' | 'imageFileId' | 'screenshotFileId'>;
+type CascadeSlotDoc = Pick<
+  ImageStudioSlotDocument,
+  '_id' | 'metadata' | 'imageFileId' | 'screenshotFileId'
+>;
 
 export type DeleteImageStudioSlotCascadeTimingsMs = {
   resolveRoot: number;
@@ -106,13 +109,19 @@ const ensureIndexesOnce = (() => {
     try {
       const db = await getMongoDb();
       await Promise.all([
-        db.collection<ImageStudioSlotDocument>(COLLECTION).createIndex({ projectId: 1, createdAt: -1 }),
-        db.collection<ImageStudioSlotDocument>(COLLECTION).createIndex({ projectId: 1, folderPath: 1 }),
+        db
+          .collection<ImageStudioSlotDocument>(COLLECTION)
+          .createIndex({ projectId: 1, createdAt: -1 }),
+        db
+          .collection<ImageStudioSlotDocument>(COLLECTION)
+          .createIndex({ projectId: 1, folderPath: 1 }),
         // Covers combined folderPath filter + createdAt sort (e.g. future paginated tree queries).
-        db.collection<ImageStudioSlotDocument>(COLLECTION).createIndex(
-          { projectId: 1, folderPath: 1, createdAt: -1 },
-          { name: 'image_studio_slots_projectId_folderPath_createdAt' },
-        ),
+        db
+          .collection<ImageStudioSlotDocument>(COLLECTION)
+          .createIndex(
+            { projectId: 1, folderPath: 1, createdAt: -1 },
+            { name: 'image_studio_slots_projectId_folderPath_createdAt' }
+          ),
       ]);
     } catch {
       // best-effort indexing
@@ -136,14 +145,16 @@ const toRecord = (
   asset3dId: doc.asset3dId ?? null,
   screenshotFileId: doc.screenshotFileId ?? null,
   metadata: doc.metadata ?? null,
-  imageFile: doc.imageFileId ? imageFileMap.get(doc.imageFileId) ?? null : null,
-  screenshotFile: doc.screenshotFileId ? screenshotMap.get(doc.screenshotFileId) ?? null : null,
+  imageFile: doc.imageFileId ? (imageFileMap.get(doc.imageFileId) ?? null) : null,
+  screenshotFile: doc.screenshotFileId ? (screenshotMap.get(doc.screenshotFileId) ?? null) : null,
   asset3d: null,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
 
-const resolveImageFiles = async (docs: ImageStudioSlotDocument[]): Promise<{
+const resolveImageFiles = async (
+  docs: ImageStudioSlotDocument[]
+): Promise<{
   imageFileMap: Map<string, ImageFileRecord>;
   screenshotMap: Map<string, ImageFileRecord>;
 }> => {
@@ -157,8 +168,10 @@ const resolveImageFiles = async (docs: ImageStudioSlotDocument[]): Promise<{
     return { imageFileMap: new Map(), screenshotMap: new Map() };
   }
   const repo = await getImageFileRepository();
-  const imageFiles = imageFileIds.size > 0 ? await repo.findImageFilesByIds(Array.from(imageFileIds)) : [];
-  const screenshots = screenshotIds.size > 0 ? await repo.findImageFilesByIds(Array.from(screenshotIds)) : [];
+  const imageFiles =
+    imageFileIds.size > 0 ? await repo.findImageFilesByIds(Array.from(imageFileIds)) : [];
+  const screenshots =
+    screenshotIds.size > 0 ? await repo.findImageFilesByIds(Array.from(screenshotIds)) : [];
   return {
     imageFileMap: new Map(imageFiles.map((file: ImageFileRecord) => [file.id, file])),
     screenshotMap: new Map(screenshots.map((file: ImageFileRecord) => [file.id, file])),
@@ -207,7 +220,9 @@ const normalizePublicUploadPath = (value: string | null | undefined): string | n
   return normalized.startsWith('/uploads/') ? normalized : null;
 };
 
-const deletePublicUploadFileBestEffort = async (filepath: string | null | undefined): Promise<void> => {
+const deletePublicUploadFileBestEffort = async (
+  filepath: string | null | undefined
+): Promise<void> => {
   const normalized = normalizePublicUploadPath(filepath);
   if (!normalized) return;
   try {
@@ -233,10 +248,7 @@ const removeImageFileIfOrphaned = async (params: {
 
   const remainingReferences = await params.collection.countDocuments({
     _id: { $ne: params.excludedSlotId },
-    $or: [
-      { imageFileId: normalizedFileId },
-      { screenshotFileId: normalizedFileId },
-    ],
+    $or: [{ imageFileId: normalizedFileId }, { screenshotFileId: normalizedFileId }],
   });
   if (remainingReferences > 0) return;
 
@@ -415,7 +427,7 @@ export async function listImageStudioSlots(projectId: string): Promise<ImageStud
   if (docs.length > SLOT_LIST_HARD_LIMIT) {
     console.warn(
       `[image-studio] listImageStudioSlots: project "${projectId}" has more than ${SLOT_LIST_HARD_LIMIT} slots. ` +
-      `Results are truncated to the ${SLOT_LIST_HARD_LIMIT} most recent slots.`
+        `Results are truncated to the ${SLOT_LIST_HARD_LIMIT} most recent slots.`
     );
     docs.splice(SLOT_LIST_HARD_LIMIT); // truncate in-place before enrichment
   }
@@ -434,12 +446,16 @@ export async function listImageStudioSlotProjectIds(): Promise<string[]> {
   const db = await getMongoDb();
   const values = await db.collection<ImageStudioSlotDocument>(COLLECTION).distinct('projectId');
   return values
-    .filter((value: unknown): value is string => typeof value === 'string' && value.trim().length > 0)
+    .filter(
+      (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0
+    )
     .map((value: string) => value.trim())
     .sort((a: string, b: string) => a.localeCompare(b));
 }
 
-export async function getImageStudioSlotById(slotId: string): Promise<ImageStudioSlotRecord | null> {
+export async function getImageStudioSlotById(
+  slotId: string
+): Promise<ImageStudioSlotRecord | null> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const doc = await db.collection<ImageStudioSlotDocument>(COLLECTION).findOne({ _id: slotId });
@@ -476,7 +492,10 @@ export async function createImageStudioSlots(
   return docs.map((doc: ImageStudioSlotDocument) => toRecord(doc, imageFileMap, screenshotMap));
 }
 
-export async function updateImageStudioSlot(slotId: string, update: SlotUpdateInput): Promise<ImageStudioSlotRecord | null> {
+export async function updateImageStudioSlot(
+  slotId: string,
+  update: SlotUpdateInput
+): Promise<ImageStudioSlotRecord | null> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const now = new Date().toISOString();
@@ -529,7 +548,7 @@ export async function deleteImageStudioSlot(
           fileId,
           excludedSlotId: slotId,
         });
-      }),
+      })
     );
 
     if (!normalizedImageFileId) {
@@ -584,10 +603,7 @@ const sweepOrphanedChildSlots = async (params: {
       {
         projectId: params.projectId,
         _id: { $nin: Array.from(params.alreadyDeletedSlotIds) },
-        $or: [
-          { imageFileId: { $in: fileIdArray } },
-          { screenshotFileId: { $in: fileIdArray } },
-        ],
+        $or: [{ imageFileId: { $in: fileIdArray } }, { screenshotFileId: { $in: fileIdArray } }],
       },
       { projection: { _id: 1 } }
     )
@@ -640,9 +656,7 @@ export async function deleteImageStudioSlotCascade(
   }
 
   const resolveRootStartedAtMs = Date.now();
-  const rootDocs = await collection
-    .find({ _id: { $in: slotIdCandidates } })
-    .toArray();
+  const rootDocs = await collection.find({ _id: { $in: slotIdCandidates } }).toArray();
   timingsMs.resolveRoot = Date.now() - resolveRootStartedAtMs;
   if (rootDocs.length === 0) {
     return finalizeResult({ deleted: false, deletedSlotIds: [] });
@@ -700,9 +714,11 @@ export async function deleteImageStudioSlotCascade(
       linkedChildIdsByProject.set(projectId, linkedChildIdsBySource);
     }
     const cascadeCollectStartedAtMs = Date.now();
-    collectCascadeSlotIds(rootDoc._id, projectDocs, { linkedChildIdsBySource }).forEach((candidateSlotId: string) => {
-      slotIdsToDeleteSet.add(candidateSlotId);
-    });
+    collectCascadeSlotIds(rootDoc._id, projectDocs, { linkedChildIdsBySource }).forEach(
+      (candidateSlotId: string) => {
+        slotIdsToDeleteSet.add(candidateSlotId);
+      }
+    );
     timingsMs.cascadeCollect += Date.now() - cascadeCollectStartedAtMs;
   }
 
@@ -802,13 +818,15 @@ export async function deleteImageStudioSlotCascade(
             projectId,
             deletedSlotIds: projectDeletedSlotIds,
           });
-        }),
+        })
       );
       timingsMs.productPrune = Date.now() - productPruneStartedAtMs;
     }
   }
 
-  const rootSlotIdSet = new Set<string>(rootDocs.map((rootDoc: ImageStudioSlotDocument) => rootDoc._id));
+  const rootSlotIdSet = new Set<string>(
+    rootDocs.map((rootDoc: ImageStudioSlotDocument) => rootDoc._id)
+  );
   return finalizeResult({
     deleted: deletedSlotIds.some((deletedSlotId: string) => rootSlotIdSet.has(deletedSlotId)),
     deletedSlotIds,

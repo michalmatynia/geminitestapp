@@ -1,19 +1,8 @@
 import { useCallback } from 'react';
-import type {
-  AiNode,
-  RuntimeState,
-  RuntimePortValues,
-} from '@/shared/lib/ai-paths';
-import {
-  TRIGGER_EVENTS,
-  evaluateRunPreflight,
-  stableStringify,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
+import { TRIGGER_EVENTS, evaluateRunPreflight, stableStringify } from '@/shared/lib/ai-paths';
 
-import {
-  buildTriggerContext,
-  createRunId,
-} from '../utils';
+import { buildTriggerContext, createRunId } from '../utils';
 
 import { evaluateLocalExecutionSecurity } from '../local-execution-security';
 import type { LocalExecutionArgs } from '../types';
@@ -31,7 +20,11 @@ import {
 
 export function useLocalExecutionTriggers(
   args: LocalExecutionArgs,
-  loop: { runLocalLoop: (mode: 'run' | 'step') => Promise<{ status: string; error?: unknown; state: RuntimeState }> },
+  loop: {
+    runLocalLoop: (
+      mode: 'run' | 'step'
+    ) => Promise<{ status: string; error?: unknown; state: RuntimeState }>;
+  },
   outcome: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     finalizeLocalRunOutcome: (outcome: any, meta: any) => void;

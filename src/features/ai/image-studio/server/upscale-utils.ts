@@ -24,8 +24,7 @@ export const normalizeUpscaleScale = (scale: number): number => {
   return Number(scale.toFixed(4));
 };
 
-const normalizeModeForFingerprint = (_mode: ImageStudioUpscaleMode): 'upscale' =>
-  'upscale';
+const normalizeModeForFingerprint = (_mode: ImageStudioUpscaleMode): 'upscale' => 'upscale';
 
 export const resolveUpscaleStrategyFromRequest = (input: {
   strategy?: ImageStudioUpscaleStrategy | null | undefined;
@@ -60,9 +59,10 @@ export const buildUpscaleFingerprint = (input: {
     sourceSignature: input.sourceSignature,
     mode: normalizeModeForFingerprint(input.mode),
     strategy: input.strategy,
-    scale: input.strategy === 'scale'
-      ? normalizeUpscaleScale(typeof input.scale === 'number' ? input.scale : Number.NaN)
-      : null,
+    scale:
+      input.strategy === 'scale'
+        ? normalizeUpscaleScale(typeof input.scale === 'number' ? input.scale : Number.NaN)
+        : null,
     targetWidth: input.strategy === 'target_resolution' ? normalizedTargetWidth : null,
     targetHeight: input.strategy === 'target_resolution' ? normalizedTargetHeight : null,
     clientPayloadSignature: input.clientPayloadSignature ?? null,
@@ -83,7 +83,10 @@ export const validateUpscaleSourceDimensions = (
   if (!(width > 0 && height > 0)) {
     return { ok: false, reason: 'non_positive_dimensions' };
   }
-  if (width > IMAGE_STUDIO_UPSCALE_MAX_SOURCE_SIDE_PX || height > IMAGE_STUDIO_UPSCALE_MAX_SOURCE_SIDE_PX) {
+  if (
+    width > IMAGE_STUDIO_UPSCALE_MAX_SOURCE_SIDE_PX ||
+    height > IMAGE_STUDIO_UPSCALE_MAX_SOURCE_SIDE_PX
+  ) {
     return { ok: false, reason: 'max_side_exceeded' };
   }
   if (width * height > IMAGE_STUDIO_UPSCALE_MAX_SOURCE_PIXELS) {
@@ -138,8 +141,14 @@ export const resolveUpscaleOutputDimensionsByResolution = (
     throw new Error('Upscaled output exceeds upscale processing limits.');
   }
 
-  if (width < sourceWidth || height < sourceHeight || (width === sourceWidth && height === sourceHeight)) {
-    throw new Error('Target resolution must upscale at least one dimension and not reduce source dimensions.');
+  if (
+    width < sourceWidth ||
+    height < sourceHeight ||
+    (width === sourceWidth && height === sourceHeight)
+  ) {
+    throw new Error(
+      'Target resolution must upscale at least one dimension and not reduce source dimensions.'
+    );
   }
 
   const scale = normalizeUpscaleScale(Math.max(width / sourceWidth, height / sourceHeight));
@@ -153,7 +162,12 @@ export const deriveUpscaleScaleFromOutputDimensions = (input: {
   outputHeight: number;
 }): number | null => {
   if (
-    !(input.sourceWidth > 0 && input.sourceHeight > 0 && input.outputWidth > 0 && input.outputHeight > 0)
+    !(
+      input.sourceWidth > 0 &&
+      input.sourceHeight > 0 &&
+      input.outputWidth > 0 &&
+      input.outputHeight > 0
+    )
   ) {
     return null;
   }

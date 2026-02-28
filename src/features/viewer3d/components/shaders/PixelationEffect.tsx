@@ -27,9 +27,7 @@ export class PixelationEffectImpl extends Effect {
   } = {}) {
     super('PixelationEffect', pixelationFragmentShader, {
       blendFunction,
-      uniforms: new Map<string, Uniform>([
-        ['pixelSize', new Uniform(pixelSize)],
-      ]),
+      uniforms: new Map<string, Uniform>([['pixelSize', new Uniform(pixelSize)]]),
     });
   }
 
@@ -48,14 +46,15 @@ export interface PixelationPassProps {
 }
 
 export const PixelationPass = forwardRef<PixelationEffectImpl, PixelationPassProps>(
-  function PixelationPass({ pixelSize = 6.0, blendFunction = BlendFunction.NORMAL }: PixelationPassProps, ref: React.Ref<PixelationEffectImpl>) {
+  function PixelationPass(
+    { pixelSize = 6.0, blendFunction = BlendFunction.NORMAL }: PixelationPassProps,
+    ref: React.Ref<PixelationEffectImpl>
+  ) {
     const effect = useMemo(
       () => new PixelationEffectImpl({ pixelSize, blendFunction }),
       [pixelSize, blendFunction]
     );
 
-     
-     
     return <primitive ref={ref} object={effect} />;
   }
 );

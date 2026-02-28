@@ -98,9 +98,7 @@ describe('RoutingTab', () => {
           },
         },
       },
-      overridesEnabled: Object.fromEntries(
-        BRAIN_FEATURE_KEYS.map((feature) => [feature, false])
-      ),
+      overridesEnabled: Object.fromEntries(BRAIN_FEATURE_KEYS.map((feature) => [feature, false])),
       effectiveAssignments,
       effectiveCapabilityAssignments,
       modelQuickPicks: [],

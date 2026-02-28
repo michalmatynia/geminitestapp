@@ -307,8 +307,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
 
   const presetRaw = graphRecord['pdfExtractionPresetId'];
   const pdfExtractionPresetId: CaseResolverPdfExtractionPresetId =
-    presetRaw === 'plain_text' ||
-    presetRaw === 'structured_sections'
+    presetRaw === 'plain_text' || presetRaw === 'structured_sections'
       ? presetRaw
       : DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID;
   const documentFileLinksByNode = sanitizeDocumentFileLinksByNode(

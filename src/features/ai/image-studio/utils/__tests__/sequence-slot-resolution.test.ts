@@ -35,15 +35,13 @@ describe('sequence-slot-resolution', () => {
     expect(normalizeStudioSlotId(' abc ')).toBe('abc');
     expect(normalizeStudioSlotId('')).toBeNull();
 
-    expect(resolveStudioSlotIdCandidates('card:abc')).toEqual([
-      'abc',
-      'slot:abc',
-      'card:abc',
-    ]);
+    expect(resolveStudioSlotIdCandidates('card:abc')).toEqual(['abc', 'slot:abc', 'card:abc']);
   });
 
   it('detects renderable slots from base64, image file path, or image url', () => {
-    expect(slotHasRenderableImage(createSlot({ imageBase64: 'data:image/png;base64,AAA=' }))).toBe(true);
+    expect(slotHasRenderableImage(createSlot({ imageBase64: 'data:image/png;base64,AAA=' }))).toBe(
+      true
+    );
     expect(
       slotHasRenderableImage(
         createSlot({
@@ -60,10 +58,12 @@ describe('sequence-slot-resolution', () => {
             createdAt: new Date(0).toISOString(),
             updatedAt: new Date(0).toISOString(),
           },
-        }),
-      ),
+        })
+      )
     ).toBe(true);
-    expect(slotHasRenderableImage(createSlot({ imageUrl: '/uploads/studio/proj/image-2.png' }))).toBe(true);
+    expect(
+      slotHasRenderableImage(createSlot({ imageUrl: '/uploads/studio/proj/image-2.png' }))
+    ).toBe(true);
     expect(slotHasRenderableImage(createSlot())).toBe(false);
   });
 

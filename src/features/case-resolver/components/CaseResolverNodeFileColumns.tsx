@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';

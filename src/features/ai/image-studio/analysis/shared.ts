@@ -12,12 +12,15 @@ import {
   IMAGE_STUDIO_CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
   type ImageStudioCenterLayoutConfig,
 } from '@/shared/contracts/image-studio';
-import { 
-  type PixelData, 
-  type NormalizedImageStudioAnalysisLayoutConfig, 
-  type ImageStudioAutoScaleAnalysis 
+import {
+  type PixelData,
+  type NormalizedImageStudioAnalysisLayoutConfig,
+  type ImageStudioAutoScaleAnalysis,
 } from './segments/types';
-import { detectObjectBoundsForLayoutFromRgba, computeAutoScalePlanFromBounds } from './segments/autoscale-planning';
+import {
+  detectObjectBoundsForLayoutFromRgba,
+  computeAutoScalePlanFromBounds,
+} from './segments/autoscale-planning';
 
 export * from './segments/types';
 export * from './segments/alpha-detection';
@@ -51,7 +54,10 @@ export const normalizeImageStudioAnalysisLayoutConfig = (
       config?.targetCanvasHeight != null
         ? Math.max(
           IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX,
-          Math.min(IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX, config.targetCanvasHeight)
+          Math.min(
+            IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX,
+            config.targetCanvasHeight
+          )
         )
         : null,
     whiteThreshold: Math.max(
@@ -82,12 +88,7 @@ export const analyzeImageObjectFromRgba = (params: {
   const { pixelData, width, height, layout } = params;
   const normalizedLayout = normalizeImageStudioAnalysisLayoutConfig(layout);
 
-  const analysis = detectObjectBoundsForLayoutFromRgba(
-    pixelData,
-    width,
-    height,
-    normalizedLayout
-  );
+  const analysis = detectObjectBoundsForLayoutFromRgba(pixelData, width, height, normalizedLayout);
   if (!analysis) return null;
 
   const plan = computeAutoScalePlanFromBounds({

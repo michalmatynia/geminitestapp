@@ -9,7 +9,8 @@ type Asset3DPreviewModalViewContextValue = {
   asset: Asset3DRecord;
 };
 
-const Asset3DPreviewModalViewContext = React.createContext<Asset3DPreviewModalViewContextValue | null>(null);
+const Asset3DPreviewModalViewContext =
+  React.createContext<Asset3DPreviewModalViewContextValue | null>(null);
 
 type Asset3DPreviewModalViewProviderProps = {
   value: Asset3DPreviewModalViewContextValue;

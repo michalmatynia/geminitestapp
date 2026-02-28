@@ -9,16 +9,16 @@ import { cn } from '@/shared/utils';
 
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 import { uploadAsset3DFile } from '../api';
-import { validate3DFileAsync, SUPPORTED_3D_FORMATS } from '@/features/viewer3d/utils/validateAsset3d';
-
+import {
+  validate3DFileAsync,
+  SUPPORTED_3D_FORMATS,
+} from '@/features/viewer3d/utils/validateAsset3d';
 
 export interface Asset3DUploaderProps {
   className?: string;
 }
 
-export function Asset3DUploader({
-  className,
-}: Asset3DUploaderProps): React.JSX.Element {
+export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.Element {
   const {
     handleUpload: onUpload,
     setShowUploader,
@@ -39,27 +39,34 @@ export function Asset3DUploader({
   const [error, setError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const handleFileSelect = useCallback(async (selectedFile: File): Promise<void> => {
-    const validation = await validate3DFileAsync(selectedFile);
-    if (!validation.valid) {
-      logClientError(new Error(validation.error ?? 'Invalid 3D file'), { 
-        context: { source: 'Asset3DUploader', action: 'handleFileSelect', filename: selectedFile.name } 
-      });
-      setError(validation.error ?? 'Invalid file');
-      return;
-    }
-    setFile(selectedFile);
-    setError(null);
-    // Auto-fill name from filename
-    if (!name) {
-      const cleanName = selectedFile.name
-        .replace(/\.[^/.]+$/, '')
-        .replace(/[-_]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-      setName(cleanName);
-    }
-  }, [name]);
+  const handleFileSelect = useCallback(
+    async (selectedFile: File): Promise<void> => {
+      const validation = await validate3DFileAsync(selectedFile);
+      if (!validation.valid) {
+        logClientError(new Error(validation.error ?? 'Invalid 3D file'), {
+          context: {
+            source: 'Asset3DUploader',
+            action: 'handleFileSelect',
+            filename: selectedFile.name,
+          },
+        });
+        setError(validation.error ?? 'Invalid file');
+        return;
+      }
+      setFile(selectedFile);
+      setError(null);
+      // Auto-fill name from filename
+      if (!name) {
+        const cleanName = selectedFile.name
+          .replace(/\.[^/.]+$/, '')
+          .replace(/[-_]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        setName(cleanName);
+      }
+    },
+    [name]
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>): void => {
@@ -83,7 +90,9 @@ export function Asset3DUploader({
     setTags(tags.filter((t: string) => t !== tag));
   };
 
-  const handleUpload = async (helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
+  const handleUpload = async (helpers?: {
+    reportProgress: (loaded: number, total?: number) => void;
+  }): Promise<void> => {
     if (!file) return;
 
     setIsUploading(true);
@@ -103,7 +112,9 @@ export function Asset3DUploader({
       );
       onUpload(uploaded);
     } catch (err) {
-      logClientError(err, { context: { source: 'Asset3DUploader', action: 'handleUpload', filename: file.name } });
+      logClientError(err, {
+        context: { source: 'Asset3DUploader', action: 'handleUpload', filename: file.name },
+      });
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setIsUploading(false);
@@ -147,9 +158,7 @@ export function Asset3DUploader({
           >
             <div className='flex flex-col items-center gap-2'>
               <Upload className='h-8 w-8 text-gray-500' />
-              <span className='text-sm text-gray-400'>
-              Drop .glb or .gltf file here
-              </span>
+              <span className='text-sm text-gray-400'>Drop .glb or .gltf file here</span>
               <span className='text-xs text-gray-500'>or click to browse</span>
             </div>
           </div>
@@ -194,7 +203,9 @@ export function Asset3DUploader({
             <Textarea
               id='upload-description'
               value={description}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                setDescription(e.target.value)
+              }
               placeholder='Enter description...'
               className='bg-gray-800 border-gray-700 min-h-[60px] text-sm'
               disabled={isUploading}
@@ -206,7 +217,9 @@ export function Asset3DUploader({
             <Input
               id='upload-category'
               value={category}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setCategory(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                setCategory(e.target.value)
+              }
               placeholder='Enter category...'
               list='upload-categories-list'
               className='bg-gray-800 border-gray-700 h-9'
@@ -225,7 +238,9 @@ export function Asset3DUploader({
               <div className='flex gap-2'>
                 <Input
                   value={newTag}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setNewTag(e.target.value)
+                  }
                   onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -275,7 +290,9 @@ export function Asset3DUploader({
             <Checkbox
               id='upload-is-public'
               checked={isPublic}
-              onCheckedChange={(checked: boolean | 'indeterminate') => setIsPublic(Boolean(checked))}
+              onCheckedChange={(checked: boolean | 'indeterminate') =>
+                setIsPublic(Boolean(checked))
+              }
               disabled={isUploading}
             />
             <label htmlFor='upload-is-public' className='cursor-pointer flex-1'>
@@ -286,9 +303,7 @@ export function Asset3DUploader({
       )}
 
       {/* Error */}
-      {error && (
-        <p className='mt-2 text-sm text-red-400'>{error}</p>
-      )}
+      {error && <p className='mt-2 text-sm text-red-400'>{error}</p>}
 
       {/* Format Info */}
       <p className='mt-2 text-xs text-gray-500'>

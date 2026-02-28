@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 
 import type { ProductTag } from '@/shared/contracts/products';

@@ -101,7 +101,9 @@ describe('auto-scaler-utils', () => {
     });
 
     expect(clientFingerprint).toBe(serverFingerprint);
-    expect(buildAutoScalerFingerprintRelationType(clientFingerprint)).toMatch(/^autoscale:output:[a-f0-9]{20}$/);
+    expect(buildAutoScalerFingerprintRelationType(clientFingerprint)).toMatch(
+      /^autoscale:output:[a-f0-9]{20}$/
+    );
   });
 
   it('uses stable layout/request signatures for idempotency and dedupe links', () => {

@@ -15,18 +15,12 @@ import {
   validateCenterOutputDimensions,
   validateCenterSourceDimensions,
 } from '@/features/ai/image-studio/server/center-utils';
-import {
-  getImageStudioSlotById,
-} from '@/features/ai/image-studio/server/slot-repository';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
 import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
 } from '@/features/ai/image-studio/server/source-image-utils';
-import { 
-  centerBadRequest, 
-  isClientCenterMode, 
-  isServerCenterMode 
-} from './image-handler-utils';
+import { centerBadRequest, isClientCenterMode, isServerCenterMode } from './image-handler-utils';
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const STRICT_SERVER_CENTER_ENABLED =

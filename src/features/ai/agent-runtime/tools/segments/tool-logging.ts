@@ -24,7 +24,7 @@ export function createToolLogger(args: {
       if (extractionType !== 'product_names' && extractionType !== 'emails') {
         return payload;
       }
-      
+
       const normalizeField = async (key: string): Promise<void> => {
         const value = payload[key];
         if (!Array.isArray(value)) return;
@@ -35,7 +35,7 @@ export function createToolLogger(args: {
           {
             model,
             runId,
-            log: async () => {}, 
+            log: async () => {},
           },
           {
             prompt,
@@ -59,7 +59,7 @@ export function createToolLogger(args: {
     };
 
     const normalizedMetadata = await normalizeLogMetadata(metadata ? { ...metadata } : undefined);
-    
+
     await prisma.agentBrowserLog.create({
       data: {
         runId,

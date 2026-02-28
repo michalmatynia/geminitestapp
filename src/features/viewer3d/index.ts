@@ -1,5 +1,3 @@
-
-
 // Public client-safe API for the Viewer3D feature
 export { Viewer3D } from './Viewer3DClient';
 

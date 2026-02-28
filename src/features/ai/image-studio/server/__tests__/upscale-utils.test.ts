@@ -33,7 +33,9 @@ describe('upscale-utils', () => {
       scale: 2,
     });
     expect(clientFingerprint).toBe(serverFingerprint);
-    expect(buildUpscaleFingerprintRelationType(clientFingerprint)).toMatch(/^upscale:output:[a-f0-9]{20}$/);
+    expect(buildUpscaleFingerprintRelationType(clientFingerprint)).toMatch(
+      /^upscale:output:[a-f0-9]{20}$/
+    );
   });
 
   it('changes fingerprint when client payload signature changes', () => {
@@ -88,12 +90,14 @@ describe('upscale-utils', () => {
       height: 1500,
       scale: 2.9297,
     });
-    expect(deriveUpscaleScaleFromOutputDimensions({
-      sourceWidth: 1024,
-      sourceHeight: 512,
-      outputWidth: 3000,
-      outputHeight: 1500,
-    })).toBe(2.9297);
+    expect(
+      deriveUpscaleScaleFromOutputDimensions({
+        sourceWidth: 1024,
+        sourceHeight: 512,
+        outputWidth: 3000,
+        outputHeight: 1500,
+      })
+    ).toBe(2.9297);
     expect(validateUpscaleOutputDimensions(8192, 8192)).toBe(true);
     expect(validateUpscaleOutputDimensions(30000, 30000)).toBe(false);
   });

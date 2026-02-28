@@ -1,10 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import type {
-  AiNode,
-  Edge,
-  PathConfig,
-  PathMeta,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
@@ -17,10 +12,7 @@ import {
 } from '@/shared/lib/ai-paths';
 import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
-import {
-  buildPersistedRuntimeState,
-  sanitizePathConfig,
-} from '../../../AiPathsSettingsUtils';
+import { buildPersistedRuntimeState, sanitizePathConfig } from '../../../AiPathsSettingsUtils';
 import {
   buildNodesForAutoSave as buildNodesForAutoSaveHelper,
   lintPathNodeRoles,
@@ -29,14 +21,11 @@ import {
   resolvePathSaveBlockedMessage,
   stripNodeConfig,
 } from '../../useAiPathsPersistence.helpers';
-import type { 
-  PathSaveOptions, 
-  UseAiPathsPersistenceArgs 
-} from '../../useAiPathsPersistence.types';
+import type { PathSaveOptions, UseAiPathsPersistenceArgs } from '../../useAiPathsPersistence.types';
 
 export function usePathPersistence(
   args: UseAiPathsPersistenceArgs,
-  core: { 
+  core: {
     enqueueSettingsWrite: <T>(operation: () => Promise<T>) => Promise<T>;
     stringifyForStorage: (value: unknown, label: string) => string;
     persistLastError: (error: unknown) => Promise<void>;
@@ -45,7 +34,7 @@ export function usePathPersistence(
   const [saving, setSaving] = useState(false);
   const [autoSaveAt, setAutoSaveAt] = useState<string | null>(null);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
-  
+
   const lastSettingsPayloadRef = useRef<string | null>(null);
   const lastSavedSnapshotRef = useRef<string | null>(null);
   const nodesRef = useRef<AiNode[]>(args.nodes);
@@ -348,7 +337,14 @@ export function usePathPersistence(
         if (!silent) setSaving(false);
       }
     },
-    [args, core, buildPathSnapshot, buildActivePathConfig, buildNodesForAutoSave, persistPathSettings]
+    [
+      args,
+      core,
+      buildPathSnapshot,
+      buildActivePathConfig,
+      buildNodesForAutoSave,
+      persistPathSettings,
+    ]
   );
 
   return {

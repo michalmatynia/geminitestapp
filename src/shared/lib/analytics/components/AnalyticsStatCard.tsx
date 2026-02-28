@@ -17,7 +17,9 @@ export function AnalyticsStatCard({
   return (
     <FormSection title={title}>
       {rows.length === 0 ? (
-        <Hint size='xs' italic className='py-4 text-center'>{emptyLabel}</Hint>
+        <Hint size='xs' italic className='py-4 text-center'>
+          {emptyLabel}
+        </Hint>
       ) : (
         <div className='rounded border border-white/5 bg-black/20 overflow-hidden'>
           <DataTable
@@ -29,7 +31,7 @@ export function AnalyticsStatCard({
                   <span className='text-xs text-gray-300 truncate block max-w-[200px]'>
                     {row.original.left}
                   </span>
-                )
+                ),
               },
               {
                 accessorKey: 'right',
@@ -38,8 +40,8 @@ export function AnalyticsStatCard({
                   <div className='text-right font-mono text-xs text-blue-400'>
                     {row.original.right}
                   </div>
-                )
-              }
+                ),
+              },
             ]}
             data={rows}
           />

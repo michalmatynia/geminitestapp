@@ -2,11 +2,7 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
-import {
-  createPresetId,
-  extractJsonPathEntries,
-  dbApi,
-} from '@/shared/lib/ai-paths';
+import { createPresetId, extractJsonPathEntries, dbApi } from '@/shared/lib/ai-paths';
 import type {
   DatabaseConfig,
   DbQueryConfig,
@@ -15,9 +11,7 @@ import type {
 } from '@/shared/lib/ai-paths';
 import type { SchemaData } from '@/shared/contracts/database';
 import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
-import {
-  resolveDbActionProvider,
-} from '@/shared/lib/ai-paths/core/utils/provider-actions';
+import { resolveDbActionProvider } from '@/shared/lib/ai-paths/core/utils/provider-actions';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
@@ -91,7 +85,9 @@ const normalizeLegacyQueryProvider = (query: DbQueryConfig): DbQueryConfig => {
   return { ...query, queryTemplate: normalizedTemplate };
 };
 
-const mapOperationFromActionCategory = (category: DatabaseActionCategory): 'query' | 'update' | 'insert' | 'delete' | 'action' | 'distinct' => {
+const mapOperationFromActionCategory = (
+  category: DatabaseActionCategory
+): 'query' | 'update' | 'insert' | 'delete' | 'action' | 'distinct' => {
   if (category === 'create') return 'insert';
   if (category === 'read' || category === 'aggregate') return 'query';
   if (category === 'update') return 'update';
@@ -155,8 +151,8 @@ export function useDatabaseNodeConfigState() {
   const resolvedProvider = resolveDbActionProvider(queryConfig.provider, appDbProvider);
 
   const queryTemplateValue = isUpdateAction
-    ? databaseConfig.updateTemplate ?? ''
-    : queryConfig.queryTemplate ?? '';
+    ? (databaseConfig.updateTemplate ?? '')
+    : (queryConfig.queryTemplate ?? '');
 
   const {
     handleRunQuery,
@@ -175,18 +171,15 @@ export function useDatabaseNodeConfigState() {
     updateSelectedNodeConfig,
     toast: toast as Toast,
   });
-  const {
-    handleProviderChange,
-    handleActionCategoryChange,
-    applyActionConfig,
-  } = useDatabaseActionConfig({
-    databaseConfig,
-    queryConfig,
-    appDbProvider,
-    resolvedProvider,
-    updateSelectedNodeConfig,
-    mapOperationFromActionCategory,
-  });
+  const { handleProviderChange, handleActionCategoryChange, applyActionConfig } =
+    useDatabaseActionConfig({
+      databaseConfig,
+      queryConfig,
+      appDbProvider,
+      resolvedProvider,
+      updateSelectedNodeConfig,
+      mapOperationFromActionCategory,
+    });
 
   const settingsMap = useSettingsMap();
   const promptEngineSettings = useMemo(
@@ -206,7 +199,9 @@ export function useDatabaseNodeConfigState() {
   });
 
   const schemaSyncMutation = createMutationV2<void, string | undefined>({
-    mutationFn: async (_provider) => { await dbApi.schema(); },
+    mutationFn: async (_provider) => {
+      await dbApi.schema();
+    },
     onSuccess: () => {
       void schemaQuery.refetch();
       toast('Schema synced', { variant: 'success' });
@@ -285,8 +280,14 @@ export function useDatabaseNodeConfigState() {
       const textArea = queryTemplateRef?.current;
       const selectionStart = textArea?.selectionStart ?? currentTemplate.length;
       const selectionEnd = textArea?.selectionEnd ?? currentTemplate.length;
-      const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
-      const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
+      const rangeStart = Math.max(
+        0,
+        Math.min(selectionStart, selectionEnd, currentTemplate.length)
+      );
+      const rangeEnd = Math.max(
+        rangeStart,
+        Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length)
+      );
       const nextQuery = `${currentTemplate.slice(0, rangeStart)}${placeholder}${currentTemplate.slice(rangeEnd)}`;
 
       applyQueryTemplateUpdate(nextQuery);
@@ -311,7 +312,10 @@ export function useDatabaseNodeConfigState() {
       const selectionStart = textArea?.selectionStart ?? currentValue.length;
       const selectionEnd = textArea?.selectionEnd ?? currentValue.length;
       const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentValue.length));
-      const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentValue.length));
+      const rangeEnd = Math.max(
+        rangeStart,
+        Math.min(Math.max(selectionStart, selectionEnd), currentValue.length)
+      );
       const nextValue = `${currentValue.slice(0, rangeStart)}${placeholder}${currentValue.slice(rangeEnd)}`;
 
       updateSelectedNodeConfig({
@@ -437,7 +441,10 @@ export function useDatabaseNodeConfigState() {
     return Array.from(new Set(incoming));
   }, [edges, selectedNodeId]);
 
-  const sampleState = useMemo(() => updaterSamples[selectedNodeId], [updaterSamples, selectedNodeId]);
+  const sampleState = useMemo(
+    () => updaterSamples[selectedNodeId],
+    [updaterSamples, selectedNodeId]
+  );
   const parsedSample = useMemo(() => safeParseJson(sampleState?.json ?? ''), [sampleState]);
 
   const uniqueTargetPathOptions = useMemo(() => {
@@ -481,20 +488,45 @@ export function useDatabaseNodeConfigState() {
     updateSelectedNodeConfig,
   });
 
-  const codeSnippets = useMemo(
-    () => extractCodeSnippets(queryTemplateValue),
-    [queryTemplateValue]
-  );
+  const codeSnippets = useMemo(() => extractCodeSnippets(queryTemplateValue), [queryTemplateValue]);
 
   const presetOptions: DatabasePresetOption[] = useMemo(
     () => [
-      { id: 'custom', label: 'Custom', description: 'Keep current settings and customize manually.' },
-      { id: 'query_by_id', label: 'Query by ID', description: 'Flexible ID query (supports UUID, ObjectId, entityId).' },
-      { id: 'query_recent_products', label: 'Query recent', description: 'Fetches newest documents sorted by createdAt.' },
-      { id: 'query_name_contains', label: 'Search by name', description: 'Regex search on name field.' },
-      { id: 'update_content_en_from_result', label: 'Update from result', description: 'Updates document field using incoming result.' },
-      { id: 'delete_product_by_entity', label: 'Delete by ID', description: 'Deletes document using connected ID input.' },
-      { id: 'insert_from_bundle', label: 'Insert from bundle', description: 'Creates new document from bundle payload.' },
+      {
+        id: 'custom',
+        label: 'Custom',
+        description: 'Keep current settings and customize manually.',
+      },
+      {
+        id: 'query_by_id',
+        label: 'Query by ID',
+        description: 'Flexible ID query (supports UUID, ObjectId, entityId).',
+      },
+      {
+        id: 'query_recent_products',
+        label: 'Query recent',
+        description: 'Fetches newest documents sorted by createdAt.',
+      },
+      {
+        id: 'query_name_contains',
+        label: 'Search by name',
+        description: 'Regex search on name field.',
+      },
+      {
+        id: 'update_content_en_from_result',
+        label: 'Update from result',
+        description: 'Updates document field using incoming result.',
+      },
+      {
+        id: 'delete_product_by_entity',
+        label: 'Delete by ID',
+        description: 'Deletes document using connected ID input.',
+      },
+      {
+        id: 'insert_from_bundle',
+        label: 'Insert from bundle',
+        description: 'Creates new document from bundle payload.',
+      },
     ],
     []
   );

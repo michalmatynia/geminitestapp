@@ -48,32 +48,32 @@ export interface Viewer3DState {
   // View settings
   autoRotate: boolean;
   autoRotateSpeed: number;
-  
+
   // Environment & Lighting
   environment: EnvironmentPreset;
   lighting: LightingPreset;
   lightIntensity: number;
-  
+
   // Rendering
   enableShadows: boolean;
   enableContactShadows: boolean;
   showGround: boolean;
-  
+
   // Post-processing
   enableBloom: boolean;
   bloomIntensity: number;
   enableVignette: boolean;
   enableToneMapping: boolean;
   exposure: number;
-  
+
   // Dithering (special effect)
   enableDithering: boolean;
   ditheringIntensity: number;
-  
+
   // Pixelation (pixel art effect)
   enablePixelation: boolean;
   pixelSize: number;
-  
+
   // Ordered dithering shader
   enableOrderedDithering: boolean;
   orderedDitheringGridSize: number;
@@ -82,7 +82,7 @@ export interface Viewer3DState {
   orderedDitheringInvertColor: boolean;
   orderedDitheringLuminanceMethod: number;
   orderedDitheringPreset: OrderedDitheringPresetKey;
-  
+
   // Background
   backgroundColor: string;
 }
@@ -114,7 +114,7 @@ interface Viewer3DContextType extends Viewer3DState {
   setOrderedDitheringLuminanceMethod: (value: number) => void;
   setOrderedDitheringPreset: (value: OrderedDitheringPresetKey) => void;
   setBackgroundColor: (value: string) => void;
-  
+
   // Actions
   resetSettings: () => void;
   applyOrderedDitheringPreset: (preset: Exclude<OrderedDitheringPresetKey, 'custom'>) => void;
@@ -146,18 +146,22 @@ export function Viewer3DProvider({ children }: { children: React.ReactNode }): R
   const [orderedDitheringGrayscaleOnly, setOrderedDitheringGrayscaleOnly] = useState(false);
   const [orderedDitheringInvertColor, setOrderedDitheringInvertColor] = useState(false);
   const [orderedDitheringLuminanceMethod, setOrderedDitheringLuminanceMethod] = useState(1);
-  const [orderedDitheringPreset, setOrderedDitheringPreset] = useState<OrderedDitheringPresetKey>('balanced');
+  const [orderedDitheringPreset, setOrderedDitheringPreset] =
+    useState<OrderedDitheringPresetKey>('balanced');
   const [backgroundColor, setBackgroundColor] = useState('#1a1a2e');
 
-  const applyOrderedDitheringPreset = useCallback((preset: Exclude<OrderedDitheringPresetKey, 'custom'>) => {
-    const config = orderedDitheringPresets[preset];
-    setOrderedDitheringGridSize(config.gridSize);
-    setOrderedDitheringPixelSizeRatio(config.pixelSizeRatio);
-    setOrderedDitheringGrayscaleOnly(config.grayscaleOnly);
-    setOrderedDitheringInvertColor(config.invertColor);
-    setOrderedDitheringLuminanceMethod(config.luminanceMethod);
-    setOrderedDitheringPreset(preset);
-  }, []);
+  const applyOrderedDitheringPreset = useCallback(
+    (preset: Exclude<OrderedDitheringPresetKey, 'custom'>) => {
+      const config = orderedDitheringPresets[preset];
+      setOrderedDitheringGridSize(config.gridSize);
+      setOrderedDitheringPixelSizeRatio(config.pixelSizeRatio);
+      setOrderedDitheringGrayscaleOnly(config.grayscaleOnly);
+      setOrderedDitheringInvertColor(config.invertColor);
+      setOrderedDitheringLuminanceMethod(config.luminanceMethod);
+      setOrderedDitheringPreset(preset);
+    },
+    []
+  );
 
   const resetSettings = useCallback(() => {
     setAutoRotate(true);
@@ -187,44 +191,91 @@ export function Viewer3DProvider({ children }: { children: React.ReactNode }): R
     setBackgroundColor('#1a1a2e');
   }, []);
 
-  const value = useMemo(() => ({
-    autoRotate, setAutoRotate,
-    autoRotateSpeed, setAutoRotateSpeed,
-    environment, setEnvironment,
-    lighting, setLighting,
-    lightIntensity, setLightIntensity,
-    enableShadows, setEnableShadows,
-    enableContactShadows, setEnableContactShadows,
-    showGround, setShowGround,
-    enableBloom, setEnableBloom,
-    bloomIntensity, setBloomIntensity,
-    enableVignette, setEnableVignette,
-    enableToneMapping, setEnableToneMapping,
-    exposure, setExposure,
-    enableDithering, setEnableDithering,
-    ditheringIntensity, setDitheringIntensity,
-    enablePixelation, setEnablePixelation,
-    pixelSize, setPixelSize,
-    enableOrderedDithering, setEnableOrderedDithering,
-    orderedDitheringGridSize, setOrderedDitheringGridSize,
-    orderedDitheringPixelSizeRatio, setOrderedDitheringPixelSizeRatio,
-    orderedDitheringGrayscaleOnly, setOrderedDitheringGrayscaleOnly,
-    orderedDitheringInvertColor, setOrderedDitheringInvertColor,
-    orderedDitheringLuminanceMethod, setOrderedDitheringLuminanceMethod,
-    orderedDitheringPreset, setOrderedDitheringPreset,
-    backgroundColor, setBackgroundColor,
-    resetSettings,
-    applyOrderedDitheringPreset,
-  }), [
-    autoRotate, autoRotateSpeed, environment, lighting, lightIntensity,
-    enableShadows, enableContactShadows, showGround,
-    enableBloom, bloomIntensity, enableVignette, enableToneMapping, exposure,
-    enableDithering, ditheringIntensity, enablePixelation, pixelSize,
-    enableOrderedDithering, orderedDitheringGridSize, orderedDitheringPixelSizeRatio,
-    orderedDitheringGrayscaleOnly, orderedDitheringInvertColor,
-    orderedDitheringLuminanceMethod, orderedDitheringPreset, backgroundColor,
-    resetSettings, applyOrderedDitheringPreset,
-  ]);
+  const value = useMemo(
+    () => ({
+      autoRotate,
+      setAutoRotate,
+      autoRotateSpeed,
+      setAutoRotateSpeed,
+      environment,
+      setEnvironment,
+      lighting,
+      setLighting,
+      lightIntensity,
+      setLightIntensity,
+      enableShadows,
+      setEnableShadows,
+      enableContactShadows,
+      setEnableContactShadows,
+      showGround,
+      setShowGround,
+      enableBloom,
+      setEnableBloom,
+      bloomIntensity,
+      setBloomIntensity,
+      enableVignette,
+      setEnableVignette,
+      enableToneMapping,
+      setEnableToneMapping,
+      exposure,
+      setExposure,
+      enableDithering,
+      setEnableDithering,
+      ditheringIntensity,
+      setDitheringIntensity,
+      enablePixelation,
+      setEnablePixelation,
+      pixelSize,
+      setPixelSize,
+      enableOrderedDithering,
+      setEnableOrderedDithering,
+      orderedDitheringGridSize,
+      setOrderedDitheringGridSize,
+      orderedDitheringPixelSizeRatio,
+      setOrderedDitheringPixelSizeRatio,
+      orderedDitheringGrayscaleOnly,
+      setOrderedDitheringGrayscaleOnly,
+      orderedDitheringInvertColor,
+      setOrderedDitheringInvertColor,
+      orderedDitheringLuminanceMethod,
+      setOrderedDitheringLuminanceMethod,
+      orderedDitheringPreset,
+      setOrderedDitheringPreset,
+      backgroundColor,
+      setBackgroundColor,
+      resetSettings,
+      applyOrderedDitheringPreset,
+    }),
+    [
+      autoRotate,
+      autoRotateSpeed,
+      environment,
+      lighting,
+      lightIntensity,
+      enableShadows,
+      enableContactShadows,
+      showGround,
+      enableBloom,
+      bloomIntensity,
+      enableVignette,
+      enableToneMapping,
+      exposure,
+      enableDithering,
+      ditheringIntensity,
+      enablePixelation,
+      pixelSize,
+      enableOrderedDithering,
+      orderedDitheringGridSize,
+      orderedDitheringPixelSizeRatio,
+      orderedDitheringGrayscaleOnly,
+      orderedDitheringInvertColor,
+      orderedDitheringLuminanceMethod,
+      orderedDitheringPreset,
+      backgroundColor,
+      resetSettings,
+      applyOrderedDitheringPreset,
+    ]
+  );
 
   return <Viewer3DContext.Provider value={value}>{children}</Viewer3DContext.Provider>;
 }

@@ -4,7 +4,11 @@ import { Bot, Trash2, ExternalLink, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
-import { JobsProvider, useJobsContext, type ChatbotJob } from '@/shared/lib/jobs/context/JobsContext';
+import {
+  JobsProvider,
+  useJobsContext,
+  type ChatbotJob,
+} from '@/shared/lib/jobs/context/JobsContext';
 import {
   Button,
   StandardDataTablePanel,

@@ -62,7 +62,10 @@ const defaultDependencies: EnsureDependencies = {
   getSlotById: getImageStudioSlotById,
 };
 
-const ensureInFlightByToken = new Map<string, Promise<EnsureImageStudioSlotFromUploadedAssetResult>>();
+const ensureInFlightByToken = new Map<
+  string,
+  Promise<EnsureImageStudioSlotFromUploadedAssetResult>
+>();
 
 const sanitizePath = (value: string | null | undefined): string => {
   const normalized = typeof value === 'string' ? value.trim() : '';
@@ -135,8 +138,11 @@ const isDuplicateKeyError = (error: unknown): boolean => {
   return message.includes('duplicate key') || message.includes('e11000');
 };
 
-const buildUploadToken = (projectId: string, uploadId: string, normalizedFilepath: string): string =>
-  `${projectId}::${uploadId || normalizedFilepath}`;
+const buildUploadToken = (
+  projectId: string,
+  uploadId: string,
+  normalizedFilepath: string
+): string => `${projectId}::${uploadId || normalizedFilepath}`;
 
 const findMatchingExistingSlot = (
   slots: ImageStudioSlotRecord[],
@@ -187,7 +193,12 @@ async function ensureImageStudioSlotFromUploadedAssetInternal(
   const slots = await dependencies.listSlots(projectId);
   const existingSlot = findMatchingExistingSlot(slots, uploadId, normalizedFilepath);
   if (existingSlot) {
-    const resolved = await ensureSlotRenderable(existingSlot, uploadId, normalizedFilepath, dependencies);
+    const resolved = await ensureSlotRenderable(
+      existingSlot,
+      uploadId,
+      normalizedFilepath,
+      dependencies
+    );
     return {
       slot: resolved,
       created: false,
@@ -198,7 +209,8 @@ async function ensureImageStudioSlotFromUploadedAssetInternal(
   const selectedSlotIdCandidates = resolveSlotIdCandidates(input.selectedSlotId);
   if (selectedSlotIdCandidates.length > 0) {
     const selectedCandidateSet = new Set<string>(selectedSlotIdCandidates);
-    const selectedSlot = slots.find((slot: ImageStudioSlotRecord) => selectedCandidateSet.has(slot.id)) ?? null;
+    const selectedSlot =
+      slots.find((slot: ImageStudioSlotRecord) => selectedCandidateSet.has(slot.id)) ?? null;
     if (selectedSlot && !slotHasRenderableImage(selectedSlot)) {
       const updatedSelectedSlot = await dependencies.updateSlot(selectedSlot.id, {
         ...(uploadId ? { imageFileId: uploadId } : {}),
@@ -260,7 +272,12 @@ async function ensureImageStudioSlotFromUploadedAssetInternal(
     const refreshedSlots = await dependencies.listSlots(projectId);
     const refreshedMatch = findMatchingExistingSlot(refreshedSlots, uploadId, normalizedFilepath);
     if (refreshedMatch) {
-      const resolved = await ensureSlotRenderable(refreshedMatch, uploadId, normalizedFilepath, dependencies);
+      const resolved = await ensureSlotRenderable(
+        refreshedMatch,
+        uploadId,
+        normalizedFilepath,
+        dependencies
+      );
       return {
         slot: resolved,
         created: false,
@@ -284,12 +301,13 @@ export async function ensureImageStudioSlotFromUploadedAsset(
     return inFlight;
   }
 
-  const promise = ensureImageStudioSlotFromUploadedAssetInternal(input, dependencies)
-    .finally(() => {
+  const promise = ensureImageStudioSlotFromUploadedAssetInternal(input, dependencies).finally(
+    () => {
       if (ensureInFlightByToken.get(token) === promise) {
         ensureInFlightByToken.delete(token);
       }
-    });
+    }
+  );
   ensureInFlightByToken.set(token, promise);
   return promise;
 }

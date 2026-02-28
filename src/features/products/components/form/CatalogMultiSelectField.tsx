@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 
 import type { CatalogRecord } from '@/shared/contracts/products';

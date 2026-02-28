@@ -1,5 +1,10 @@
 import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-validator';
-import type { PromptAutofixOperation, PromptValidationRule, PromptValidationSettings, PromptValidationSimilarPattern } from '@/shared/lib/prompt-engine/settings';
+import type {
+  PromptAutofixOperation,
+  PromptValidationRule,
+  PromptValidationSettings,
+  PromptValidationSimilarPattern,
+} from '@/shared/lib/prompt-engine/settings';
 
 type AppliedFix = {
   ruleId: string;
@@ -238,7 +243,13 @@ function normalizeParamsObject(rawObjectText: string): string {
     if (segment.kind === 'single_string') {
       const inner = segment.text.slice(1, -1);
       // Best-effort safety: only convert simple single-quoted strings.
-      if (!inner || inner.includes('\n') || inner.includes('\r') || inner.includes('\\') || inner.includes('"')) {
+      if (
+        !inner ||
+        inner.includes('\n') ||
+        inner.includes('\r') ||
+        inner.includes('\\') ||
+        inner.includes('"')
+      ) {
         return segment.text;
       }
       return `"${inner}"`;
@@ -319,11 +330,11 @@ function getRuleById(rules: PromptValidationRule[], id: string): PromptValidatio
   return rules.find((rule: PromptValidationRule) => rule.id === id) ?? null;
 }
 
-export function formatProgrammaticPrompt(prompt: string, settings: PromptValidationSettings): FormatPromptResult {
-  const mergedRules: PromptValidationRule[] = [
-    ...settings.rules,
-    ...(settings.learnedRules ?? []),
-  ];
+export function formatProgrammaticPrompt(
+  prompt: string,
+  settings: PromptValidationSettings
+): FormatPromptResult {
+  const mergedRules: PromptValidationRule[] = [...settings.rules, ...(settings.learnedRules ?? [])];
   const validationSettings = { ...settings, enabled: true, rules: mergedRules };
   const issuesBeforeList = validateProgrammaticPrompt(prompt, validationSettings);
   const issuesBefore = issuesBeforeList.length;
@@ -338,7 +349,12 @@ export function formatProgrammaticPrompt(prompt: string, settings: PromptValidat
     const rule = getRuleById(mergedRules, issue.ruleId);
     const autofix = rule?.autofix;
     let appliedFix = false;
-    if (rule && autofix?.enabled && Array.isArray(autofix.operations) && autofix.operations.length > 0) {
+    if (
+      rule &&
+      autofix?.enabled &&
+      Array.isArray(autofix.operations) &&
+      autofix.operations.length > 0
+    ) {
       for (const op of autofix.operations) {
         const before = nextPrompt;
         nextPrompt = applyAutofixOperation(nextPrompt, op);

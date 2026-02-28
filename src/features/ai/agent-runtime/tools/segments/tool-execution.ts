@@ -8,18 +8,9 @@ import {
   type Response,
 } from 'playwright';
 
-import {
-  buildSearchQueryWithLLM,
-  pickSearchResultWithLLM,
-  decideSearchFirstWithLLM,
-} from '../llm';
-import {
-  dismissConsent,
-  checkForChallenge,
-} from '../playwright/actions';
-import {
-  captureSnapshot,
-} from '../playwright/browser';
+import { buildSearchQueryWithLLM, pickSearchResultWithLLM, decideSearchFirstWithLLM } from '../llm';
+import { dismissConsent, checkForChallenge } from '../playwright/actions';
+import { captureSnapshot } from '../playwright/browser';
 import { runExtractionRequest } from '../run-agent-tool-extraction';
 import { fetchSearchResults } from '../search';
 import {
@@ -31,11 +22,7 @@ import {
   evaluateRobotsRules,
 } from '../utils';
 
-import { 
-  type AgentToolRequest, 
-  type AgentToolResult, 
-  type ToolLlmContext
-} from './types';
+import { type AgentToolRequest, type AgentToolResult, type ToolLlmContext } from './types';
 import { resolveToolContext } from './tool-context';
 import { createToolLogger } from './tool-logging';
 
@@ -51,18 +38,29 @@ export async function runAgentTool(
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }
 
-  const { runId, prompt, stepId, stepLabel, targetUrl, targetHostname, runDir: _runDir, launch, context, config } = contextData;
-  const { 
-    resolvedModel, 
-    resolvedSearchProvider, 
-    ignoreRobotsTxt, 
-    memoryKey, 
-    memoryValidationModel, 
+  const {
+    runId,
+    prompt,
+    stepId,
+    stepLabel,
+    targetUrl,
+    targetHostname,
+    runDir: _runDir,
+    launch,
+    context,
+    config,
+  } = contextData;
+  const {
+    resolvedModel,
+    resolvedSearchProvider,
+    ignoreRobotsTxt,
+    memoryKey,
+    memoryValidationModel,
     memorySummarizationModel,
     outputNormalizationModel,
     toolRouterModel,
     selectorInferenceModel,
-    extractionValidationModel
+    extractionValidationModel,
   } = config;
 
   const log = createToolLogger({
@@ -219,8 +217,7 @@ export async function runAgentTool(
           });
         }
 
-        const fallback =
-          resolvedPicked || (allowedResults.length ? allowedResults[0]?.url : null);
+        const fallback = resolvedPicked || (allowedResults.length ? allowedResults[0]?.url : null);
 
         if (fallback) {
           if (!(await enforceRobotsPolicy(fallback))) {
@@ -350,14 +347,14 @@ export async function runAgentTool(
     }
 
     const snapshot = await captureSnapshot(page, runId, _runDir, 'auto', log, activeStepId);
-    
+
     return {
       ok: true,
       output: {
         url: finalUrl,
         domText: safeText(snapshot.domText),
         snapshotId: snapshot.id,
-        logCount: 0, 
+        logCount: 0,
         cloudflareDetected: detectionState.cloudflareDetected,
         ...extractionResult.output,
       },
@@ -366,10 +363,14 @@ export async function runAgentTool(
     const errorId = randomUUID();
     const message = error instanceof Error ? error.message : String(error);
     await log('error', `Tool execution failed: ${message}`, { errorId });
-    
+
     let snapshotId: string | null = null;
     if (page) {
-      const errorSnapshot = await (captureSnapshot(page, runId, _runDir, 'error', log, activeStepId) as Promise<{ id: string } | null>).catch(() => null);
+      const errorSnapshot = await (
+        captureSnapshot(page, runId, _runDir, 'error', log, activeStepId) as Promise<{
+          id: string;
+        } | null>
+      ).catch(() => null);
       snapshotId = errorSnapshot?.id ?? null;
     }
 

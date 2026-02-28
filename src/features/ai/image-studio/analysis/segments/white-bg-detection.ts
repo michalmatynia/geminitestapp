@@ -278,7 +278,10 @@ const selectBestConnectedComponent = (
   let bestComponent: ConnectedComponent | null = null;
   let bestScore = Number.NEGATIVE_INFINITY;
   for (const component of components) {
-    const bboxArea = Math.max(1, (component.right - component.left + 1) * (component.bottom - component.top + 1));
+    const bboxArea = Math.max(
+      1,
+      (component.right - component.left + 1) * (component.bottom - component.top + 1)
+    );
     const density = component.pixelCount / bboxArea;
     const dominance = component.pixelCount / Math.max(1, totalForegroundPixels);
     const centerDistance = Math.hypot(
@@ -306,7 +309,10 @@ const computeComponentConfidence = (params: {
   height: number;
 }): number => {
   const { component, totalForegroundPixels, width, height } = params;
-  const bboxArea = Math.max(1, (component.right - component.left + 1) * (component.bottom - component.top + 1));
+  const bboxArea = Math.max(
+    1,
+    (component.right - component.left + 1) * (component.bottom - component.top + 1)
+  );
   const coverage = component.pixelCount / Math.max(1, bboxArea);
   const dominance = component.pixelCount / Math.max(1, totalForegroundPixels);
   const borderScore = component.touchesBorder ? 0.45 : 1;
@@ -323,7 +329,11 @@ export const resolveWhiteForegroundObjectDetectionFromRgba = (
   whiteThreshold: number,
   chromaThreshold: number,
   shadowPolicy: ImageStudioCenterShadowPolicy
-): { bounds: ImageStudioCenterObjectBounds; confidence: number; details: ImageStudioDetectionDetails } | null => {
+): {
+  bounds: ImageStudioCenterObjectBounds;
+  confidence: number;
+  details: ImageStudioDetectionDetails;
+} | null => {
   const backgroundModel = resolveWhiteBackgroundModel(
     pixelData,
     width,
@@ -423,8 +433,10 @@ export const resolveWhiteForegroundObjectDetectionFromRgba = (
       componentCount: components.length,
       coreComponentCount: shadowPolicy === 'exclude_shadow' ? components.length : 0,
       selectedComponentPixels: bestComponent.pixelCount,
-      selectedComponentCoverage: bestComponent.pixelCount / 
-        ((bestComponent.right - bestComponent.left + 1) * (bestComponent.bottom - bestComponent.top + 1)),
+      selectedComponentCoverage:
+        bestComponent.pixelCount /
+        ((bestComponent.right - bestComponent.left + 1) *
+          (bestComponent.bottom - bestComponent.top + 1)),
       foregroundPixels: foregroundCount,
       corePixels: coreCount,
       touchesBorder: bestComponent.touchesBorder,

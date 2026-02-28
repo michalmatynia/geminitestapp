@@ -350,13 +350,17 @@ export function useAiPathsSettingsState({
     return [...palette, ...derived];
   }, [triggerButtonsQuery.data]);
 
-  const { parserSampleLoading, updaterSampleLoading, handleFetchParserSample, handleFetchUpdaterSample } =
-    useAiPathsSettingsSamples({
-      queryClient,
-      setParserSamples,
-      setUpdaterSamples,
-      toast,
-    });
+  const {
+    parserSampleLoading,
+    updaterSampleLoading,
+    handleFetchParserSample,
+    handleFetchUpdaterSample,
+  } = useAiPathsSettingsSamples({
+    queryClient,
+    setParserSamples,
+    setUpdaterSamples,
+    toast,
+  });
 
   const persistence = useAiPathsPersistence({
     activePathId,
@@ -515,7 +519,6 @@ export function useAiPathsSettingsState({
     },
   });
 
-
   const pathActions = useAiPathsSettingsPathActions({
     activePathId,
     setActivePathId,
@@ -599,19 +602,27 @@ export function useAiPathsSettingsState({
 
   const autoSaveLabel = useMemo((): string => {
     switch (persistence.autoSaveStatus) {
-      case 'saving': return 'Saving...';
-      case 'saved': return 'Saved';
-      case 'error': return 'Save error';
-      default: return '';
+      case 'saving':
+        return 'Saving...';
+      case 'saved':
+        return 'Saved';
+      case 'error':
+        return 'Save error';
+      default:
+        return '';
     }
   }, [persistence.autoSaveStatus]);
 
   const autoSaveClasses = useMemo((): string => {
     switch (persistence.autoSaveStatus) {
-      case 'saving': return 'text-yellow-500';
-      case 'saved': return 'text-green-500';
-      case 'error': return 'text-red-500';
-      default: return '';
+      case 'saving':
+        return 'text-yellow-500';
+      case 'saved':
+        return 'text-green-500';
+      case 'error':
+        return 'text-red-500';
+      default:
+        return '';
     }
   }, [persistence.autoSaveStatus]);
 
@@ -767,7 +778,10 @@ export function useAiPathsSettingsState({
     handleSave: persistence.handleSave,
     persistActivePathPreference: persistence.persistActivePathPreference,
     persistPathSettings: persistPathSettingsVoid,
-    persistRuntimePathState: persistence.persistRuntimePathState as unknown as (pathId: string, runtimeState: RuntimeState) => Promise<void>,
+    persistRuntimePathState: persistence.persistRuntimePathState as unknown as (
+      pathId: string,
+      runtimeState: RuntimeState
+    ) => Promise<void>,
     persistSettingsBulk: persistence.persistSettingsBulk,
     savePathIndex: persistence.savePathIndex,
     // Samples fetch

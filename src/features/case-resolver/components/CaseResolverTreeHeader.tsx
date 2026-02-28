@@ -43,10 +43,7 @@ export function CaseResolverTreeHeader({
     selectedFolderForCreate,
   } = useCaseResolverFolderTreeDataContext();
 
-  const {
-    showChildCaseFolders,
-    setShowChildCaseFolders,
-  } = useCaseResolverFolderTreeUiContext();
+  const { showChildCaseFolders, setShowChildCaseFolders } = useCaseResolverFolderTreeUiContext();
 
   const hasCaseContext = Boolean(activeCaseId || activeCaseFile);
 

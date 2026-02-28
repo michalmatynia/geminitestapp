@@ -1,6 +1,9 @@
 import 'server-only';
 
-import { getProductDataProvider, type ProductDbProvider } from '@/shared/lib/products/services/product-provider';
+import {
+  getProductDataProvider,
+  type ProductDbProvider,
+} from '@/shared/lib/products/services/product-provider';
 import type { ImageFileRepository } from '@/shared/contracts/files';
 import { mongoImageFileRepository } from './mongo-image-file-repository';
 import { prismaImageFileRepository } from './prisma-image-file-repository';

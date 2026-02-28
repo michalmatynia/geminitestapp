@@ -4,8 +4,7 @@ import type {
 } from '@/shared/contracts/image-studio';
 import { sanitizeStudioProjectId } from '@/features/ai/image-studio/utils/project-session';
 
-export const IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT =
-  'image-studio:analysis-plan-changed';
+export const IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT = 'image-studio:analysis-plan-changed';
 
 export type ImageStudioAnalysisApplyTarget = 'object_layout' | 'auto_scaler';
 
@@ -67,14 +66,10 @@ export type ImageStudioAnalysisSourceSignatureInput = {
   clientProcessingImageSrc?: string | null | undefined;
 };
 
-const ANALYSIS_PLAN_SNAPSHOT_LOCAL_KEY_PREFIX =
-  'image_studio_analysis_plan_snapshot_local_';
-const ANALYSIS_PLAN_SNAPSHOT_SESSION_KEY =
-  'image_studio_analysis_plan_snapshot_session';
-const ANALYSIS_APPLY_INTENT_LOCAL_KEY_PREFIX =
-  'image_studio_analysis_apply_intent_local_';
-const ANALYSIS_APPLY_INTENT_SESSION_KEY =
-  'image_studio_analysis_apply_intent_session';
+const ANALYSIS_PLAN_SNAPSHOT_LOCAL_KEY_PREFIX = 'image_studio_analysis_plan_snapshot_local_';
+const ANALYSIS_PLAN_SNAPSHOT_SESSION_KEY = 'image_studio_analysis_plan_snapshot_session';
+const ANALYSIS_APPLY_INTENT_LOCAL_KEY_PREFIX = 'image_studio_analysis_apply_intent_local_';
+const ANALYSIS_APPLY_INTENT_SESSION_KEY = 'image_studio_analysis_apply_intent_session';
 
 const normalizeSourceSignature = (raw: unknown): string =>
   typeof raw === 'string' ? raw.trim() : '';
@@ -88,8 +83,7 @@ const normalizeSignatureString = (raw: string | null | undefined): string =>
 const normalizeSignatureNumber = (raw: number | null | undefined): string =>
   Number.isFinite(raw) ? String(Math.floor(Number(raw))) : '';
 
-const encodeSignatureValue = (value: string): string =>
-  encodeURIComponent(value);
+const encodeSignatureValue = (value: string): string => encodeURIComponent(value);
 
 const normalizeBase64Signature = (raw: string | null | undefined): string => {
   const normalized = normalizeSignatureString(raw);
@@ -143,23 +137,17 @@ const normalizeLayout = (
   raw: Partial<ImageStudioAnalysisSharedLayout> | null | undefined
 ): ImageStudioAnalysisSharedLayout => {
   const paddingPercent = clampNumber(
-    Number.isFinite(raw?.paddingPercent)
-      ? Number(raw?.paddingPercent)
-      : 8,
+    Number.isFinite(raw?.paddingPercent) ? Number(raw?.paddingPercent) : 8,
     0,
     40
   );
   const paddingXPercent = clampNumber(
-    Number.isFinite(raw?.paddingXPercent)
-      ? Number(raw?.paddingXPercent)
-      : paddingPercent,
+    Number.isFinite(raw?.paddingXPercent) ? Number(raw?.paddingXPercent) : paddingPercent,
     0,
     40
   );
   const paddingYPercent = clampNumber(
-    Number.isFinite(raw?.paddingYPercent)
-      ? Number(raw?.paddingYPercent)
-      : paddingPercent,
+    Number.isFinite(raw?.paddingYPercent) ? Number(raw?.paddingYPercent) : paddingPercent,
     0,
     40
   );
@@ -171,22 +159,10 @@ const normalizeLayout = (
     ? Math.max(1, Math.floor(Number(raw?.targetCanvasHeight)))
     : null;
   const whiteThreshold = Math.round(
-    clampNumber(
-      Number.isFinite(raw?.whiteThreshold)
-        ? Number(raw?.whiteThreshold)
-        : 16,
-      1,
-      80
-    )
+    clampNumber(Number.isFinite(raw?.whiteThreshold) ? Number(raw?.whiteThreshold) : 16, 1, 80)
   );
   const chromaThreshold = Math.round(
-    clampNumber(
-      Number.isFinite(raw?.chromaThreshold)
-        ? Number(raw?.chromaThreshold)
-        : 10,
-      0,
-      80
-    )
+    clampNumber(Number.isFinite(raw?.chromaThreshold) ? Number(raw?.chromaThreshold) : 10, 0, 80)
   );
   const shadowPolicyRaw = raw?.shadowPolicy;
   const shadowPolicy: ImageStudioCenterShadowPolicy =
@@ -218,17 +194,13 @@ const dispatchAnalysisPlanChanged = (): void => {
   window.dispatchEvent(new Event(IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT));
 };
 
-const resolveSnapshotLocalKey = (
-  projectId: string | null | undefined
-): string | null => {
+const resolveSnapshotLocalKey = (projectId: string | null | undefined): string | null => {
   const normalized = projectId?.trim() ?? '';
   if (!normalized) return null;
   return `${ANALYSIS_PLAN_SNAPSHOT_LOCAL_KEY_PREFIX}${sanitizeStudioProjectId(normalized)}`;
 };
 
-const resolveIntentLocalKey = (
-  projectId: string | null | undefined
-): string | null => {
+const resolveIntentLocalKey = (projectId: string | null | undefined): string | null => {
   const normalized = projectId?.trim() ?? '';
   if (!normalized) return null;
   return `${ANALYSIS_APPLY_INTENT_LOCAL_KEY_PREFIX}${sanitizeStudioProjectId(normalized)}`;
@@ -243,17 +215,14 @@ const parseSnapshot = (raw: string | null): ImageStudioAnalysisPlanSnapshot | nu
     const slotId = typeof candidate.slotId === 'string' ? candidate.slotId.trim() : '';
     if (!slotId) return null;
     const sourceSignature = normalizeSourceSignature(candidate.sourceSignature);
-    const effectiveMode = typeof candidate.effectiveMode === 'string'
-      ? candidate.effectiveMode.trim()
-      : '';
+    const effectiveMode =
+      typeof candidate.effectiveMode === 'string' ? candidate.effectiveMode.trim() : '';
     if (!effectiveMode) return null;
-    const policyVersion = typeof candidate.policyVersion === 'string'
-      ? candidate.policyVersion.trim()
-      : '';
+    const policyVersion =
+      typeof candidate.policyVersion === 'string' ? candidate.policyVersion.trim() : '';
     if (!policyVersion) return null;
-    const policyReason = typeof candidate.policyReason === 'string'
-      ? candidate.policyReason.trim()
-      : '';
+    const policyReason =
+      typeof candidate.policyReason === 'string' ? candidate.policyReason.trim() : '';
     if (!policyReason) return null;
     const authoritativeSource =
       candidate.authoritativeSource === 'client_upload'
@@ -271,9 +240,8 @@ const parseSnapshot = (raw: string | null): ImageStudioAnalysisPlanSnapshot | nu
     const confidence = Number.isFinite(candidate.confidence)
       ? clampNumber(Number(candidate.confidence), 0, 1)
       : 0;
-    const savedAt = typeof candidate.savedAt === 'string'
-      ? candidate.savedAt
-      : new Date().toISOString();
+    const savedAt =
+      typeof candidate.savedAt === 'string' ? candidate.savedAt : new Date().toISOString();
     return {
       version: 1,
       slotId,
@@ -307,12 +275,10 @@ const parseIntent = (raw: string | null): ImageStudioAnalysisApplyIntent | null 
         ? candidate.target
         : null;
     if (!target) return null;
-    const runAfterApply = typeof candidate.runAfterApply === 'boolean'
-      ? candidate.runAfterApply
-      : false;
-    const createdAt = typeof candidate.createdAt === 'string'
-      ? candidate.createdAt
-      : new Date().toISOString();
+    const runAfterApply =
+      typeof candidate.runAfterApply === 'boolean' ? candidate.runAfterApply : false;
+    const createdAt =
+      typeof candidate.createdAt === 'string' ? candidate.createdAt : new Date().toISOString();
     return {
       version: 1,
       slotId,
@@ -417,9 +383,7 @@ export const saveImageStudioAnalysisApplyIntent = (
   return normalized;
 };
 
-export const clearImageStudioAnalysisApplyIntent = (
-  projectId: string | null | undefined
-): void => {
+export const clearImageStudioAnalysisApplyIntent = (projectId: string | null | undefined): void => {
   if (typeof window === 'undefined') return;
   const localKey = resolveIntentLocalKey(projectId);
   if (localKey) {

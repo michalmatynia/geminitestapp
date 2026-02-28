@@ -43,7 +43,7 @@ export function useAiPathsValidationActions(args: {
       console.error(fullMessage, context, error);
       toast(fallbackMessage || message, { variant: 'error' });
       void persistLastError(fallbackMessage || message);
-      
+
       const errorToLog = error instanceof Error ? error : new Error(message);
       logClientError(errorToLog, {
         context: {

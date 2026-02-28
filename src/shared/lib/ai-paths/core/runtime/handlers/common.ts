@@ -3,7 +3,10 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { LogicalConditionConfig, LogicalConditionOperator } from '@/shared/contracts/ai-paths-core/nodes';
+import type {
+  LogicalConditionConfig,
+  LogicalConditionOperator,
+} from '@/shared/contracts/ai-paths-core/nodes';
 
 import { DELAY_OUTPUT_PORTS, ROUTER_OUTPUT_PORTS } from '../../constants';
 import { coerceInput, coerceInputArray, safeStringify } from '../../utils';
@@ -36,7 +39,10 @@ export const handleMath: NodeHandler = ({
 }: NodeHandlerContext): RuntimePortValues => {
   const inputValue = coerceInput(nodeInputs['value']);
   const numeric = Number(inputValue);
-  const mathConfig = (node.config?.['math'] ?? { operation: 'add', operand: 0 }) as Record<string, unknown>;
+  const mathConfig = (node.config?.['math'] ?? { operation: 'add', operand: 0 }) as Record<
+    string,
+    unknown
+  >;
   const operand = (mathConfig['operand'] as number) ?? 0;
   if (!Number.isFinite(numeric)) {
     return { value: inputValue };
@@ -82,7 +88,7 @@ export const handleCompare: NodeHandler = ({
     message: 'Comparison failed',
   }) as Record<string, unknown>;
   const currentValue = coerceInput(nodeInputs['value']);
-  const compareTo = compareConfig['compareTo'] as string ?? '';
+  const compareTo = (compareConfig['compareTo'] as string) ?? '';
   const base = safeStringify(currentValue);
   const target = String(compareTo ?? '');
   const value = compareConfig['caseSensitive'] ? base : base.toLowerCase();
@@ -280,7 +286,9 @@ export const handleRouter: NodeHandler = ({
   };
   const config = configRaw as Record<string, unknown>;
   const valueCandidate =
-    config['mode'] === 'valid' ? coerceInput(nodeInputs['valid']) : coerceInput(nodeInputs['value']);
+    config['mode'] === 'valid'
+      ? coerceInput(nodeInputs['valid'])
+      : coerceInput(nodeInputs['value']);
   const compareTarget = (config['compareTo'] as string) ?? '';
   const asString = safeStringify(valueCandidate);
   let shouldPass: boolean;
@@ -329,7 +337,9 @@ export const handleGate: NodeHandler = ({
     return {
       context: null,
       valid: false,
-      errors: errorsInput.length ? errorsInput : [(config['failMessage'] as string) ?? 'Gate blocked'],
+      errors: errorsInput.length
+        ? errorsInput
+        : [(config['failMessage'] as string) ?? 'Gate blocked'],
     };
   }
   return {
@@ -345,7 +355,9 @@ export const handleBundle: NodeHandler = ({
 }: NodeHandlerContext): RuntimePortValues => {
   const configRaw = node.config?.['bundle'] ?? { includePorts: [] };
   const config = configRaw as Record<string, unknown>;
-  const includePorts = (config['includePorts'] as string[])?.length ? (config['includePorts'] as string[]) : node.inputs;
+  const includePorts = (config['includePorts'] as string[])?.length
+    ? (config['includePorts'] as string[])
+    : node.inputs;
   const bundle = includePorts.reduce<Record<string, unknown>>(
     (acc: Record<string, unknown>, port: string) => {
       if (nodeInputs[port] !== undefined) {

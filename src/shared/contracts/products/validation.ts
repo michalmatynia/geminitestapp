@@ -414,4 +414,3 @@ export type ProductValidationPatternFormDataDto = z.infer<
 /**
  * Product Studio Sequencing DTOs
  */
-

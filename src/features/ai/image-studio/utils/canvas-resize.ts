@@ -80,16 +80,9 @@ export function computeCanvasResizeShiftPx(params: {
   const horizontalMode = resolveHorizontalMode(direction);
   const verticalMode = resolveVerticalMode(direction);
 
-  const x = horizontalMode === 'left'
-    ? deltaWidth
-    : horizontalMode === 'center'
-      ? deltaWidth / 2
-      : 0;
-  const y = verticalMode === 'up'
-    ? deltaHeight
-    : verticalMode === 'center'
-      ? deltaHeight / 2
-      : 0;
+  const x =
+    horizontalMode === 'left' ? deltaWidth : horizontalMode === 'center' ? deltaWidth / 2 : 0;
+  const y = verticalMode === 'up' ? deltaHeight : verticalMode === 'center' ? deltaHeight / 2 : 0;
 
   return { x, y };
 }
@@ -171,7 +164,7 @@ const resolveSourceAspectRatio = (
   sourceAspectRatio: number | null | undefined,
   currentImageFrame: NormalizedImageFrame | null | undefined,
   oldCanvasWidth: number,
-  oldCanvasHeight: number,
+  oldCanvasHeight: number
 ): number | null => {
   if (isPositiveFiniteNumber(sourceAspectRatio)) return sourceAspectRatio;
   if (
@@ -225,13 +218,13 @@ export function resolveImageOffsetForCanvasResize(params: {
     params.sourceAspectRatio,
     params.currentImageFrame,
     oldCanvasWidth,
-    oldCanvasHeight,
+    oldCanvasHeight
   );
 
   if (!isPositiveFiniteNumber(sourceAspectRatio)) {
     return {
-      x: currentOffset.x + shift.x - ((newCanvasWidth - oldCanvasWidth) / 2),
-      y: currentOffset.y + shift.y - ((newCanvasHeight - oldCanvasHeight) / 2),
+      x: currentOffset.x + shift.x - (newCanvasWidth - oldCanvasWidth) / 2,
+      y: currentOffset.y + shift.y - (newCanvasHeight - oldCanvasHeight) / 2,
     };
   }
 
@@ -248,16 +241,16 @@ export function resolveImageOffsetForCanvasResize(params: {
 
   const oldFrameX = params.currentImageFrame
     ? params.currentImageFrame.x * oldCanvasWidth
-    : ((oldCanvasWidth - oldContent.width) / 2) + currentOffset.x;
+    : (oldCanvasWidth - oldContent.width) / 2 + currentOffset.x;
   const oldFrameY = params.currentImageFrame
     ? params.currentImageFrame.y * oldCanvasHeight
-    : ((oldCanvasHeight - oldContent.height) / 2) + currentOffset.y;
+    : (oldCanvasHeight - oldContent.height) / 2 + currentOffset.y;
 
   const desiredFrameX = oldFrameX + shift.x;
   const desiredFrameY = oldFrameY + shift.y;
 
-  const nextOffsetX = desiredFrameX - ((newCanvasWidth - newContent.width) / 2);
-  const nextOffsetY = desiredFrameY - ((newCanvasHeight - newContent.height) / 2);
+  const nextOffsetX = desiredFrameX - (newCanvasWidth - newContent.width) / 2;
+  const nextOffsetY = desiredFrameY - (newCanvasHeight - newContent.height) / 2;
 
   return {
     x: Number.isFinite(nextOffsetX) ? nextOffsetX : currentOffset.x,

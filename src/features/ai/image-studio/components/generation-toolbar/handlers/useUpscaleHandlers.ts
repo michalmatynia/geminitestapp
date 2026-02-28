@@ -5,19 +5,18 @@ import {
   type StudioSlotsResponse,
   type ImageStudioSlotRecord,
 } from '@/shared/contracts/image-studio';
-import {
-  UPSCALE_REQUEST_TIMEOUT_MS,
-} from '../GenerationToolbar.utils';
-import {
-  loadImageElement,
-} from '../GenerationToolbarImageUtils';
+import { UPSCALE_REQUEST_TIMEOUT_MS } from '../GenerationToolbar.utils';
+import { loadImageElement } from '../GenerationToolbarImageUtils';
 import { studioKeys } from '../../../hooks/useImageStudioQueries';
 import {
   type GenerationToolbarState,
   type GenerationToolbarHelpers,
 } from '../GenerationToolbar.types';
 
-export function useUpscaleHandlers(state: GenerationToolbarState, helpers: GenerationToolbarHelpers) {
+export function useUpscaleHandlers(
+  state: GenerationToolbarState,
+  helpers: GenerationToolbarHelpers
+) {
   const {
     workingSlot,
     projectId,
@@ -94,7 +93,9 @@ export function useUpscaleHandlers(state: GenerationToolbarState, helpers: Gener
       setSelectedSlotId(response.slot.id);
       toast('Upscale completed.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to upscale image.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to upscale image.', {
+        variant: 'error',
+      });
     } finally {
       setUpscaleBusy(false);
       setUpscaleStatus('idle');

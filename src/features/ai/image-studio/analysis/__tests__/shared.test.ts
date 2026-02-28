@@ -134,7 +134,7 @@ describe('image-studio analysis shared', () => {
     expect(analysis?.detectionUsed).toBe('white_bg_first_colored_pixel');
     expect(analysis?.confidence).toBeGreaterThan(0);
     expect(analysis?.detectionDetails).not.toBeNull();
-     
+
     expect((analysis?.layout as Record<string, unknown>)?.['shadowPolicy']).toBe('auto');
     expect(analysis?.policyVersion).toBe('v2');
     expect(typeof analysis?.policyReason).toBe('string');

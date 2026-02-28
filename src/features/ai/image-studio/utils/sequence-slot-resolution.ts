@@ -19,9 +19,7 @@ const asTrimmedString = (value: string | null | undefined): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
-export const normalizeStudioSlotId = (
-  value: string | null | undefined,
-): string | null => {
+export const normalizeStudioSlotId = (value: string | null | undefined): string | null => {
   const normalized = asTrimmedString(value);
   if (!normalized) return null;
 
@@ -34,9 +32,7 @@ export const normalizeStudioSlotId = (
   return normalized;
 };
 
-export const resolveStudioSlotIdCandidates = (
-  value: string | null | undefined,
-): string[] => {
+export const resolveStudioSlotIdCandidates = (value: string | null | undefined): string[] => {
   const normalized = normalizeStudioSlotId(value);
   if (!normalized) return [];
 
@@ -47,9 +43,7 @@ export const resolveStudioSlotIdCandidates = (
   return Array.from(candidates);
 };
 
-export const slotHasRenderableImage = (
-  slot: SlotWithImageLike | null | undefined,
-): boolean => {
+export const slotHasRenderableImage = (slot: SlotWithImageLike | null | undefined): boolean => {
   if (!slot) return false;
 
   const base64 = asTrimmedString(slot.imageBase64);
@@ -63,11 +57,11 @@ export const slotHasRenderableImage = (
 
 export const resolveRenderableSlotById = (
   slots: ImageStudioSlotRecord[],
-  slotId: string | null | undefined,
+  slotId: string | null | undefined
 ): ImageStudioSlotRecord | null => {
   if (!Array.isArray(slots) || slots.length === 0) return null;
   const byId = new Map<string, ImageStudioSlotRecord>(
-    slots.map((slot: ImageStudioSlotRecord): [string, ImageStudioSlotRecord] => [slot.id, slot]),
+    slots.map((slot: ImageStudioSlotRecord): [string, ImageStudioSlotRecord] => [slot.id, slot])
   );
 
   const candidates = resolveStudioSlotIdCandidates(slotId);

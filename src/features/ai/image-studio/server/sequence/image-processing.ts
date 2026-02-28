@@ -9,10 +9,13 @@ import {
   upscaleImageWithSharp,
   validateUpscaleSourceDimensions,
 } from '@/features/ai/image-studio/server/upscale-utils';
-import { getDiskPathFromPublicPath, getImageFileRepository } from '@/shared/lib/files/services/image-file-service';
-import { 
-  type ImageStudioSequenceCropStep, 
-  type ImageStudioSequenceUpscaleStep 
+import {
+  getDiskPathFromPublicPath,
+  getImageFileRepository,
+} from '@/shared/lib/files/services/image-file-service';
+import {
+  type ImageStudioSequenceCropStep,
+  type ImageStudioSequenceUpscaleStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
 import type { ImageStudioSequenceRunRecord } from '../sequence-run-repository';
 import {
@@ -34,7 +37,7 @@ export async function executeCropStep(params: {
 
   const diskPath = getDiskPathFromPublicPath(sourcePath);
   const metadata = await sharp(diskPath).metadata();
-  
+
   const outputFilename = `crop_${Date.now()}.png`;
   const relativeDir = path.join(sanitizeSegment(run.projectId), 'sequences', run.id);
   const outputDir = path.join(STUDIO_UPLOADS_ROOT, relativeDir);

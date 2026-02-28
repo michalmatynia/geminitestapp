@@ -78,9 +78,8 @@ export function parseImageStudioProjectSession(
   const objectValue = asRecord(parsed);
   if (!objectValue) return null;
 
-  const projectId = typeof objectValue['projectId'] === 'string'
-    ? objectValue['projectId'].trim()
-    : '';
+  const projectId =
+    typeof objectValue['projectId'] === 'string' ? objectValue['projectId'].trim() : '';
   if (!projectId) return null;
 
   const expected = expectedProjectId?.trim();
@@ -102,12 +101,9 @@ export function parseImageStudioProjectSession(
     : [];
 
   const previewMode = objectValue['previewMode'] === '3d' ? '3d' : 'image';
-  const selectedFolder = typeof objectValue['selectedFolder'] === 'string'
-    ? objectValue['selectedFolder'].trim()
-    : '';
-  const promptText = typeof objectValue['promptText'] === 'string'
-    ? objectValue['promptText']
-    : '';
+  const selectedFolder =
+    typeof objectValue['selectedFolder'] === 'string' ? objectValue['selectedFolder'].trim() : '';
+  const promptText = typeof objectValue['promptText'] === 'string' ? objectValue['promptText'] : '';
 
   return {
     version: 1,

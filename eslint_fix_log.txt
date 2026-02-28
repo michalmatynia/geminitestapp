@@ -1,0 +1,9 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/file-upload.tsx
+  324:7  error  Parsing error: '>' expected
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/form-section.tsx
+  116:0  error  Parsing error: '}' expected
+
+✖ 2 problems (2 errors, 0 warnings)
+

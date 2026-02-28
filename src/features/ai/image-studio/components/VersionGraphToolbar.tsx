@@ -24,7 +24,10 @@ import { cn } from '@/shared/utils';
 
 import { useVersionGraphControlsContext } from './VersionGraphControlsContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { getImageStudioDocTooltip, type ImageStudioDocKey } from '@/features/ai/image-studio/utils/studio-docs';
+import {
+  getImageStudioDocTooltip,
+  type ImageStudioDocKey,
+} from '@/features/ai/image-studio/utils/studio-docs';
 
 import type { LayoutMode } from '@/features/ai/image-studio/utils/version-graph';
 

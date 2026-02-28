@@ -30,7 +30,11 @@ import {
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import { badRequestError, configurationError, operationFailedError } from '@/shared/errors/app-error';
+import {
+  badRequestError,
+  configurationError,
+  operationFailedError,
+} from '@/shared/errors/app-error';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const publicRoot = path.join(process.cwd(), 'public');
@@ -52,7 +56,8 @@ const OPENAI_MAX_RETRIES = Math.min(
   5,
   parsePositiveInteger(process.env['IMAGE_STUDIO_OPENAI_MAX_RETRIES'], DEFAULT_OPENAI_MAX_RETRIES)
 );
-const IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT = process.env['IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT'] === 'true';
+const IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT =
+  process.env['IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT'] === 'true';
 const DALLE_PROMPT_MAX_CHARS = 1000;
 const UNKNOWN_PARAMETER_REGEX = /Unknown parameter:\s*['"]([^'"]+)['"]/i;
 const MODEL_MUST_BE_DALLE2_REGEX = /Value must be ['"]dall-e-2['"]/i;
@@ -94,10 +99,12 @@ const imageStudioRunCenterSchema = z.object({
 export const imageStudioRunRequestSchema = z.object({
   projectId: z.string().min(1).max(120),
   operation: z.enum(['generate', 'center_object']).default('generate').optional(),
-  asset: z.object({
-    filepath: z.string().min(1),
-    id: z.string().optional(),
-  }).optional(),
+  asset: z
+    .object({
+      filepath: z.string().min(1),
+      id: z.string().optional(),
+    })
+    .optional(),
   referenceAssets: z
     .array(
       z.object({
@@ -216,23 +223,27 @@ const isProjectScopedAssetPath = (filepath: string, projectId: string): boolean 
 
 const getProjectScopedRoots = (projectId: string): string[] => [
   path.resolve(projectsRoot, projectId),
-  ...PROJECT_SCOPED_STUDIO_ASSET_GROUPS.map((group) => path.resolve(projectsRoot, group, projectId)),
+  ...PROJECT_SCOPED_STUDIO_ASSET_GROUPS.map((group) =>
+    path.resolve(projectsRoot, group, projectId)
+  ),
 ];
 
 const ensureWithinProject = (diskPath: string, projectId: string): void => {
   const resolvedPath = path.resolve(diskPath);
-  const withinProject = getProjectScopedRoots(projectId).some((projectRoot) =>
-    resolvedPath === projectRoot || resolvedPath.startsWith(`${projectRoot}${path.sep}`)
+  const withinProject = getProjectScopedRoots(projectId).some(
+    (projectRoot) =>
+      resolvedPath === projectRoot || resolvedPath.startsWith(`${projectRoot}${path.sep}`)
   );
   if (!withinProject) {
     throw badRequestError('Asset path is outside the project.');
   }
 };
 
-const toOutputFolder = (projectId: string): string =>
-  path.join(projectsRoot, projectId, 'outputs');
+const toOutputFolder = (projectId: string): string => path.join(projectsRoot, projectId, 'outputs');
 
-const mapBackground = (value: string | null | undefined): 'transparent' | 'opaque' | 'auto' | null => {
+const mapBackground = (
+  value: string | null | undefined
+): 'transparent' | 'opaque' | 'auto' | null => {
   if (!value) return null;
   if (value === 'transparent') return 'transparent';
   if (value === 'opaque') return 'opaque';
@@ -240,7 +251,9 @@ const mapBackground = (value: string | null | undefined): 'transparent' | 'opaqu
   return 'auto';
 };
 
-const coerceImageSize = (value: string | null | undefined): OpenAI.Images.ImageEditParams['size'] => {
+const coerceImageSize = (
+  value: string | null | undefined
+): OpenAI.Images.ImageEditParams['size'] => {
   if (!value) return undefined;
   const allowed = new Set([
     'auto',
@@ -256,11 +269,12 @@ const coerceImageSize = (value: string | null | undefined): OpenAI.Images.ImageE
 };
 
 const extractUnknownParameterName = (error: unknown): string | null => {
-  const message = error instanceof Error
-    ? error.message
-    : typeof error === 'object' && error !== null && 'message' in error
-      ? String((error as { message?: unknown }).message ?? '')
-      : '';
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message?: unknown }).message ?? '')
+        : '';
   const match = UNKNOWN_PARAMETER_REGEX.exec(message);
   return match?.[1]?.trim() || null;
 };
@@ -341,9 +355,7 @@ async function toUploadableImageFile(params: {
   return toFile(pngBuffer, `${params.fileNameBase}.png`, { type: 'image/png' });
 }
 
-async function toDalle2UploadableImageFile(
-  diskPath: string,
-): Promise<{
+async function toDalle2UploadableImageFile(diskPath: string): Promise<{
   file: Awaited<ReturnType<typeof toFile>>;
   size: '256x256' | '512x512' | '1024x1024';
 }> {
@@ -379,8 +391,13 @@ async function buildMaskBuffer(params: {
   if (!width || !height) return null;
 
   const polygons = params.polygons
-    .map((poly) => poly.map((p) => `${Math.round(p.x * width)},${Math.round(p.y * height)}`).join(' '))
-    .map((points) => `<polygon points="${points}" fill="${params.invert ? 'white' : 'black'}" fill-opacity="${params.invert ? 1 : 0}" />`)
+    .map((poly) =>
+      poly.map((p) => `${Math.round(p.x * width)},${Math.round(p.y * height)}`).join(' ')
+    )
+    .map(
+      (points) =>
+        `<polygon points="${points}" fill="${params.invert ? 'white' : 'black'}" fill-opacity="${params.invert ? 1 : 0}" />`
+    )
     .join('\n');
 
   const svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
@@ -415,7 +432,9 @@ async function createImageRecord(params: {
         ? 'image/webp'
         : 'image/png';
   const now = new Date();
-  const metadata = await sharp(params.buffer).metadata().catch(() => null);
+  const metadata = await sharp(params.buffer)
+    .metadata()
+    .catch(() => null);
   const width = metadata?.width ?? null;
   const height = metadata?.height ?? null;
 
@@ -480,7 +499,9 @@ async function executeCenterOperation(params: {
     }
     outputBuffer = parsedDataUrl.buffer;
     outputMime = parsedDataUrl.mime;
-    const metadata = await sharp(outputBuffer).metadata().catch(() => null);
+    const metadata = await sharp(outputBuffer)
+      .metadata()
+      .catch(() => null);
     const width = metadata?.width ?? 0;
     const height = metadata?.height ?? 0;
     if (!(width > 0 && height > 0)) {
@@ -509,7 +530,9 @@ async function executeCenterOperation(params: {
     const sourceBuffer = await fs.readFile(params.diskPath).catch(() => {
       throw badRequestError('Asset file not found.');
     });
-    const sourceMetadata = await sharp(sourceBuffer).metadata().catch(() => null);
+    const sourceMetadata = await sharp(sourceBuffer)
+      .metadata()
+      .catch(() => null);
     const sourceWidth = sourceMetadata?.width ?? 0;
     const sourceHeight = sourceMetadata?.height ?? 0;
     if (!(sourceWidth > 0 && sourceHeight > 0)) {
@@ -528,7 +551,10 @@ async function executeCenterOperation(params: {
       try {
         centered = await centerAndScaleObjectByLayout(sourceBuffer, params.request.center?.layout);
       } catch (error) {
-        if (error instanceof Error && /No visible object pixels were detected to center/i.test(error.message)) {
+        if (
+          error instanceof Error &&
+          /No visible object pixels were detected to center/i.test(error.message)
+        ) {
           throw badRequestError('No visible object pixels were detected to center.');
         }
         if (error instanceof Error && /dimensions are invalid/i.test(error.message)) {
@@ -564,7 +590,10 @@ async function executeCenterOperation(params: {
       try {
         centered = await centerObjectByAlpha(sourceBuffer);
       } catch (error) {
-        if (error instanceof Error && /No visible object pixels were detected to center/i.test(error.message)) {
+        if (
+          error instanceof Error &&
+          /No visible object pixels were detected to center/i.test(error.message)
+        ) {
           throw badRequestError('No visible object pixels were detected to center.');
         }
         if (error instanceof Error && /dimensions are invalid/i.test(error.message)) {
@@ -615,7 +644,9 @@ async function executeCenterOperation(params: {
   };
 }
 
-export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageStudioRunExecutionResult> {
+export async function executeImageStudioRun(
+  rawRequest: unknown
+): Promise<ImageStudioRunExecutionResult> {
   const parsed = imageStudioRunRequestSchema.safeParse(rawRequest);
   if (!parsed.success) {
     throw badRequestError('Invalid payload', { errors: parsed.error.format() });
@@ -678,7 +709,8 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   });
 
   const overrides =
-    settings.targetAi.openai.advanced_overrides && typeof settings.targetAi.openai.advanced_overrides === 'object'
+    settings.targetAi.openai.advanced_overrides &&
+    typeof settings.targetAi.openai.advanced_overrides === 'object'
       ? settings.targetAi.openai.advanced_overrides
       : null;
 
@@ -747,7 +779,9 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   const requestMode: 'edit' | 'generate' = hasSourceAsset && diskPath ? 'edit' : 'generate';
   let dalle2BaseSize: '256x256' | '512x512' | '1024x1024' | null = null;
   let imageFiles: Array<Awaited<ReturnType<typeof toFile>>> = [];
-  let payload: OpenAI.Images.ImageEditParamsNonStreaming | OpenAI.Images.ImageGenerateParamsNonStreaming;
+  let payload:
+    | OpenAI.Images.ImageEditParamsNonStreaming
+    | OpenAI.Images.ImageGenerateParamsNonStreaming;
 
   if (requestMode === 'edit') {
     if (!diskPath) {
@@ -857,7 +891,10 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
         if (key === 'image' || key === 'mask' || key === 'prompt') {
           return;
         }
-        if (key === 'output_format' && !(IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT && modelCapabilities.supportsOutputFormat)) {
+        if (
+          key === 'output_format' &&
+          !(IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT && modelCapabilities.supportsOutputFormat)
+        ) {
           return;
         }
         if (key === 'response_format' && !modelCapabilities.supportsResponseFormat) {
@@ -891,9 +928,14 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   for (let attempt = 0; attempt < MAX_UNKNOWN_PARAMETER_RETRIES; attempt += 1) {
     try {
       apiAttemptCount += 1;
-      response = requestMode === 'edit'
-        ? await client.images.edit(payload as OpenAI.Images.ImageEditParamsNonStreaming) as OpenAI.ImagesResponse
-        : await client.images.generate(payload as OpenAI.Images.ImageGenerateParamsNonStreaming) as OpenAI.ImagesResponse;
+      response =
+        requestMode === 'edit'
+          ? ((await client.images.edit(
+              payload as OpenAI.Images.ImageEditParamsNonStreaming
+          )) as OpenAI.ImagesResponse)
+          : ((await client.images.generate(
+              payload as OpenAI.Images.ImageGenerateParamsNonStreaming
+          )) as OpenAI.ImagesResponse);
       break;
     } catch (error) {
       const message = extractErrorMessage(error);
@@ -979,9 +1021,8 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   }
 
   const modelUsedRaw = payloadRecord['model'];
-  const modelUsed = typeof modelUsedRaw === 'string' && modelUsedRaw.trim()
-    ? modelUsedRaw.trim()
-    : resolvedModel;
+  const modelUsed =
+    typeof modelUsedRaw === 'string' && modelUsedRaw.trim() ? modelUsedRaw.trim() : resolvedModel;
   const effectiveSizeRaw = payloadRecord['size'];
   const effectiveQualityRaw = payloadRecord['quality'];
   const effectiveBackgroundRaw = payloadRecord['background'];
@@ -994,15 +1035,16 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
       modelRequested: resolvedModel,
       modelUsed,
       outputFormat: effectiveFormat,
-      requestedOutputCount: Math.max(1, Math.min(10, Math.floor(settings.targetAi.openai.image.n || 1))),
+      requestedOutputCount: Math.max(
+        1,
+        Math.min(10, Math.floor(settings.targetAi.openai.image.n || 1))
+      ),
       responseImageCount: images.length,
       inputImageCount: requestMode === 'edit' ? imageFiles.length : 0,
       usedMask: requestMode === 'edit' && Boolean(payloadRecord['mask']),
       requestedSize: settings.targetAi.openai.image.size ?? null,
       effectiveSize:
-        typeof effectiveSizeRaw === 'string' && effectiveSizeRaw.trim()
-          ? effectiveSizeRaw
-          : null,
+        typeof effectiveSizeRaw === 'string' && effectiveSizeRaw.trim() ? effectiveSizeRaw : null,
       requestedQuality: settings.targetAi.openai.image.quality ?? null,
       effectiveQuality:
         typeof effectiveQualityRaw === 'string' && effectiveQualityRaw.trim()

@@ -30,7 +30,9 @@ export const centerBadRequest = (
 };
 
 export const isClientCenterMode = (mode: ImageStudioCenterMode): boolean =>
-  mode === 'client_alpha_bbox' || mode === 'client_object_layout_v1' || mode === 'client_white_bg_bbox';
+  mode === 'client_alpha_bbox' ||
+  mode === 'client_object_layout_v1' ||
+  mode === 'client_white_bg_bbox';
 
 export const isServerCenterMode = (mode: ImageStudioCenterMode): boolean =>
   mode === 'server_alpha_bbox' || mode === 'server_object_layout_v1';

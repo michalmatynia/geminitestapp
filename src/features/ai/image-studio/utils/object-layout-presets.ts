@@ -111,8 +111,7 @@ const normalizeAdvancedDefaults = (
 const normalizePresetName = (value: string): string =>
   value.trim().replace(/\s+/g, ' ').slice(0, CUSTOM_PRESET_NAME_MAX_LENGTH);
 
-const buildCustomPresetOptionValue = (presetId: string): `user:${string}` =>
-  `user:${presetId}`;
+const buildCustomPresetOptionValue = (presetId: string): `user:${string}` => `user:${presetId}`;
 
 const parseCustomPresetOptionValue = (value: string): string | null =>
   value.startsWith('user:') ? value.slice(5).trim() : null;
@@ -160,7 +159,10 @@ export const OBJECT_LAYOUT_ADVANCED_PRESETS: ObjectLayoutPresetDefinition[] = [
   },
 ];
 
-export const OBJECT_LAYOUT_ADVANCED_PRESET_OPTIONS: Array<{ value: ObjectLayoutPresetOptionValue; label: string }> = [
+export const OBJECT_LAYOUT_ADVANCED_PRESET_OPTIONS: Array<{
+  value: ObjectLayoutPresetOptionValue;
+  label: string;
+}> = [
   ...OBJECT_LAYOUT_ADVANCED_PRESETS.map((preset) => ({
     value: preset.id,
     label: preset.label,
@@ -212,12 +214,13 @@ export const resolveObjectLayoutPresetId = (
   values: Partial<ObjectLayoutAdvancedDefaults> | null | undefined
 ): ObjectLayoutPresetId => {
   const normalized = normalizeAdvancedDefaults(values);
-  const matched = OBJECT_LAYOUT_ADVANCED_PRESETS.find((preset) => (
-    preset.detection === normalized.detection &&
-    preset.shadowPolicy === normalized.shadowPolicy &&
-    preset.whiteThreshold === normalized.whiteThreshold &&
-    preset.chromaThreshold === normalized.chromaThreshold
-  ));
+  const matched = OBJECT_LAYOUT_ADVANCED_PRESETS.find(
+    (preset) =>
+      preset.detection === normalized.detection &&
+      preset.shadowPolicy === normalized.shadowPolicy &&
+      preset.whiteThreshold === normalized.whiteThreshold &&
+      preset.chromaThreshold === normalized.chromaThreshold
+  );
   return matched?.id ?? 'custom';
 };
 
@@ -246,15 +249,15 @@ const getProjectScopedDefaultsLocalKey = (projectId: string | null | undefined):
   return `${OBJECT_LAYOUT_ADVANCED_DEFAULTS_LOCAL_KEY_PREFIX}${sanitizeStudioProjectId(normalized)}`;
 };
 
-const getProjectScopedCustomPresetsLocalKey = (projectId: string | null | undefined): string | null => {
+const getProjectScopedCustomPresetsLocalKey = (
+  projectId: string | null | undefined
+): string | null => {
   const normalized = projectId?.trim() ?? '';
   if (!normalized) return null;
   return `${OBJECT_LAYOUT_CUSTOM_PRESETS_LOCAL_KEY_PREFIX}${sanitizeStudioProjectId(normalized)}`;
 };
 
-const parsePersistedDefaults = (
-  raw: string | null
-): ObjectLayoutAdvancedDefaults | null => {
+const parsePersistedDefaults = (raw: string | null): ObjectLayoutAdvancedDefaults | null => {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -266,9 +269,7 @@ const parsePersistedDefaults = (
   }
 };
 
-const parsePersistedCustomPreset = (
-  value: unknown
-): ObjectLayoutCustomPreset | null => {
+const parsePersistedCustomPreset = (value: unknown): ObjectLayoutCustomPreset | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const candidate = value as Partial<PersistedObjectLayoutCustomPreset>;
   const idRaw = typeof candidate.id === 'string' ? candidate.id.trim() : '';
@@ -300,9 +301,7 @@ const compareCustomPresetsByRecency = (
   return right - left;
 };
 
-const parsePersistedCustomPresets = (
-  raw: string | null
-): ObjectLayoutCustomPreset[] => {
+const parsePersistedCustomPresets = (raw: string | null): ObjectLayoutCustomPreset[] => {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -328,7 +327,9 @@ export const loadObjectLayoutAdvancedDefaults = (
     const fromLocal = parsePersistedDefaults(window.localStorage.getItem(projectKey));
     if (fromLocal) return fromLocal;
   }
-  return parsePersistedDefaults(window.sessionStorage.getItem(OBJECT_LAYOUT_ADVANCED_DEFAULTS_SESSION_KEY));
+  return parsePersistedDefaults(
+    window.sessionStorage.getItem(OBJECT_LAYOUT_ADVANCED_DEFAULTS_SESSION_KEY)
+  );
 };
 
 export const saveObjectLayoutAdvancedDefaults = (
@@ -361,7 +362,9 @@ export const loadObjectLayoutCustomPresets = (
       return parsePersistedCustomPresets(rawLocal);
     }
   }
-  return parsePersistedCustomPresets(window.sessionStorage.getItem(OBJECT_LAYOUT_CUSTOM_PRESETS_SESSION_KEY));
+  return parsePersistedCustomPresets(
+    window.sessionStorage.getItem(OBJECT_LAYOUT_CUSTOM_PRESETS_SESSION_KEY)
+  );
 };
 
 export const persistObjectLayoutCustomPresets = (
@@ -471,6 +474,5 @@ export const deleteObjectLayoutCustomPreset = (
   return next;
 };
 
-export const resolveCustomPresetIdFromOptionValue = (
-  optionValue: string
-): string | null => parseCustomPresetOptionValue(optionValue);
+export const resolveCustomPresetIdFromOptionValue = (optionValue: string): string | null =>
+  parseCustomPresetOptionValue(optionValue);

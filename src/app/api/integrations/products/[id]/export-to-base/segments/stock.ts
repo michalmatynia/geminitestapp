@@ -1,7 +1,4 @@
-import {
-  fetchBaseWarehouses,
-  normalizeStockKey,
-} from '@/features/integrations/server';
+import { fetchBaseWarehouses, normalizeStockKey } from '@/features/integrations/server';
 import { type BaseFieldMapping } from './common';
 
 export const resolveWarehouseAndStockMappings = async ({

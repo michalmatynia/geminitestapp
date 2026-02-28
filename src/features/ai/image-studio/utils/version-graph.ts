@@ -1,7 +1,9 @@
-import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
+import type {
+  ImageStudioSlotRecord,
+  SlotGenerationMetadata,
+} from '@/shared/contracts/image-studio';
 
 import { readMeta } from './metadata';
-
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,11 +50,10 @@ export const CONTENT_OFFSET_Y = 40;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-
 /** Resolve parent IDs from metadata — supports both single and multi-parent. */
 function resolveParentIds(
   meta: SlotGenerationMetadata,
-  slotById: Map<string, ImageStudioSlotRecord>,
+  slotById: Map<string, ImageStudioSlotRecord>
 ): string[] {
   // Multi-parent (merge) takes precedence
   if (Array.isArray(meta.sourceSlotIds) && meta.sourceSlotIds.length > 0) {
@@ -69,7 +70,7 @@ function resolveParentIds(
 function countDescendants(
   nodeId: string,
   childrenMap: Map<string, string[]>,
-  memo: Map<string, number>,
+  memo: Map<string, number>
 ): number {
   const cached = memo.get(nodeId);
   if (cached !== undefined) return cached;
@@ -308,7 +309,7 @@ export function computeVersionGraph(slots: ImageStudioSlotRecord[]): VersionGrap
 export function computeTimelineLayout(
   nodes: VersionNode[],
   edges: VersionEdge[],
-  orientation: 'horizontal' | 'vertical',
+  orientation: 'horizontal' | 'vertical'
 ): { nodes: VersionNode[]; edges: VersionEdge[] } {
   if (nodes.length === 0) return { nodes: [], edges };
 
@@ -392,15 +393,14 @@ export async function exportSvgAsPng(svgElement: SVGSVGElement): Promise<void> {
 
   clone.setAttribute('width', String(width));
   clone.setAttribute('height', String(height));
-  clone.setAttribute(
-    'viewBox',
-    `${bbox.x - padding} ${bbox.y - padding} ${width} ${height}`,
-  );
+  clone.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${width} ${height}`);
 
   // Inline computed styles for key elements
   const rects = clone.querySelectorAll('rect');
   for (const rect of rects) {
-    const original = svgElement.querySelector(`rect[x="${rect.getAttribute('x')}"][y="${rect.getAttribute('y')}"]`);
+    const original = svgElement.querySelector(
+      `rect[x="${rect.getAttribute('x')}"][y="${rect.getAttribute('y')}"]`
+    );
     if (original) {
       const computed = window.getComputedStyle(original);
       if (!rect.getAttribute('fill') || rect.classList.length > 0) {

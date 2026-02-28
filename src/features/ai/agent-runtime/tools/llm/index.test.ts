@@ -50,7 +50,8 @@ describe('agent runtime llm transport', () => {
       messages: [
         {
           role: 'system',
-          content: 'You craft concise web search queries. Return only JSON with keys: query, intent.',
+          content:
+            'You craft concise web search queries. Return only JSON with keys: query, intent.',
         },
         {
           role: 'user',

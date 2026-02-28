@@ -292,9 +292,7 @@ export function AdminCaseResolverCasesProvider({
     const currentRevision = getCaseResolverWorkspaceRevision(workspace);
     const metadata = await fetchCaseResolverWorkspaceMetadata('cases_page_manual_refresh');
     const shouldFetchWorkspace =
-      metadata === null
-        ? true
-        : metadata.exists !== false && metadata.revision >= currentRevision;
+      metadata === null ? true : metadata.exists !== false && metadata.revision >= currentRevision;
     if (!shouldFetchWorkspace) {
       toast('Workspace already up to date.', { variant: 'success' });
       return;
@@ -346,7 +344,13 @@ export function AdminCaseResolverCasesProvider({
     return (): void => {
       isCancelled = true;
     };
-  }, [canHydrateWorkspaceFromStore, lastPersistedWorkspaceRevisionRef, parsedWorkspace, pathname, setWorkspace]);
+  }, [
+    canHydrateWorkspaceFromStore,
+    lastPersistedWorkspaceRevisionRef,
+    parsedWorkspace,
+    pathname,
+    setWorkspace,
+  ]);
 
   useEffect(() => {
     if (pathname !== '/admin/case-resolver/cases') return;

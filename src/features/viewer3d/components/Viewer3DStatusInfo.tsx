@@ -28,21 +28,11 @@ export function Viewer3DStatusInfo(): React.JSX.Element {
         <PropertyRow label='Light' value={lighting} valueClassName='text-gray-300' />
       </div>
       <div className='flex items-center gap-2'>
-        {enableBloom && (
-          <StatusBadge status='Bloom' variant='info' />
-        )}
-        {enablePixelation && (
-          <StatusBadge status='Pixel Art' variant='warning' />
-        )}
-        {enableOrderedDithering && (
-          <StatusBadge status='Ordered Dither' variant='info' />
-        )}
-        {enableDithering && (
-          <StatusBadge status='Dithering' variant='neutral' />
-        )}
-        {enableShadows && (
-          <StatusBadge status='Shadows' variant='info' />
-        )}
+        {enableBloom && <StatusBadge status='Bloom' variant='info' />}
+        {enablePixelation && <StatusBadge status='Pixel Art' variant='warning' />}
+        {enableOrderedDithering && <StatusBadge status='Ordered Dither' variant='info' />}
+        {enableDithering && <StatusBadge status='Dithering' variant='neutral' />}
+        {enableShadows && <StatusBadge status='Shadows' variant='info' />}
       </div>
     </div>
   );

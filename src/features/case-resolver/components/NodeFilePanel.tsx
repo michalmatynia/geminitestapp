@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { ScanLine, FileText, ExternalLink } from 'lucide-react';
 import { Card, PanelHeader, Hint, Button } from '@/shared/ui';

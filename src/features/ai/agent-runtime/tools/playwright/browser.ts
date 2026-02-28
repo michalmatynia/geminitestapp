@@ -129,7 +129,8 @@ export const captureSnapshot = async (
 ): Promise<{ id: string; domText: string; domHtml: string; url: string }> => {
   if (!page) {
     return { id: '', domText: '', domHtml: '', url: '' };
-  }  const domHtml = await page.content();
+  }
+  const domHtml = await page.content();
   const domText = await page.evaluate(
     () => document.body?.innerText || document.documentElement?.innerText || ''
   );

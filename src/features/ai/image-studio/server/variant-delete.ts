@@ -125,7 +125,9 @@ const extractSlotSourceAliases = (slot: ImageStudioSlotRecord): Set<string> => {
   const metadata = asRecord(slot.metadata);
   const sourceAliases = new Set<string>();
 
-  resolveSlotIdAliases(metadata?.['sourceSlotId']).forEach((candidate) => sourceAliases.add(candidate));
+  resolveSlotIdAliases(metadata?.['sourceSlotId']).forEach((candidate) =>
+    sourceAliases.add(candidate)
+  );
   const sourceSlotIds = metadata?.['sourceSlotIds'];
   if (Array.isArray(sourceSlotIds)) {
     sourceSlotIds.forEach((value: unknown) => {
@@ -142,7 +144,7 @@ const matchesVariantRunSelectors = (
     generationRunId: string;
     generationOutputIndex: number | null;
     sourceSlotAliases: string[];
-  },
+  }
 ): boolean => {
   const metadata = asRecord(slot.metadata);
   if (!metadata) return false;
@@ -186,7 +188,9 @@ const isGenerationDerivedSlotMetadata = (metadataRaw: unknown): boolean => {
 const isGenerationDerivedSlot = (slot: ImageStudioSlotRecord): boolean =>
   isGenerationDerivedSlotMetadata(slot.metadata);
 
-const buildFileSelectorsFromSlot = (slot: ImageStudioSlotRecord): {
+const buildFileSelectorsFromSlot = (
+  slot: ImageStudioSlotRecord
+): {
   fileIds: string[];
   filepaths: string[];
 } => {
@@ -235,13 +239,16 @@ const collectMatchingVariantSlots = (
     generationRunId: string;
     generationOutputIndex: number | null;
     sourceSlotAliases: string[];
-  },
+  }
 ): ImageStudioSlotRecord[] => {
   const matchesById = new Set<string>();
 
   for (const slot of slots) {
     const slotAliases = resolveSlotIdAliases(slot.id);
-    if (input.slotAliases.length > 0 && slotAliases.some((alias) => input.slotAliases.includes(alias))) {
+    if (
+      input.slotAliases.length > 0 &&
+      slotAliases.some((alias) => input.slotAliases.includes(alias))
+    ) {
       matchesById.add(slot.id);
       continue;
     }
@@ -288,7 +295,7 @@ const collectMatchingVariantSlots = (
         generationRunId: input.generationRunId,
         generationOutputIndex: null,
         sourceSlotAliases: input.sourceSlotAliases,
-      }),
+      })
     );
     if (runSourceCandidates.length === 1) {
       const fallbackSlotId = runSourceCandidates[0]?.id;
@@ -349,52 +356,58 @@ const defaultDeps: DeleteImageStudioVariantDeps = {
 const emitDeleteTelemetry = async (
   result: DeleteImageStudioVariantResult,
   input: { projectId: string; requestedSlotId: string; requestedAssetId: string; runId: string },
-  deps: DeleteImageStudioVariantDeps,
+  deps: DeleteImageStudioVariantDeps
 ): Promise<void> => {
-  await deps.logMetric({
-    level: result.modeUsed === 'noop' ? 'warn' : 'info',
-    message: 'Image Studio variant delete processed.',
-    context: {
-      metric: 'variant_delete_total',
-      projectId: input.projectId,
-      modeUsed: result.modeUsed,
-      requestedSlotId: input.requestedSlotId || null,
-      requestedAssetId: input.requestedAssetId || null,
-      requestedRunId: input.runId || null,
-      matchedSlotCount: result.matchedSlotIds.length,
-      deletedSlotCount: result.deletedSlotIds.length,
-      deletedFileCount: result.deletedFileIds.length + result.deletedFilepaths.length,
-      warningCount: result.warnings.length,
-    },
-  }).catch(() => {});
+  await deps
+    .logMetric({
+      level: result.modeUsed === 'noop' ? 'warn' : 'info',
+      message: 'Image Studio variant delete processed.',
+      context: {
+        metric: 'variant_delete_total',
+        projectId: input.projectId,
+        modeUsed: result.modeUsed,
+        requestedSlotId: input.requestedSlotId || null,
+        requestedAssetId: input.requestedAssetId || null,
+        requestedRunId: input.runId || null,
+        matchedSlotCount: result.matchedSlotIds.length,
+        deletedSlotCount: result.deletedSlotIds.length,
+        deletedFileCount: result.deletedFileIds.length + result.deletedFilepaths.length,
+        warningCount: result.warnings.length,
+      },
+    })
+    .catch(() => {});
 
   if (result.modeUsed === 'asset_only') {
-    await deps.logMetric({
-      level: 'warn',
-      message: 'Image Studio variant delete fell back to file-only cleanup.',
-      context: {
-        metric: 'variant_delete_file_only_total',
-        projectId: input.projectId,
-      },
-    }).catch(() => {});
+    await deps
+      .logMetric({
+        level: 'warn',
+        message: 'Image Studio variant delete fell back to file-only cleanup.',
+        context: {
+          metric: 'variant_delete_file_only_total',
+          projectId: input.projectId,
+        },
+      })
+      .catch(() => {});
   }
 
   if (result.warnings.some((warning) => warning.includes('orphan'))) {
-    await deps.logMetric({
-      level: 'warn',
-      message: 'Image Studio orphan slot risk detected during variant delete.',
-      context: {
-        metric: 'orphan_slot_detected_total',
-        projectId: input.projectId,
-        warnings: result.warnings,
-      },
-    }).catch(() => {});
+    await deps
+      .logMetric({
+        level: 'warn',
+        message: 'Image Studio orphan slot risk detected during variant delete.',
+        context: {
+          metric: 'orphan_slot_detected_total',
+          projectId: input.projectId,
+          warnings: result.warnings,
+        },
+      })
+      .catch(() => {});
   }
 };
 
 export async function deleteImageStudioVariant(
   input: DeleteImageStudioVariantInput,
-  deps: DeleteImageStudioVariantDeps = defaultDeps,
+  deps: DeleteImageStudioVariantDeps = defaultDeps
 ): Promise<DeleteImageStudioVariantResult> {
   const projectId = asTrimmedString(input.projectId);
   if (!projectId) {
@@ -464,7 +477,7 @@ export async function deleteImageStudioVariant(
 
   let deletedSlotIds = Array.from(deletedSlotIdsSet);
   const stillReferencedMatchedSlots = Array.from(matchedSlotIdsSet).filter(
-    (slotId) => !deletedSlotIdsSet.has(slotId),
+    (slotId) => !deletedSlotIdsSet.has(slotId)
   );
 
   const fileIdsToCleanup = new Set<string>([...fileIdsFromMatchedSlots]);
@@ -487,25 +500,23 @@ export async function deleteImageStudioVariant(
   const hasResidualSlotReferences = stillReferencedMatchedSlots.length > 0;
   if (hasResidualSlotReferences) {
     warnings.push(
-      'Skipped file-only fallback to prevent orphan slot nodes. At least one matched slot could not be removed.',
+      'Skipped file-only fallback to prevent orphan slot nodes. At least one matched slot could not be removed.'
     );
   }
 
   if (modeUsed === 'noop' && !hasResidualSlotReferences) {
     if (variantIntentRequested) {
       warnings.push(
-        'Skipped file-only fallback because variant deletion expects a slot/node match.',
+        'Skipped file-only fallback because variant deletion expects a slot/node match.'
       );
     } else {
       for (const fileId of Array.from(fileIdsToCleanup)) {
         const imageFile = await deps.getImageFileById(fileId);
         if (!imageFile) continue;
-        const productReferenceCount = await deps
-          .countProductsByImageFileId(fileId)
-          .catch(() => 1);
+        const productReferenceCount = await deps.countProductsByImageFileId(fileId).catch(() => 1);
         if (productReferenceCount > 0) {
           warnings.push(
-            `Skipped file deletion for "${fileId}" because it is still referenced by Product Studio image slots.`,
+            `Skipped file deletion for "${fileId}" because it is still referenced by Product Studio image slots.`
           );
           continue;
         }
@@ -547,9 +558,7 @@ export async function deleteImageStudioVariant(
   const postDeleteFileIds = new Set<string>([...fileIdsToCleanup, ...deletedFileIds]);
   const postDeleteFilepaths = new Set<string>([...filepathsToCleanup, ...deletedFilepaths]);
   const canRunOrphanSweep =
-    postDeleteFileIds.size > 0 ||
-    postDeleteFilepaths.size > 0 ||
-    Boolean(requestedRunId);
+    postDeleteFileIds.size > 0 || postDeleteFilepaths.size > 0 || Boolean(requestedRunId);
 
   if (canRunOrphanSweep) {
     const refreshedSlots = await deps.listSlots(projectId);
@@ -634,7 +643,7 @@ export async function deleteImageStudioVariant(
       requestedAssetId,
       runId: requestedRunId,
     },
-    deps,
+    deps
   );
 
   return result;

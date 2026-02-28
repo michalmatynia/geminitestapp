@@ -224,7 +224,8 @@ export const determineBaseImportTerminalStatus = (
   options?: { hasPendingItems?: boolean }
 ): BaseImportRunRecord['status'] => {
   const hadFailures = (stats?.failed ?? 0) > 0;
-  const hadSuccess = (stats?.imported ?? 0) > 0 || (stats?.updated ?? 0) > 0 || (stats?.skipped ?? 0) > 0;
+  const hadSuccess =
+    (stats?.imported ?? 0) > 0 || (stats?.updated ?? 0) > 0 || (stats?.skipped ?? 0) > 0;
   if (options?.hasPendingItems) {
     return hadSuccess ? 'partial_success' : 'failed';
   }

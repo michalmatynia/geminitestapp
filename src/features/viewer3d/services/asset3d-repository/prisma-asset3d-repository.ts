@@ -129,7 +129,9 @@ export const prismaAsset3DRepository: Asset3DRepository = {
       if (data.tags !== undefined) updateData.tags = data.tags;
       if (data.categoryId !== undefined) updateData.category = data.categoryId;
       if (data.metadata !== undefined) {
-        updateData.metadata = data.metadata ? (data.metadata as Prisma.InputJsonValue) : Prisma.JsonNull;
+        updateData.metadata = data.metadata
+          ? (data.metadata as Prisma.InputJsonValue)
+          : Prisma.JsonNull;
       }
       if (data.isPublic !== undefined) updateData.isPublic = data.isPublic;
 

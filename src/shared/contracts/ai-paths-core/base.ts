@@ -59,4 +59,3 @@ export type SvgDetailLevel = 'full' | 'compact' | 'skeleton';
  * Audio Node Types
  */
 export type AudioWaveform = 'sine' | 'square' | 'triangle' | 'sawtooth';
-

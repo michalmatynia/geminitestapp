@@ -5,7 +5,10 @@ import { ChevronDown, ChevronRight, FilePlus, FolderPlus, Copy, Edit2, Trash2 } 
 
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import { fromFolderMasterNodeId, fromNoteMasterNodeId } from '@/features/notesapp/utils/master-folder-tree';
+import {
+  fromFolderMasterNodeId,
+  fromNoteMasterNodeId,
+} from '@/features/notesapp/utils/master-folder-tree';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 
 export type NotesAppTreeNodeProps = FolderTreeViewportRenderNodeInput & {

@@ -137,10 +137,7 @@ export const validateAutoScalerSourceDimensions = (
   return { ok: true };
 };
 
-export const validateAutoScalerOutputDimensions = (
-  width: number,
-  height: number
-): boolean =>
+export const validateAutoScalerOutputDimensions = (width: number, height: number): boolean =>
   width > 0 && height > 0 && width * height <= IMAGE_STUDIO_CENTER_MAX_OUTPUT_PIXELS;
 
 export const normalizeAutoScalerLayoutConfig = (

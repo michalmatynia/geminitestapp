@@ -1,9 +1,5 @@
 import { useCallback } from 'react';
-import type {
-  AiNode,
-  RuntimeState,
-  RuntimePortValues,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
 import {
   evaluateGraphClient as evaluateGraph,
   GraphExecutionError,
@@ -11,14 +7,10 @@ import {
 } from '@/shared/lib/ai-paths';
 import { LOCAL_RUN_STEP_CHUNK } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  createRunId,
-} from '../utils';
+import { createRunId } from '../utils';
 
 import type { LocalExecutionArgs } from '../types';
-import {
-  extractDatabaseRuntimeMetadata,
-} from '../useAiPathsLocalExecution.helpers';
+import { extractDatabaseRuntimeMetadata } from '../useAiPathsLocalExecution.helpers';
 
 export function useLocalExecutionLoop(args: LocalExecutionArgs) {
   const runLocalLoop = useCallback(

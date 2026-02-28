@@ -31,9 +31,7 @@ export function ToolbarButton({
         title={title}
         className={cn(
           'rounded p-1.5 transition-colors',
-          isActive
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-800 text-gray-200 hover:bg-gray-700',
+          isActive ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-200 hover:bg-gray-700',
           disabled && 'cursor-not-allowed opacity-50'
         )}
       >

@@ -13,12 +13,10 @@ export function AnalyticsEventDetails({ event }: AnalyticsEventDetailsProps): Re
   const screenValue = event.screen
     ? `${event.screen.width}×${event.screen.height} @ ${event.screen.dpr}x`
     : '—';
-  const viewportValue = event.viewport
-    ? `${event.viewport.width}×${event.viewport.height}`
-    : '—';
+  const viewportValue = event.viewport ? `${event.viewport.width}×${event.viewport.height}` : '—';
   const languageValue = event.languages?.length
     ? event.languages.join(', ')
-    : event.language ?? '—';
+    : (event.language ?? '—');
   const connectionValue = event.connection
     ? `${event.connection.effectiveType ?? 'n/a'} • ${event.connection.downlink ?? '?'} Mbps • ${event.connection.rtt ?? '?'} ms`
     : '—';
@@ -38,7 +36,10 @@ export function AnalyticsEventDetails({ event }: AnalyticsEventDetailsProps): Re
       <DetailItem label='Connection' value={connectionValue} />
       <DetailItem label='Region' value={event.region ?? '—'} />
       <DetailItem label='City' value={event.city ?? '—'} />
-      <DetailItem label='UTM Parameters' value={event.utm ? JSON.stringify(event.utm, null, 2) : '—'} />
+      <DetailItem
+        label='UTM Parameters'
+        value={event.utm ? JSON.stringify(event.utm, null, 2) : '—'}
+      />
       <DetailItem label='Metadata' value={event.meta ? JSON.stringify(event.meta, null, 2) : '—'} />
     </div>
   );

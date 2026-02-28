@@ -84,7 +84,9 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
 
   const mapperConfig = selectedNode.config?.mapper ?? {
     outputs: (selectedNode.outputs ?? []).length ? selectedNode.outputs : ['value'],
-    mappings: createParserMappings((selectedNode.outputs ?? []).length ? selectedNode.outputs : ['value']),
+    mappings: createParserMappings(
+      (selectedNode.outputs ?? []).length ? selectedNode.outputs : ['value']
+    ),
     jsonIntegrityPolicy: 'repair',
   };
   const outputs = (mapperConfig.outputs ?? []).length

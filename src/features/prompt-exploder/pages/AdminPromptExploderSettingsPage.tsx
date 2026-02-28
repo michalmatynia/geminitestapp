@@ -35,10 +35,7 @@ import {
   normalizePromptExploderValidationRuleStack,
 } from '../validation-stack';
 
-import type {
-  PromptExploderOperationMode,
-  PromptExploderSettings,
-} from '../types';
+import type { PromptExploderOperationMode, PromptExploderSettings } from '../types';
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -134,17 +131,17 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     brainAssignment.enabled && brainAssignment.provider === 'model' && brainEffectiveModelId !== '';
   const providerSnapshot = hasConfiguredBrainModel
     ? inferBrainModelVendor(brainEffectiveModelId)
-    : draft?.ai.provider ?? 'auto';
+    : (draft?.ai.provider ?? 'auto');
   const primaryModelSnapshot = hasConfiguredBrainModel
     ? brainEffectiveModelId
     : draft?.ai.modelId.trim() || '';
   const fallbackModelSnapshot = draft?.ai.fallbackModelId.trim() || '';
   const temperatureSnapshot = hasConfiguredBrainModel
-    ? brainAssignment.temperature ?? draft?.ai.temperature ?? parsedSettings.ai.temperature
-    : draft?.ai.temperature ?? parsedSettings.ai.temperature;
+    ? (brainAssignment.temperature ?? draft?.ai.temperature ?? parsedSettings.ai.temperature)
+    : (draft?.ai.temperature ?? parsedSettings.ai.temperature);
   const maxTokensSnapshot = hasConfiguredBrainModel
-    ? brainAssignment.maxTokens ?? draft?.ai.maxTokens ?? parsedSettings.ai.maxTokens
-    : draft?.ai.maxTokens ?? parsedSettings.ai.maxTokens;
+    ? (brainAssignment.maxTokens ?? draft?.ai.maxTokens ?? parsedSettings.ai.maxTokens)
+    : (draft?.ai.maxTokens ?? parsedSettings.ai.maxTokens);
 
   const runtimeFields: SettingsField<PromptExploderSettings['runtime']>[] = useMemo(
     () => [
@@ -266,8 +263,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     []
   );
 
-  const saveDisabled =
-    !draft || settingsQuery.isLoading || updateSetting.isPending;
+  const saveDisabled = !draft || settingsQuery.isLoading || updateSetting.isPending;
 
   const handleSave = async (): Promise<void> => {
     if (!draft) return;

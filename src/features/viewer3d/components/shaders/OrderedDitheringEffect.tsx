@@ -133,7 +133,5 @@ export const OrderedDitheringPass = forwardRef<
     [gridSize, luminanceMethod, invertColor, pixelSizeRatio, grayscaleOnly, blendFunction]
   );
 
-   
-   
   return <primitive ref={ref} object={effect} />;
 });

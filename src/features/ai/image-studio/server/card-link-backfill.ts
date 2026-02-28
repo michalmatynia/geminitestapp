@@ -57,10 +57,7 @@ function asString(value: unknown): string | null {
 }
 
 function normalizeFolderPath(value: string | null | undefined): string {
-  return (value ?? '')
-    .replace(/\\/g, '/')
-    .replace(/^\/+/, '')
-    .replace(/\/+$/, '');
+  return (value ?? '').replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+$/, '');
 }
 
 function extractSourceSlotIdFromMaskFolder(folderPath: string | null | undefined): string | null {
@@ -92,7 +89,10 @@ function parseMaskRelation(relationType: string | null): { variant?: string; inv
   const parts = normalized.split(':').filter(Boolean);
   const variant = parts[1] && parts[1] !== 'inverted' ? parts[1] : undefined;
   const inverted = parts.includes('inverted') ? true : undefined;
-  return { ...(variant ? { variant } : {}), ...(typeof inverted === 'boolean' ? { inverted } : {}) };
+  return {
+    ...(variant ? { variant } : {}),
+    ...(typeof inverted === 'boolean' ? { inverted } : {}),
+  };
 }
 
 function getSlotTimestamp(slot: SlotRecord): number {
@@ -222,15 +222,12 @@ export async function runImageStudioCardLinkBackfill(
         const role = deriveRoleFromRelationType(relationType);
         const maskPatch = parseMaskRelation(relationType);
 
-        queueMetadata(
-          target.id,
-          {
-            sourceSlotId: source.id,
-            ...(relationType ? { relationType } : {}),
-            ...(role ? { role } : {}),
-            ...maskPatch,
-          }
-        );
+        queueMetadata(target.id, {
+          sourceSlotId: source.id,
+          ...(relationType ? { relationType } : {}),
+          ...(role ? { role } : {}),
+          ...maskPatch,
+        });
 
         if (!asString(targetMetadata['sourceSlotId'])) {
           touchedByReason['slot-link'] += 1;
@@ -242,19 +239,17 @@ export async function runImageStudioCardLinkBackfill(
         const sourceSlotId = asString(metadata['sourceSlotId']);
         if (sourceSlotId) return;
         const inferredSourceId = extractSourceSlotIdFromMaskFolder(slot.folderPath);
-        if (!inferredSourceId || !slotById.has(inferredSourceId) || inferredSourceId === slot.id) return;
+        if (!inferredSourceId || !slotById.has(inferredSourceId) || inferredSourceId === slot.id)
+          return;
         const existingRole = asString(metadata['role'])?.toLowerCase();
         const relationType = asString(metadata['relationType'])?.toLowerCase() ?? 'mask:inferred';
         const maskPatch = parseMaskRelation(relationType);
-        queueMetadata(
-          slot.id,
-          {
-            sourceSlotId: inferredSourceId,
-            relationType,
-            role: existingRole || 'mask',
-            ...maskPatch,
-          }
-        );
+        queueMetadata(slot.id, {
+          sourceSlotId: inferredSourceId,
+          relationType,
+          role: existingRole || 'mask',
+          ...maskPatch,
+        });
         touchedByReason['mask-folder'] += 1;
       });
 
@@ -264,7 +259,13 @@ export async function runImageStudioCardLinkBackfill(
           const sourceSlotId = asString(metadata['sourceSlotId']);
           if (sourceSlotId && sourceSlotId !== slot.id) return false;
           const role = asString(metadata['role'])?.toLowerCase() ?? '';
-          if (role === 'mask' || role === 'generation' || role === 'version' || role === 'variant' || role === 'part') {
+          if (
+            role === 'mask' ||
+            role === 'generation' ||
+            role === 'version' ||
+            role === 'variant' ||
+            role === 'part'
+          ) {
             return false;
           }
           return true;
@@ -280,14 +281,12 @@ export async function runImageStudioCardLinkBackfill(
             rootCandidates.filter((candidate: SlotRecord) => candidate.id !== slot.id)
           );
           if (!source) return;
-          queueMetadata(
-            slot.id,
-            {
-              sourceSlotId: source.id,
-              role: asString(metadata['role'])?.toLowerCase() || 'generation',
-              relationType: asString(metadata['relationType'])?.toLowerCase() || 'generation:inferred',
-            }
-          );
+          queueMetadata(slot.id, {
+            sourceSlotId: source.id,
+            role: asString(metadata['role'])?.toLowerCase() || 'generation',
+            relationType:
+              asString(metadata['relationType'])?.toLowerCase() || 'generation:inferred',
+          });
           touchedByReason['generation-inferred'] += 1;
         });
       }

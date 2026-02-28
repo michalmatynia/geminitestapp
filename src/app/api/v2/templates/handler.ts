@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { 
-  createExportTemplate, 
+import {
+  createExportTemplate,
   listExportTemplates,
   createImportTemplate,
-  listImportTemplates
+  listImportTemplates,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -34,7 +34,7 @@ const templateSchema = z.object({
 });
 
 export async function GET_templates_handler(
-  _req: NextRequest, 
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {
@@ -51,7 +51,7 @@ export async function GET_templates_handler(
 }
 
 export async function POST_templates_handler(
-  req: NextRequest, 
+  req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {

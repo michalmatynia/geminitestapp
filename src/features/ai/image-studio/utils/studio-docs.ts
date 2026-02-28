@@ -10,10 +10,7 @@ import {
 } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 
-export type {
-  ImageStudioDocEntry,
-  ImageStudioDocKey,
-};
+export type { ImageStudioDocEntry, ImageStudioDocKey };
 
 export {
   IMAGE_STUDIO_CROP_DOC_KEYS,
@@ -24,6 +21,8 @@ export {
 };
 
 export function getImageStudioDocTooltip(key: ImageStudioDocKey): string {
-  return getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.imageStudio, key)
-    ?? `${IMAGE_STUDIO_DOCS[key].title}: ${IMAGE_STUDIO_DOCS[key].description}`;
+  return (
+    getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.imageStudio, key) ??
+    `${IMAGE_STUDIO_DOCS[key].title}: ${IMAGE_STUDIO_DOCS[key].description}`
+  );
 }

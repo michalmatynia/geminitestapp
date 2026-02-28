@@ -2,10 +2,9 @@ import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import { readMeta } from './metadata';
 
-
 const resolveSourceIds = (
   slot: ImageStudioSlotRecord,
-  slotById: Map<string, ImageStudioSlotRecord>,
+  slotById: Map<string, ImageStudioSlotRecord>
 ): string[] => {
   const meta = readMeta(slot);
   const ordered: string[] = [];
@@ -19,7 +18,11 @@ const resolveSourceIds = (
     }
   }
 
-  if (typeof meta.sourceSlotId === 'string' && slotById.has(meta.sourceSlotId) && !ordered.includes(meta.sourceSlotId)) {
+  if (
+    typeof meta.sourceSlotId === 'string' &&
+    slotById.has(meta.sourceSlotId) &&
+    !ordered.includes(meta.sourceSlotId)
+  ) {
     ordered.push(meta.sourceSlotId);
   }
 
@@ -75,4 +78,3 @@ export const resolveScopedVersionGraphSlots = (
 
   return slots.filter((slot) => includedIds.has(slot.id));
 };
-

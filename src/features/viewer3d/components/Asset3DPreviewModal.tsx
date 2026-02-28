@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  Download,
-  RotateCcw,
-  Settings2,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react';
+import { Download, RotateCcw, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
 import { useState } from 'react';
 
@@ -16,12 +10,14 @@ import { Button } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
 
-import { Asset3DPreviewModalViewProvider, useAsset3DPreviewModalViewContext } from './context/Asset3DPreviewModalViewContext';
+import {
+  Asset3DPreviewModalViewProvider,
+  useAsset3DPreviewModalViewContext,
+} from './context/Asset3DPreviewModalViewContext';
 import { Viewer3D } from './Viewer3D';
 import { Viewer3DSettingsPanel } from './Viewer3DSettingsPanel';
 import { Viewer3DStatusInfo } from './Viewer3DStatusInfo';
 import { Viewer3DProvider, useViewer3D } from '../context/Viewer3DContext';
-
 
 interface Asset3DPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
 
@@ -138,7 +134,9 @@ export function Asset3DPreviewModal({
       title={asset.name || asset.filename}
       subtitle={formatFileSize(asset.size || 0)}
       size='xl'
-    >      <Viewer3DProvider>
+    >
+      {' '}
+      <Viewer3DProvider>
         <Asset3DPreviewModalViewProvider value={{ asset }}>
           <Asset3DPreviewModalContent />
         </Asset3DPreviewModalViewProvider>

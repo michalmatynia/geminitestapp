@@ -19,11 +19,11 @@ import type {
   CaseResolverCaptureRoleMapping,
   CaseResolverCaptureSettings,
 } from '../settings';
-import type { 
-  CaseResolverCaptureProposal, 
-  CaseResolverCaptureProposalState, 
+import type {
+  CaseResolverCaptureProposal,
+  CaseResolverCaptureProposalState,
   CaseResolverCaptureDocumentDateProposal,
-  CaseResolverCaptureProposalMatchKind 
+  CaseResolverCaptureProposalMatchKind,
 } from './types';
 
 const CAPTURE_ADDRESSER_LABEL_HINTS = ['addresser', 'nadawca', 'sender', 'wnioskodawca'];

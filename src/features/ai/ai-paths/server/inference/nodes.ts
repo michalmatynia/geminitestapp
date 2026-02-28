@@ -180,8 +180,7 @@ Rules:
   {
     type: 'validation_pattern',
     title: 'VP: JSON Cleaner',
-    description:
-      'Clean raw model JSON output by stripping markdown fences and surrounding text.',
+    description: 'Clean raw model JSON output by stripping markdown fences and surrounding text.',
     inputs: ['value', 'prompt', 'result', 'context'],
     outputs: ['value', 'result', 'context', 'valid', 'errors', 'bundle'],
     id: 'node-vp-template-params',

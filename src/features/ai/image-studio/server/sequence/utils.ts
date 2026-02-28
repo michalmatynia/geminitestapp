@@ -18,8 +18,7 @@ export const asTrimmedString = (value: unknown): string | null => {
 export const sanitizeSegment = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
-export const sanitizeFilename = (value: string): string =>
-  value.replace(/[^a-zA-Z0-9._-]/g, '_');
+export const sanitizeFilename = (value: string): string => value.replace(/[^a-zA-Z0-9._-]/g, '_');
 
 export const normalizePublicPath = (filepath: string): string => {
   let normalized = filepath.trim().replace(/\\/g, '/');
@@ -41,13 +40,11 @@ export const guessExtensionFromMime = (mime: string): string => {
 };
 
 export const resolveSlotImagePath = (slot: ImageStudioSlotRecord): string | null =>
-  asTrimmedString(slot.imageFile?.filepath)
-  ?? asTrimmedString(slot.imageUrl)
-  ?? null;
+  asTrimmedString(slot.imageFile?.filepath) ?? asTrimmedString(slot.imageUrl) ?? null;
 
 export const ensureRenderableSlot = (
   slot: ImageStudioSlotRecord | null | undefined,
-  contextLabel: string,
+  contextLabel: string
 ): ImageStudioSlotRecord => {
   if (!slot) {
     throw new Error(`${contextLabel}: Slot record not found.`);

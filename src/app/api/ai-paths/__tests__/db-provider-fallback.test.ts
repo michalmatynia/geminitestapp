@@ -63,7 +63,7 @@ describe('AI Paths DB provider fallback', () => {
     resolveCollectionProviderForRequestMock.mockReset();
     getMongoDbMock.mockReset();
     Object.keys(prismaMock).forEach((key) => {
-      delete (prismaMock)[key];
+      delete prismaMock[key];
     });
 
     requireAiPathsAccessOrInternalMock.mockResolvedValue({

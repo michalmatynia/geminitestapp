@@ -63,9 +63,7 @@ export function DatabaseAiPromptConnectionStatus({
             <div className='h-2 w-2 rounded-full bg-emerald-400'></div>
             <span className='text-[11px] text-emerald-100'>
               Connected to AI Model:{' '}
-              <span className='font-medium text-emerald-200'>
-                {modelLabel}
-              </span>
+              <span className='font-medium text-emerald-200'>{modelLabel}</span>
             </span>
           </div>
           {modelMissingFromCatalog ? (

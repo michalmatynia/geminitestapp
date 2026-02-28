@@ -430,7 +430,8 @@ export const buildSearchQueryWithLLM = async (
     const parsed = await runStructuredAgentRuntimeTask({
       model,
       temperature: 0.2,
-      systemPrompt: 'You craft concise web search queries. Return only JSON with keys: query, intent.',
+      systemPrompt:
+        'You craft concise web search queries. Return only JSON with keys: query, intent.',
       userContent: JSON.stringify({ prompt }),
     });
     const query = typeof parsed?.['query'] === 'string' ? parsed['query'].trim() : '';

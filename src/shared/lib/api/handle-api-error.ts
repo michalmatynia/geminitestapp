@@ -38,7 +38,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
       getErrorFingerprint: (input: ErrorFingerprintParams) => string;
     };
 
-    await  mod.logSystemEvent(params);
+    await mod.logSystemEvent(params);
   } catch (error) {
     logger.error('Failed to log system event via observability feature', error, {
       context: params,

@@ -9,11 +9,7 @@ const Admin3DAssetsContext = createContext<Admin3DAssetsContextValue | null>(nul
 
 export function Admin3DAssetsProvider({ children }: { children: React.ReactNode }) {
   const value = useAdmin3DAssetsState();
-  return (
-    <Admin3DAssetsContext.Provider value={value}>
-      {children}
-    </Admin3DAssetsContext.Provider>
-  );
+  return <Admin3DAssetsContext.Provider value={value}>{children}</Admin3DAssetsContext.Provider>;
 }
 
 export function useAdmin3DAssetsContext() {

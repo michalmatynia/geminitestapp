@@ -12,7 +12,10 @@ import {
   getTreePathLeaf,
 } from '@/shared/utils';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
-import { fromFolderMasterNodeId, fromSlotMasterNodeId } from '@/features/ai/image-studio/utils/master-folder-tree';
+import {
+  fromFolderMasterNodeId,
+  fromSlotMasterNodeId,
+} from '@/features/ai/image-studio/utils/master-folder-tree';
 import { useSlotsActions } from '../../context/SlotsContext';
 
 export function useSlotTreeActions({

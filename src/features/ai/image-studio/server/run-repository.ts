@@ -109,7 +109,7 @@ const createId = (): string => {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
-const toJsonSafe = <T,>(value: T): T => {
+const toJsonSafe = <T>(value: T): T => {
   try {
     return JSON.parse(JSON.stringify(value)) as T;
   } catch {
@@ -125,7 +125,9 @@ const ensureIndexesOnce = (() => {
     try {
       const db = await getMongoDb();
       await Promise.all([
-        db.collection<ImageStudioRunDocument>(COLLECTION).createIndex({ projectId: 1, createdAt: -1 }),
+        db
+          .collection<ImageStudioRunDocument>(COLLECTION)
+          .createIndex({ projectId: 1, createdAt: -1 }),
         db.collection<ImageStudioRunDocument>(COLLECTION).createIndex({ status: 1, updatedAt: -1 }),
       ]);
     } catch {
@@ -152,24 +154,13 @@ const toHistoryEvent = (
   fallbackAt: string
 ): ImageStudioRunHistoryEvent | null => {
   if (!event) return null;
-  const type =
-    typeof event.type === 'string' && event.type.trim()
-      ? event.type.trim()
-      : 'event';
+  const type = typeof event.type === 'string' && event.type.trim() ? event.type.trim() : 'event';
   const message =
-    typeof event.message === 'string' && event.message.trim()
-      ? event.message.trim()
-      : '';
-  const at =
-    typeof event.at === 'string' && event.at.trim()
-      ? event.at
-      : fallbackAt;
+    typeof event.message === 'string' && event.message.trim() ? event.message.trim() : '';
+  const at = typeof event.at === 'string' && event.at.trim() ? event.at : fallbackAt;
   const payload = isRecord(event.payload) ? toJsonSafe(event.payload) : undefined;
   return {
-    id:
-      typeof event.id === 'string' && event.id.trim()
-        ? event.id
-        : createId(),
+    id: typeof event.id === 'string' && event.id.trim() ? event.id : createId(),
     type,
     source: normalizeHistoryEventSource(event.source),
     message,
@@ -193,9 +184,7 @@ const buildHistoryEventDocument = (
   source: normalizeHistoryEventSource(event.source),
   message: event.message.trim(),
   at: event.at?.trim() || fallbackAt,
-  ...(event.payload && isRecord(event.payload)
-    ? { payload: toJsonSafe(event.payload) }
-    : {}),
+  ...(event.payload && isRecord(event.payload) ? { payload: toJsonSafe(event.payload) } : {}),
 });
 
 const toRecord = (doc: ImageStudioRunDocument): ImageStudioRunRecord => ({
@@ -204,7 +193,9 @@ const toRecord = (doc: ImageStudioRunDocument): ImageStudioRunRecord => ({
   status: doc.status,
   dispatchMode: doc.dispatchMode ?? null,
   request: doc.request,
-  expectedOutputs: Number.isFinite(doc.expectedOutputs) ? Math.max(1, Math.floor(doc.expectedOutputs)) : 1,
+  expectedOutputs: Number.isFinite(doc.expectedOutputs)
+    ? Math.max(1, Math.floor(doc.expectedOutputs))
+    : 1,
   outputs: Array.isArray(doc.outputs) ? doc.outputs : [],
   errorMessage: doc.errorMessage ?? null,
   createdAt: doc.createdAt,
@@ -218,7 +209,9 @@ const toRecord = (doc: ImageStudioRunDocument): ImageStudioRunRecord => ({
     : [],
 });
 
-export async function createImageStudioRun(input: CreateImageStudioRunInput): Promise<ImageStudioRunRecord> {
+export async function createImageStudioRun(
+  input: CreateImageStudioRunInput
+): Promise<ImageStudioRunRecord> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const now = new Date().toISOString();
@@ -278,7 +271,8 @@ export async function updateImageStudioRun(
 
   if (update.status !== undefined) patch.status = update.status;
   if (update.dispatchMode !== undefined) patch.dispatchMode = update.dispatchMode;
-  if (update.expectedOutputs !== undefined) patch.expectedOutputs = Math.max(1, Math.min(10, Math.floor(update.expectedOutputs || 1)));
+  if (update.expectedOutputs !== undefined)
+    patch.expectedOutputs = Math.max(1, Math.min(10, Math.floor(update.expectedOutputs || 1)));
   if (update.outputs !== undefined) patch.outputs = update.outputs;
   if (update.errorMessage !== undefined) patch.errorMessage = update.errorMessage;
   if (update.startedAt !== undefined) patch.startedAt = update.startedAt;
@@ -305,11 +299,9 @@ export async function updateImageStudioRun(
     };
   }
 
-  const result = await collection.findOneAndUpdate(
-    { _id: runId },
-    updateDocument,
-    { returnDocument: 'after' }
-  );
+  const result = await collection.findOneAndUpdate({ _id: runId }, updateDocument, {
+    returnDocument: 'after',
+  });
 
   if (!result) return null;
   return toRecord(result);
@@ -322,7 +314,9 @@ export async function listImageStudioRuns(
   const db = await getMongoDb();
   const collection = db.collection<ImageStudioRunDocument>(COLLECTION);
 
-  const limit = Number.isFinite(input.limit) ? Math.max(1, Math.min(200, Math.floor(input.limit ?? 50))) : 50;
+  const limit = Number.isFinite(input.limit)
+    ? Math.max(1, Math.min(200, Math.floor(input.limit ?? 50)))
+    : 50;
   const offset = Number.isFinite(input.offset) ? Math.max(0, Math.floor(input.offset ?? 0)) : 0;
 
   const query: Record<string, unknown> = {};
@@ -331,12 +325,7 @@ export async function listImageStudioRuns(
   if (input.sourceSlotId) query['request.asset.id'] = input.sourceSlotId;
 
   const [docs, total] = await Promise.all([
-    collection
-      .find(query)
-      .sort({ createdAt: -1 })
-      .skip(offset)
-      .limit(limit)
-      .toArray(),
+    collection.find(query).sort({ createdAt: -1 }).skip(offset).limit(limit).toArray(),
     collection.countDocuments(query),
   ]);
 

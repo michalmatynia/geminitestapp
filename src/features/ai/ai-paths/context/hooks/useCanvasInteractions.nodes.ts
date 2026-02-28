@@ -244,10 +244,7 @@ export function useCanvasInteractionsNodes({
 
       if (!activeDragSession && dragState?.nodeId !== nodeId) {
         const dragCandidate = dragCandidateRef.current;
-        if (
-          dragCandidate?.nodeId !== nodeId ||
-          dragCandidate?.pointerId !== event.pointerId
-        ) {
+        if (dragCandidate?.nodeId !== nodeId || dragCandidate?.pointerId !== event.pointerId) {
           return;
         }
         const movedDistance = Math.hypot(

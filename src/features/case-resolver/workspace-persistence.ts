@@ -426,11 +426,7 @@ export const fetchCaseResolverWorkspaceRecord = async (
   let lastFailureMessage = 'Workspace record request failed.';
   let loggedHeavyFallback = false;
   for (const attempt of attempts) {
-    if (
-      !loggedHeavyFallback &&
-      fetchStrategy === 'light_then_heavy' &&
-      attempt.scope === 'heavy'
-    ) {
+    if (!loggedHeavyFallback && fetchStrategy === 'light_then_heavy' && attempt.scope === 'heavy') {
       loggedHeavyFallback = true;
       logCaseResolverWorkspaceEvent({
         source,

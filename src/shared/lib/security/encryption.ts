@@ -17,7 +17,11 @@ function getKey(keyEnv: string, fallbackEnv?: string): Buffer {
   return key;
 }
 
-export function encryptSecret(value: string, keyEnv: string = 'INTEGRATION_ENCRYPTION_KEY', fallbackEnv?: string): string {
+export function encryptSecret(
+  value: string,
+  keyEnv: string = 'INTEGRATION_ENCRYPTION_KEY',
+  fallbackEnv?: string
+): string {
   const key = getKey(keyEnv, fallbackEnv);
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
@@ -26,7 +30,11 @@ export function encryptSecret(value: string, keyEnv: string = 'INTEGRATION_ENCRY
   return [iv.toString('base64'), tag.toString('base64'), encrypted.toString('base64')].join(':');
 }
 
-export function decryptSecret(payload: string, keyEnv: string = 'INTEGRATION_ENCRYPTION_KEY', fallbackEnv?: string): string {
+export function decryptSecret(
+  payload: string,
+  keyEnv: string = 'INTEGRATION_ENCRYPTION_KEY',
+  fallbackEnv?: string
+): string {
   const key = getKey(keyEnv, fallbackEnv);
   const [ivB64, tagB64, dataB64] = payload.split(':');
   if (!ivB64 || !tagB64 || !dataB64) {
@@ -42,8 +50,8 @@ export function decryptSecret(payload: string, keyEnv: string = 'INTEGRATION_ENC
 }
 
 // Legacy aliases for auth
-export const encryptAuthSecret = (value: string): string => 
+export const encryptAuthSecret = (value: string): string =>
   encryptSecret(value, 'AUTH_ENCRYPTION_KEY', 'INTEGRATION_ENCRYPTION_KEY');
 
-export const decryptAuthSecret = (payload: string): string => 
+export const decryptAuthSecret = (payload: string): string =>
   decryptSecret(payload, 'AUTH_ENCRYPTION_KEY', 'INTEGRATION_ENCRYPTION_KEY');

@@ -26,7 +26,10 @@ import {
   type GenerationToolbarHelpers,
 } from '../GenerationToolbar.types';
 
-export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers: GenerationToolbarHelpers) {
+export function useCenterAndScaleHandlers(
+  state: GenerationToolbarState,
+  helpers: GenerationToolbarHelpers
+) {
   const {
     workingSlot,
     projectId,
@@ -60,7 +63,7 @@ export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers
       centerMode === 'client_alpha_bbox' ||
       centerMode === 'client_object_layout_v1' ||
       centerMode === 'client_white_bg_bbox';
-    
+
     if (isClientCenterMode && !clientProcessingImageSrc) {
       toast('No client image source is available for centering/layouting.', { variant: 'info' });
       return;
@@ -71,7 +74,7 @@ export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers
     setCenterBusy(true);
     setCenterStatus('resolving');
     const centerRequestId = buildCenterRequestId();
-    
+
     const buildValidatedCenterRequestPayload = (mode: ImageStudioCenterMode) => {
       const validation = imageStudioCenterRequestSchema.safeParse({
         mode,
@@ -79,7 +82,9 @@ export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers
         ...(centerLayoutPayload ? { layout: centerLayoutPayload } : {}),
       });
       if (!validation.success) {
-        throw new Error(`Center request payload is invalid (${describeSchemaValidationIssue(validation.error.issues)}).`);
+        throw new Error(
+          `Center request payload is invalid (${describeSchemaValidationIssue(validation.error.issues)}).`
+        );
       }
       return validation.data;
     };
@@ -96,9 +101,12 @@ export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers
           centerMode === 'client_object_layout_v1'
             ? (await layoutCanvasImageObject(sourceForClientCenter, centerLayoutPayload)).dataUrl
             : centerMode === 'client_white_bg_bbox'
-              ? await centerCanvasImageObjectWhiteBg(sourceForClientCenter, centerLayoutWhiteThresholdValue)
+              ? await centerCanvasImageObjectWhiteBg(
+                sourceForClientCenter,
+                centerLayoutWhiteThresholdValue
+              )
               : await centerCanvasImageObject(sourceForClientCenter);
-        
+
         const uploadBlob = await dataUrlToUploadBlob(centeredDataUrl);
         setCenterStatus('uploading');
 
@@ -110,22 +118,36 @@ export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers
             formData.append('center', JSON.stringify({ layout: centerLayoutPayload }));
           }
           formData.append('image', uploadBlob, `center-client-${Date.now()}.png`);
-          return api.post<unknown>(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`, formData, {
-            signal: abortController.signal,
-            timeout: 60000,
-            headers: { 'x-idempotency-key': centerRequestId },
-          }).then(raw => imageStudioCenterResponseSchema.parse(raw));
+          return api
+            .post<unknown>(
+              `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
+              formData,
+              {
+                signal: abortController.signal,
+                timeout: 60000,
+                headers: { 'x-idempotency-key': centerRequestId },
+              }
+            )
+            .then((raw) => imageStudioCenterResponseSchema.parse(raw));
         }, abortController.signal);
       } else {
         setCenterStatus('processing');
         const payload = buildValidatedCenterRequestPayload(centerMode as ImageStudioCenterMode);
-        response = await withCenterRetry(() => 
-          api.post<unknown>(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`, payload, {
-            signal: abortController.signal,
-            timeout: 60000,
-            headers: { 'x-idempotency-key': centerRequestId },
-          }).then(raw => imageStudioCenterResponseSchema.parse(raw)), 
-        abortController.signal);
+        response = await withCenterRetry(
+          () =>
+            api
+              .post<unknown>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
+                payload,
+                {
+                  signal: abortController.signal,
+                  timeout: 60000,
+                  headers: { 'x-idempotency-key': centerRequestId },
+                }
+              )
+              .then((raw) => imageStudioCenterResponseSchema.parse(raw)),
+          abortController.signal
+        );
       }
 
       const normalizedProjectId = projectId?.trim() ?? '';
@@ -134,7 +156,10 @@ export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers
         void invalidateImageStudioSlots(queryClient, normalizedProjectId);
         const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
         queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
-          slots: [response.slot, ...slotsSnapshot.filter((s: ImageStudioSlotRecord) => s.id !== response.slot.id)],
+          slots: [
+            response.slot,
+            ...slotsSnapshot.filter((s: ImageStudioSlotRecord) => s.id !== response.slot.id),
+          ],
         });
       }
 
@@ -146,7 +171,9 @@ export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers
         toast('Centering canceled.', { variant: 'info' });
         return;
       }
-      toast(error instanceof Error ? error.message : 'Failed to center image object.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to center image object.', {
+        variant: 'error',
+      });
     } finally {
       centerRequestInFlightRef.current = false;
       centerAbortControllerRef.current = null;
@@ -170,7 +197,7 @@ export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers
     workingSlotImageSrc,
     centerAbortControllerRef,
     centerRequestInFlightRef,
-    describeSchemaValidationIssue
+    describeSchemaValidationIssue,
   ]);
 
   const handleCancelCenter = useCallback((): void => {

@@ -98,7 +98,9 @@ export const handleStringMutator: NodeHandler = ({
   }
   const stringConfigRaw = node.config?.['stringMutator'];
   const stringConfig = (stringConfigRaw as Record<string, unknown>) ?? { operations: [] };
-  const operations = Array.isArray(stringConfig['operations']) ? (stringConfig['operations'] as StringMutatorOperation[]) : [];
+  const operations = Array.isArray(stringConfig['operations'])
+    ? (stringConfig['operations'] as StringMutatorOperation[])
+    : [];
   let current = safeStringify(rawInput);
   operations.forEach((operation: StringMutatorOperation): void => {
     switch (operation.type) {

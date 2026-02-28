@@ -57,7 +57,10 @@ export function SettingsStoreProvider({
   const isAdminRoute = pathname.startsWith('/admin');
   const shouldSuppressLiteQuery = !useAdmin && (suppressOwnQuery || isAdminRoute);
   const shouldSuppressAdminQuery = useAdmin && suppressOwnQuery;
-  const adminQuery = useSettingsMap({ scope: 'light', enabled: useAdmin && !shouldSuppressAdminQuery });
+  const adminQuery = useSettingsMap({
+    scope: 'light',
+    enabled: useAdmin && !shouldSuppressAdminQuery,
+  });
   const liteQuery = useLiteSettingsMap({ enabled: !useAdmin && !shouldSuppressLiteQuery });
   const settingsQuery = useAdmin ? adminQuery : liteQuery;
   const mapData = settingsQuery.data;

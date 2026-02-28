@@ -26,7 +26,11 @@ import { useVersionGraphShortcuts } from '../hooks/useVersionGraphShortcuts';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import { readMeta } from '@/features/ai/image-studio/utils/metadata';
 import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
-import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, exportSvgAsPng } from '@/features/ai/image-studio/utils/version-graph';
+import {
+  CONTENT_OFFSET_X,
+  CONTENT_OFFSET_Y,
+  exportSvgAsPng,
+} from '@/features/ai/image-studio/utils/version-graph';
 
 // ── Component ────────────────────────────────────────────────────────────────
 

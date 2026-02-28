@@ -21,9 +21,8 @@ export const fontFamilyMark = Mark.create({
           return value && value.length > 0 ? value : null;
         },
         renderHTML: (attributes: Record<string, unknown>) => {
-          const fontFamily = typeof attributes['fontFamily'] === 'string'
-            ? attributes['fontFamily'].trim()
-            : '';
+          const fontFamily =
+            typeof attributes['fontFamily'] === 'string' ? attributes['fontFamily'].trim() : '';
           if (!fontFamily) {
             return {};
           }
@@ -85,9 +84,10 @@ export const inlineTextAlignMark = Mark.create({
           return null;
         },
         renderHTML: (attributes: Record<string, unknown>) => {
-          const textAlign = typeof attributes['textAlign'] === 'string'
-            ? attributes['textAlign'].trim().toLowerCase()
-            : '';
+          const textAlign =
+            typeof attributes['textAlign'] === 'string'
+              ? attributes['textAlign'].trim().toLowerCase()
+              : '';
           if (!TEXT_ALIGN_OPTIONS.includes(textAlign as TextAlignOption) || textAlign === 'left') {
             return {};
           }
@@ -117,10 +117,14 @@ export const textAlignExtension = Extension.create({
                 : 'left';
             },
             renderHTML: (attributes: Record<string, unknown>) => {
-              const textAlign = typeof attributes['textAlign'] === 'string'
-                ? attributes['textAlign'].trim().toLowerCase()
-                : '';
-              if (!TEXT_ALIGN_OPTIONS.includes(textAlign as TextAlignOption) || textAlign === 'left') {
+              const textAlign =
+                typeof attributes['textAlign'] === 'string'
+                  ? attributes['textAlign'].trim().toLowerCase()
+                  : '';
+              if (
+                !TEXT_ALIGN_OPTIONS.includes(textAlign as TextAlignOption) ||
+                textAlign === 'left'
+              ) {
                 return {};
               }
               return { style: `text-align: ${textAlign}` };

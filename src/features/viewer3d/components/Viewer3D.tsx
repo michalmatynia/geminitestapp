@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -112,11 +111,7 @@ function Loader(): React.JSX.Element {
   );
 }
 
-function AutoRotateGroup({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.JSX.Element {
+function AutoRotateGroup({ children }: { children: React.ReactNode }): React.JSX.Element {
   const context = useOptionalViewer3D();
   const autoRotate = context?.autoRotate ?? true;
   const autoRotateSpeed = context?.autoRotateSpeed ?? 2;
@@ -146,20 +141,15 @@ function Model3D({
   const context = useOptionalViewer3D();
   const enableShadows = context?.enableShadows ?? true;
   const replacedTextureRef = useRef(false);
-  const { scene } = useGLTF(
-    url,
-    true,
-    true,
-    (loader: { manager: THREE.LoadingManager }) => {
-      loader.manager.setURLModifier((resourceUrl: string) => {
-        if (resourceUrl.startsWith('blob:')) {
-          replacedTextureRef.current = true;
-          return FALLBACK_TEXTURE_DATA_URL;
-        }
-        return resourceUrl;
-      });
-    }
-  );
+  const { scene } = useGLTF(url, true, true, (loader: { manager: THREE.LoadingManager }) => {
+    loader.manager.setURLModifier((resourceUrl: string) => {
+      if (resourceUrl.startsWith('blob:')) {
+        replacedTextureRef.current = true;
+        return FALLBACK_TEXTURE_DATA_URL;
+      }
+      return resourceUrl;
+    });
+  });
   const modelRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
@@ -169,9 +159,10 @@ function Model3D({
           context: {
             source: 'Viewer3D',
             action: 'loadScene',
-            message: 'Model references blob: textures. Re-export as .glb or embed textures to restore materials.',
-            level: 'warn'
-          }
+            message:
+              'Model references blob: textures. Re-export as .glb or embed textures to restore materials.',
+            level: 'warn',
+          },
         });
       }
       // Optimize materials for PBR rendering
@@ -204,9 +195,7 @@ function Model3D({
       <Html center>
         <div className='text-red-400 text-center p-4 bg-black/50 rounded'>
           <p>Model not found</p>
-          <p className='text-sm text-gray-400 mt-2'>
-            The 3D asset could not be loaded
-          </p>
+          <p className='text-sm text-gray-400 mt-2'>The 3D asset could not be loaded</p>
         </div>
       </Html>
     );
@@ -231,16 +220,9 @@ function Ground(): React.JSX.Element | null {
   if (!showGround) return null;
 
   return (
-    <mesh
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, -0.001, 0]}
-      receiveShadow
-    >
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]} receiveShadow>
       <planeGeometry args={[50, 50]} />
-      <shadowMaterial
-        transparent
-        opacity={0.4}
-      />
+      <shadowMaterial transparent opacity={0.4} />
     </mesh>
   );
 }
@@ -463,21 +445,47 @@ export function Viewer3D({
     legacyProp: Viewer3DSettings[K] | undefined,
     defaultValue: Required<Viewer3DSettings>[K]
   ): Required<Viewer3DSettings>[K] => {
-    if (propSettings?.[key] !== undefined) return propSettings[key] as Required<Viewer3DSettings>[K];
+    if (propSettings?.[key] !== undefined)
+      return propSettings[key] as Required<Viewer3DSettings>[K];
     if (legacyProp !== undefined) return legacyProp as Required<Viewer3DSettings>[K];
-    if (context?.[key as keyof typeof context] !== undefined) return context[key as keyof typeof context] as Required<Viewer3DSettings>[K];
+    if (context?.[key as keyof typeof context] !== undefined)
+      return context[key as keyof typeof context] as Required<Viewer3DSettings>[K];
     return defaultValue;
   };
 
   const backgroundColor = getSetting('backgroundColor', propBackgroundColor, '#1a1a2e');
   const enableDithering = getSetting('enableDithering', propEnableDithering, false);
   const ditheringIntensity = getSetting('ditheringIntensity', propDitheringIntensity, 1.0);
-  const enableOrderedDithering = getSetting('enableOrderedDithering', propEnableOrderedDithering, false);
-  const orderedDitheringGridSize = getSetting('orderedDitheringGridSize', propOrderedDitheringGridSize, 4);
-  const orderedDitheringPixelSizeRatio = getSetting('orderedDitheringPixelSizeRatio', propOrderedDitheringPixelSizeRatio, 1);
-  const orderedDitheringGrayscaleOnly = getSetting('orderedDitheringGrayscaleOnly', propOrderedDitheringGrayscaleOnly, false);
-  const orderedDitheringInvertColor = getSetting('orderedDitheringInvertColor', propOrderedDitheringInvertColor, false);
-  const orderedDitheringLuminanceMethod = getSetting('orderedDitheringLuminanceMethod', propOrderedDitheringLuminanceMethod, 1);
+  const enableOrderedDithering = getSetting(
+    'enableOrderedDithering',
+    propEnableOrderedDithering,
+    false
+  );
+  const orderedDitheringGridSize = getSetting(
+    'orderedDitheringGridSize',
+    propOrderedDitheringGridSize,
+    4
+  );
+  const orderedDitheringPixelSizeRatio = getSetting(
+    'orderedDitheringPixelSizeRatio',
+    propOrderedDitheringPixelSizeRatio,
+    1
+  );
+  const orderedDitheringGrayscaleOnly = getSetting(
+    'orderedDitheringGrayscaleOnly',
+    propOrderedDitheringGrayscaleOnly,
+    false
+  );
+  const orderedDitheringInvertColor = getSetting(
+    'orderedDitheringInvertColor',
+    propOrderedDitheringInvertColor,
+    false
+  );
+  const orderedDitheringLuminanceMethod = getSetting(
+    'orderedDitheringLuminanceMethod',
+    propOrderedDitheringLuminanceMethod,
+    1
+  );
   const enablePixelation = getSetting('enablePixelation', propEnablePixelation, false);
   const pixelSize = getSetting('pixelSize', propPixelSize, 6);
   const enableBloom = getSetting('enableBloom', propEnableBloom, false);
@@ -504,10 +512,23 @@ export function Viewer3D({
   const effects = useMemo(() => {
     const effectsList: React.ReactElement[] = [];
     if (enableAntiAliasing) effectsList.push(<SMAA key='smaa' />);
-    if (enableToneMapping) effectsList.push(<ToneMapping key='tonemapping' mode={ToneMappingMode.ACES_FILMIC} />);
-    if (enableBloom) effectsList.push(<Bloom key='bloom' intensity={bloomIntensity} luminanceThreshold={0.9} luminanceSmoothing={0.025} />);
-    if (enableVignette) effectsList.push(<Vignette key='vignette' offset={0.3} darkness={0.5} blendFunction={BlendFunction.NORMAL} />);
-    if (enablePixelation) effectsList.push(<PixelationPass key='pixelation' pixelSize={Math.max(1, pixelSize)} />);
+    if (enableToneMapping)
+      effectsList.push(<ToneMapping key='tonemapping' mode={ToneMappingMode.ACES_FILMIC} />);
+    if (enableBloom)
+      effectsList.push(
+        <Bloom
+          key='bloom'
+          intensity={bloomIntensity}
+          luminanceThreshold={0.9}
+          luminanceSmoothing={0.025}
+        />
+      );
+    if (enableVignette)
+      effectsList.push(
+        <Vignette key='vignette' offset={0.3} darkness={0.5} blendFunction={BlendFunction.NORMAL} />
+      );
+    if (enablePixelation)
+      effectsList.push(<PixelationPass key='pixelation' pixelSize={Math.max(1, pixelSize)} />);
     if (enableOrderedDithering) {
       effectsList.push(
         <OrderedDitheringPass
@@ -520,7 +541,8 @@ export function Viewer3D({
         />
       );
     }
-    if (enableDithering) effectsList.push(<DitheringPass key='dithering' intensity={ditheringIntensity} />);
+    if (enableDithering)
+      effectsList.push(<DitheringPass key='dithering' intensity={ditheringIntensity} />);
     return effectsList;
   }, [
     enableAntiAliasing,
@@ -555,13 +577,13 @@ export function Viewer3D({
     </Model3DErrorBoundary>
   );
 
-  const framedModel = autoFit
-    ? (
-      <Bounds fit clip observe margin={1.2}>
-        {modelNode}
-      </Bounds>
-    )
-    : modelNode;
+  const framedModel = autoFit ? (
+    <Bounds fit clip observe margin={1.2}>
+      {modelNode}
+    </Bounds>
+  ) : (
+    modelNode
+  );
 
   return (
     <div className={className}>
@@ -598,14 +620,10 @@ export function Viewer3D({
               polar={[-Math.PI / 4, Math.PI / 4]}
               azimuth={[-Math.PI / 4, Math.PI / 4]}
             >
-              <Center>
-                {framedModel}
-              </Center>
+              <Center>{framedModel}</Center>
             </PresentationControls>
           ) : (
-            <Center>
-              {framedModel}
-            </Center>
+            <Center>{framedModel}</Center>
           )}
 
           {/* Ground and shadows */}
@@ -642,9 +660,7 @@ export function Viewer3D({
 
         {/* Post-processing */}
         {hasPostProcessing && effects.length > 0 && (
-          <EffectComposer multisampling={0}>
-            {effects}
-          </EffectComposer>
+          <EffectComposer multisampling={0}>{effects}</EffectComposer>
         )}
       </Canvas>
     </div>

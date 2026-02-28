@@ -74,9 +74,15 @@ describe('object layout presets', () => {
         updatedAt: '2026-02-20T12:00:00.000Z',
       },
     ];
-    const optionValue = resolveObjectLayoutPresetOptionValue(customPresets[0]!.values, customPresets);
+    const optionValue = resolveObjectLayoutPresetOptionValue(
+      customPresets[0]!.values,
+      customPresets
+    );
     expect(optionValue).toBe('user:custom_1');
-    expect(getObjectLayoutPresetValuesFromOption(optionValue, customPresets)).toEqual(customPresets[0]!.values);  });
+    expect(getObjectLayoutPresetValuesFromOption(optionValue, customPresets)).toEqual(
+      customPresets[0]!.values
+    );
+  });
 
   it('builds options with custom presets and current custom fallback', () => {
     const options = buildObjectLayoutPresetOptions([

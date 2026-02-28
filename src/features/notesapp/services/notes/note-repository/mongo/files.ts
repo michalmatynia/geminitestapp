@@ -1,16 +1,12 @@
 import { randomUUID } from 'crypto';
 import type { Filter, WithId } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type {
-  NoteFileDocument,
-} from '@/features/notesapp/services/notes/types/mongo-note-types';
+import type { NoteFileDocument } from '@/features/notesapp/services/notes/types/mongo-note-types';
 import type {
   NoteFileDto as NoteFileRecord,
   CreateNoteFileDto as NoteFileCreateInput,
 } from '@/shared/contracts/notes';
-import {
-  toNoteFileResponse,
-} from '../mongo-note-repository-utils';
+import { toNoteFileResponse } from '../mongo-note-repository-utils';
 import { noteFileCollectionName } from './common';
 
 export const mongoFileImpl = {

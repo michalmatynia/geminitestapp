@@ -8,9 +8,7 @@ import {
   canDropImageStudioExternalNode,
   resolveImageStudioExternalDropAction,
 } from '@/features/ai/image-studio/utils/studio-master-tree-external-drop';
-import {
-  defaultFolderTreeProfilesV2,
-} from '@/shared/utils/folder-tree-profiles-v2';
+import { defaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const folderNode = (

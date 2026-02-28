@@ -103,9 +103,10 @@ export const readStoredSettingValue = async (key: string): Promise<string | null
     return cachedBrainSettingsValue;
   }
 
-  const provider = typeof getAppDbProvider === 'function' 
-    ? await Promise.resolve(getAppDbProvider()).catch(() => null)
-    : null;
+  const provider =
+    typeof getAppDbProvider === 'function'
+      ? await Promise.resolve(getAppDbProvider()).catch(() => null)
+      : null;
 
   const tryPrisma = async () => {
     try {

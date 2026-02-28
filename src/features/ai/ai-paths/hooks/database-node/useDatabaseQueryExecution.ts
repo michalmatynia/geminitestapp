@@ -1,15 +1,11 @@
 import { useCallback, useState } from 'react';
-import { 
-  renderTemplate, 
-  safeParseJson, 
-  dbApi,
-} from '@/shared/lib/ai-paths';
+import { renderTemplate, safeParseJson, dbApi } from '@/shared/lib/ai-paths';
 import { buildPresetQueryTemplate } from '@/features/ai/ai-paths/config/query-presets';
-import type { 
-  DatabaseAction, 
-  DatabaseConfig, 
-  DbQueryConfig, 
-  RuntimeState 
+import type {
+  DatabaseAction,
+  DatabaseConfig,
+  DbQueryConfig,
+  RuntimeState,
 } from '@/shared/lib/ai-paths';
 
 export function useDatabaseQueryExecution(args: {
@@ -40,7 +36,11 @@ export function useDatabaseQueryExecution(args: {
       let actionPayload: Record<string, unknown> = {};
 
       if (actionCategory === 'update') {
-        const renderedFilter = renderTemplate(args.queryConfig.queryTemplate || '{}', ctx, val ?? '');
+        const renderedFilter = renderTemplate(
+          args.queryConfig.queryTemplate || '{}',
+          ctx,
+          val ?? ''
+        );
         const parsedFilter = safeParseJson(renderedFilter);
         if (parsedFilter.error) throw new Error(parsedFilter.error);
 

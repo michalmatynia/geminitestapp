@@ -5,18 +5,14 @@ import React from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+import { Button, Input, Alert, Tag, MetadataItem } from '@/shared/ui';
 import {
-  Button,
-  Input,
-  Alert,
-  Tag,
-  MetadataItem,
-} from '@/shared/ui';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 import { useAsset3DForm } from '../hooks/useAsset3DForm';
-
 
 interface Asset3DEditModalProps extends EntityModalProps<Asset3DRecord> {}
 
@@ -98,8 +94,9 @@ export function Asset3DEditModal({
             value={formatFileSize(asset.size || 0)}
             variant='card'
             className='p-3'
-          />        </div>
-      )
+          />{' '}
+        </div>
+      ),
     },
     {
       key: 'name',
@@ -134,7 +131,7 @@ export function Asset3DEditModal({
             ))}
           </datalist>
         </div>
-      )
+      ),
     },
     {
       key: 'name', // Custom field for Tags
@@ -186,14 +183,14 @@ export function Asset3DEditModal({
             </div>
           )}
         </div>
-      )
+      ),
     },
     {
       key: 'isPublic',
       label: 'Public visibility',
       type: 'checkbox',
       helperText: 'Make this asset accessible publicly',
-    }
+    },
   ];
 
   return (

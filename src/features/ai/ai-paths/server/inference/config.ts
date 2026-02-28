@@ -1,10 +1,10 @@
 import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import type { PathConfig, AiNode } from '@/shared/contracts/ai-paths';
-import { 
-  PARAMETER_INFERENCE_PATH_ID, 
-  PARAMETER_INFERENCE_PATH_NAME, 
-  PARAMETER_INFERENCE_TRIGGER_BUTTON_ID 
+import {
+  PARAMETER_INFERENCE_PATH_ID,
+  PARAMETER_INFERENCE_PATH_NAME,
+  PARAMETER_INFERENCE_TRIGGER_BUTTON_ID,
 } from '../settings-store-parameter-inference';
 import { getParameterInferenceNodes } from './nodes';
 import { PARAMETER_INFERENCE_PATH_EDGES } from './edges';

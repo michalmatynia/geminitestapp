@@ -6,7 +6,7 @@ const captureException = async (
 ): Promise<void> => {
   try {
     const mod = await import('@/shared/lib/observability/system-logger');
-    await  mod.ErrorSystem.captureException(error, {
+    await mod.ErrorSystem.captureException(error, {
       service: context.source,
       ...context.context,
       critical: context.critical,

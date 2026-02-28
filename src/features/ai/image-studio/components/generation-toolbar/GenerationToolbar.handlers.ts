@@ -4,12 +4,8 @@ import {
   type GenerationToolbarState,
   type GenerationToolbarHandlers,
 } from './GenerationToolbar.types';
-import {
-  describeSchemaValidationIssue,
-} from './GenerationToolbar.utils';
-import {
-  type ImageStudioSlotRecord,
-} from '@/shared/contracts/image-studio';
+import { describeSchemaValidationIssue } from './GenerationToolbar.utils';
+import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import { useCropHandlers } from './handlers/useCropHandlers';
 import { useUpscaleHandlers } from './handlers/useUpscaleHandlers';
@@ -18,9 +14,7 @@ import { useCenterAndScaleHandlers } from './handlers/useCenterAndScaleHandlers'
 export function useGenerationToolbarHandlers(
   state: GenerationToolbarState
 ): GenerationToolbarHandlers {
-  const {
-    queryClient,
-  } = state;
+  const { queryClient } = state;
 
   const fetchProjectSlots = useCallback(
     async (id: string): Promise<ImageStudioSlotRecord[]> => {
@@ -32,10 +26,13 @@ export function useGenerationToolbarHandlers(
     [queryClient]
   );
 
-  const helpers = useMemo(() => ({
-    fetchProjectSlots,
-    describeSchemaValidationIssue,
-  }), [fetchProjectSlots]);
+  const helpers = useMemo(
+    () => ({
+      fetchProjectSlots,
+      describeSchemaValidationIssue,
+    }),
+    [fetchProjectSlots]
+  );
 
   const crop = useCropHandlers(state, helpers);
   const upscale = useUpscaleHandlers(state, helpers);

@@ -2,7 +2,6 @@ import 'server-only';
 
 import { createHash } from 'crypto';
 
-
 import type {
   AnalyticsConnectionInfoDto as AnalyticsConnectionInfo,
   AnalyticsEventCreateInput,
@@ -146,7 +145,9 @@ const maskIp = (ip: string): string => {
   return ip;
 };
 
-const buildIpFields = (ip: string | undefined): { ip?: string; ipMasked?: string; ipHash?: string } => {
+const buildIpFields = (
+  ip: string | undefined
+): { ip?: string; ipMasked?: string; ipHash?: string } => {
   if (!ip) return {};
   const mode = normalizeIpMode();
   if (mode === 'none') return {};
@@ -205,20 +206,20 @@ const getAnalyticsCacheVersion = async (): Promise<string> => {
 const bumpAnalyticsCacheVersion = async (): Promise<void> => {
   const redis = getRedisConnection();
   if (!redis) return;
-  
+
   // Use a last-bumped timestamp to throttle version increments to at most once every 10 seconds.
   // This prevents immediate cache invalidation on every single event while still keeping charts relatively fresh.
   const lastBumpKey = `${ANALYTICS_CACHE_PREFIX}:last_bump`;
   const now = Date.now();
   const lastBump = await redis.get(lastBumpKey);
-  
+
   if (lastBump && now - Number(lastBump) < 10000) {
     return;
   }
-  
+
   await Promise.all([
     redis.incr(ANALYTICS_CACHE_VERSION_KEY),
-    redis.set(lastBumpKey, now.toString(), 'EX', 60)
+    redis.set(lastBumpKey, now.toString(), 'EX', 60),
   ]);
 };
 
@@ -325,12 +326,12 @@ export async function listAnalyticsEvents(input: {
     match['scope'] = input.scope;
   }
 
-  const docs = await col
+  const docs = (await col
     .find(match)
     .sort({ ts: -1 })
     .skip(input.skip)
     .limit(input.limit)
-    .toArray() as AnalyticsEventMongoDocWithId[];
+    .toArray()) as AnalyticsEventMongoDocWithId[];
 
   const payload = { events: docs.map(toEventDto) };
   if (redis) {
@@ -379,59 +380,57 @@ export async function getAnalyticsSummary(input: {
     topCountries,
     recent,
   ] = await Promise.all([
-    col.aggregate<{ events: number; pageviews: number }>([
-      { $match: match },
-      {
-        $group: {
-          _id: null,
-          events: { $sum: 1 },
-          pageviews: {
-            $sum: {
-              $cond: [{ $eq: ['$type', 'pageview'] }, 1, 0],
+    col
+      .aggregate<{ events: number; pageviews: number }>([
+        { $match: match },
+        {
+          $group: {
+            _id: null,
+            events: { $sum: 1 },
+            pageviews: {
+              $sum: {
+                $cond: [{ $eq: ['$type', 'pageview'] }, 1, 0],
+              },
             },
           },
         },
-      },
-      { $project: { _id: 0, events: 1, pageviews: 1 } },
-    ]).toArray(),
-    col.aggregate<{ count: number }>([
-      { $match: match },
-      { $group: { _id: '$visitorId' } },
-      { $count: 'count' },
-    ]).toArray(),
-    col.aggregate<{ count: number }>([
-      { $match: match },
-      { $group: { _id: '$sessionId' } },
-      { $count: 'count' },
-    ]).toArray(),
-    col.aggregate<{ path: string; count: number }>([
-      { $match: { ...match, type: 'pageview' } },
-      { $group: { _id: '$path', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 20 },
-      { $project: { _id: 0, path: '$_id', count: 1 } },
-    ]).toArray(),
-    col.aggregate<{ referrer: string; count: number }>([
-      { $match: { ...match, referrer: { $exists: true, $ne: '' } } },
-      { $group: { _id: '$referrer', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 20 },
-      { $project: { _id: 0, referrer: '$_id', count: 1 } },
-    ]).toArray(),
-    col.aggregate<{ language: string; count: number }>([
-      { $match: { ...match, language: { $exists: true, $ne: '' } } },
-      { $group: { _id: '$language', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 20 },
-      { $project: { _id: 0, language: '$_id', count: 1 } },
-    ]).toArray(),
-    col.aggregate<{ country: string; count: number }>([
-      { $match: { ...match, country: { $exists: true, $ne: '' } } },
-      { $group: { _id: '$country', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 20 },
-      { $project: { _id: 0, country: '$_id', count: 1 } },
-    ]).toArray(),
+        { $project: { _id: 0, events: 1, pageviews: 1 } },
+      ])
+      .toArray(),
+    col
+      .aggregate<{
+        count: number;
+      }>([{ $match: match }, { $group: { _id: '$visitorId' } }, { $count: 'count' }])
+      .toArray(),
+    col
+      .aggregate<{
+        count: number;
+      }>([{ $match: match }, { $group: { _id: '$sessionId' } }, { $count: 'count' }])
+      .toArray(),
+    col
+      .aggregate<{
+        path: string;
+        count: number;
+      }>([{ $match: { ...match, type: 'pageview' } }, { $group: { _id: '$path', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 20 }, { $project: { _id: 0, path: '$_id', count: 1 } }])
+      .toArray(),
+    col
+      .aggregate<{
+        referrer: string;
+        count: number;
+      }>([{ $match: { ...match, referrer: { $exists: true, $ne: '' } } }, { $group: { _id: '$referrer', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 20 }, { $project: { _id: 0, referrer: '$_id', count: 1 } }])
+      .toArray(),
+    col
+      .aggregate<{
+        language: string;
+        count: number;
+      }>([{ $match: { ...match, language: { $exists: true, $ne: '' } } }, { $group: { _id: '$language', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 20 }, { $project: { _id: 0, language: '$_id', count: 1 } }])
+      .toArray(),
+    col
+      .aggregate<{
+        country: string;
+        count: number;
+      }>([{ $match: { ...match, country: { $exists: true, $ne: '' } } }, { $group: { _id: '$country', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 20 }, { $project: { _id: 0, country: '$_id', count: 1 } }])
+      .toArray(),
     col.find(match).sort({ ts: -1 }).limit(50).toArray(),
   ]);
 

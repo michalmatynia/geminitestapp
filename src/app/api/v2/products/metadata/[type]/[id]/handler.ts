@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
-import { 
+import {
   getProducerRepository,
   getTagRepository,
   getParameterRepository,
@@ -13,9 +13,9 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 
 export async function GET_products_metadata_id_handler(
-  _req: NextRequest, 
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { type: string, id: string }
+  params: { type: string; id: string }
 ): Promise<Response> {
   const { type, id } = params;
 
@@ -37,14 +37,14 @@ export async function GET_products_metadata_id_handler(
     if (!item) throw notFoundError(`Parameter not found: ${id}`);
     return NextResponse.json(item);
   }
-  
+
   throw badRequestError(`Invalid products metadata type for GET: ${type}`);
 }
 
 export async function PUT_products_metadata_id_handler(
-  req: NextRequest, 
+  req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { type: string, id: string }
+  params: { type: string; id: string }
 ): Promise<Response> {
   const { type, id } = params;
   const data = (await req.json()) as Record<string, unknown>;
@@ -75,11 +75,10 @@ export async function PUT_products_metadata_id_handler(
   throw badRequestError(`Invalid products metadata type for PUT: ${type}`);
 }
 
-
 export async function DELETE_products_metadata_id_handler(
-  _req: NextRequest, 
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { type: string, id: string }
+  params: { type: string; id: string }
 ): Promise<Response> {
   const { type, id } = params;
 
@@ -106,6 +105,6 @@ export async function DELETE_products_metadata_id_handler(
     await deleteSimpleParameter(id);
     return new Response(null, { status: 204 });
   }
-  
+
   throw badRequestError(`Invalid products metadata type for DELETE: ${type}`);
 }

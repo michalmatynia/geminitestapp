@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import { NextRequest } from 'next/server';
-import { 
+import {
   type ImageStudioCenterRequest,
   type ImageStudioCenterResponse,
   imageStudioCenterResponseSchema,
@@ -10,12 +10,12 @@ import {
   type ImageStudioObjectDetectionUsed,
   type ImageStudioDetectionDetails,
   type ImageStudioCenterShadowPolicy,
-  type ImageStudioCenterDetectionMode
+  type ImageStudioCenterDetectionMode,
 } from '@/shared/contracts/image-studio';
-import { 
+import {
   coerceBoolean,
   coerceFiniteNumber,
-  isFileLike
+  isFileLike,
 } from '@/features/ai/image-studio/server/image-handler-utils';
 
 export type UploadedClientCenterImage = {
@@ -47,9 +47,11 @@ export async function parseCenterRequestPayload(
   const paddingPercent = form.get('layout[paddingPercent]') ?? form.get('paddingPercent');
   const paddingXPercent = form.get('layout[paddingXPercent]') ?? form.get('paddingXPercent');
   const paddingYPercent = form.get('layout[paddingYPercent]') ?? form.get('paddingYPercent');
-  const fillMissingCanvasWhite = form.get('layout[fillMissingCanvasWhite]') ?? form.get('fillMissingCanvasWhite');
+  const fillMissingCanvasWhite =
+    form.get('layout[fillMissingCanvasWhite]') ?? form.get('fillMissingCanvasWhite');
   const targetCanvasWidth = form.get('layout[targetCanvasWidth]') ?? form.get('targetCanvasWidth');
-  const targetCanvasHeight = form.get('layout[targetCanvasHeight]') ?? form.get('targetCanvasHeight');
+  const targetCanvasHeight =
+    form.get('layout[targetCanvasHeight]') ?? form.get('targetCanvasHeight');
   const whiteThreshold = form.get('layout[whiteThreshold]') ?? form.get('whiteThreshold');
   const chromaThreshold = form.get('layout[chromaThreshold]') ?? form.get('chromaThreshold');
   const shadowPolicy = form.get('layout[shadowPolicy]') ?? form.get('shadowPolicy');
@@ -81,7 +83,7 @@ export async function parseCenterRequestPayload(
         ...(chromaThreshold !== null ? { chromaThreshold } : {}),
         ...(typeof shadowPolicy === 'string' ? { shadowPolicy } : {}),
         ...(typeof detection === 'string' ? { detection } : {}),
-      }
+      },
     },
     uploadedClientImage,
   };
@@ -89,19 +91,35 @@ export async function parseCenterRequestPayload(
 
 export function normalizeCenterRequestBody(body: unknown): Partial<ImageStudioCenterRequest> {
   if (!body || typeof body !== 'object') return {};
-  
+
   const bodyObj = body as Record<string, unknown>;
   const centerVal = bodyObj['center'];
-  const root = (centerVal && typeof centerVal === 'object' ? centerVal : bodyObj) as Record<string, unknown>;
+  const root = (centerVal && typeof centerVal === 'object' ? centerVal : bodyObj) as Record<
+    string,
+    unknown
+  >;
 
   const layoutVal = root['layout'];
-  const layout = (layoutVal && typeof layoutVal === 'object' ? layoutVal : {}) as Record<string, unknown>;
+  const layout = (layoutVal && typeof layoutVal === 'object' ? layoutVal : {}) as Record<
+    string,
+    unknown
+  >;
 
   return {
-    mode: typeof root['mode'] === 'string' ? (root['mode'].trim() as ImageStudioCenterRequest['mode']) : undefined,
-    dataUrl: typeof root['dataUrl'] === 'string' ? root['dataUrl'].trim() : (root['dataUrl'] as string | undefined),
-    name: typeof root['name'] === 'string' ? root['name'].trim() : (root['name'] as string | undefined),
-    requestId: typeof root['requestId'] === 'string' ? root['requestId'].trim() : (root['requestId'] as string | undefined),
+    mode:
+      typeof root['mode'] === 'string'
+        ? (root['mode'].trim() as ImageStudioCenterRequest['mode'])
+        : undefined,
+    dataUrl:
+      typeof root['dataUrl'] === 'string'
+        ? root['dataUrl'].trim()
+        : (root['dataUrl'] as string | undefined),
+    name:
+      typeof root['name'] === 'string' ? root['name'].trim() : (root['name'] as string | undefined),
+    requestId:
+      typeof root['requestId'] === 'string'
+        ? root['requestId'].trim()
+        : (root['requestId'] as string | undefined),
     layout: {
       paddingPercent: coerceFiniteNumber(layout['paddingPercent']) ?? undefined,
       paddingXPercent: coerceFiniteNumber(layout['paddingXPercent']) ?? undefined,
@@ -111,9 +129,13 @@ export function normalizeCenterRequestBody(body: unknown): Partial<ImageStudioCe
       targetCanvasHeight: coerceFiniteNumber(layout['targetCanvasHeight']) ?? undefined,
       whiteThreshold: coerceFiniteNumber(layout['whiteThreshold']) ?? undefined,
       chromaThreshold: coerceFiniteNumber(layout['chromaThreshold']) ?? undefined,
-      shadowPolicy: (typeof layout['shadowPolicy'] === 'string' ? layout['shadowPolicy'].trim() : layout['shadowPolicy']) as ImageStudioCenterShadowPolicy,
-      detection: (typeof layout['detection'] === 'string' ? layout['detection'].trim() : layout['detection']) as ImageStudioCenterDetectionMode,
-    }
+      shadowPolicy: (typeof layout['shadowPolicy'] === 'string'
+        ? layout['shadowPolicy'].trim()
+        : layout['shadowPolicy']) as ImageStudioCenterShadowPolicy,
+      detection: (typeof layout['detection'] === 'string'
+        ? layout['detection'].trim()
+        : layout['detection']) as ImageStudioCenterDetectionMode,
+    },
   };
 }
 
@@ -149,7 +171,12 @@ export function readCenterMetadataFromSlot(slot: ImageStudioSlotRecord): ImageSt
 
 export function parseCenterResponsePayload(
   data: unknown,
-  context?: { responseStage: string; sourceSlotId: string; targetSlotId: string; requestId?: string | null }
+  context?: {
+    responseStage: string;
+    sourceSlotId: string;
+    targetSlotId: string;
+    requestId?: string | null;
+  }
 ): ImageStudioCenterResponse {
   try {
     return imageStudioCenterResponseSchema.parse(data);
@@ -160,7 +187,7 @@ export function parseCenterResponsePayload(
       httpStatus?: number;
       meta?: Record<string, unknown>;
     };
-    
+
     validationError.code = 'BAD_REQUEST';
     validationError.httpStatus = 400;
     validationError.meta = {

@@ -13,7 +13,11 @@ import {
   normalizeFolderPath,
   normalizeFolderPaths,
 } from '../settings';
-import { createId, isLikelyImageFile, isLikelyScanInputFile } from '@/features/case-resolver/utils/caseResolverUtils';
+import {
+  createId,
+  isLikelyImageFile,
+  isLikelyScanInputFile,
+} from '@/features/case-resolver/utils/caseResolverUtils';
 import {
   normalizeUploadedCaseResolverFile,
   resolveUploadBaseFolder,

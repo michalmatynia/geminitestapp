@@ -117,18 +117,14 @@ const normalizeDisplayForRead = (value: unknown): AiTriggerButtonDisplayMode | u
   return undefined;
 };
 
-const normalizeModeForRead = (
-  value: unknown
-): AiTriggerButtonMode | undefined => {
+const normalizeModeForRead = (value: unknown): AiTriggerButtonMode | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().toLowerCase();
   const parsed = aiTriggerButtonModeSchema.safeParse(normalized);
   return parsed.success ? parsed.data : undefined;
 };
 
-const normalizeLocationsForRead = (
-  value: unknown
-): AiTriggerButtonLocation[] | undefined => {
+const normalizeLocationsForRead = (value: unknown): AiTriggerButtonLocation[] | undefined => {
   const source = Array.isArray(value) ? value : typeof value === 'string' ? [value] : [];
   const seen = new Set<AiTriggerButtonLocation>();
   source.forEach((entry: unknown) => {

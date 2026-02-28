@@ -80,17 +80,11 @@ const buildHookProps = (): Parameters<typeof useCanvasInteractionsNodes>[0] => {
 
 describe('useCanvasInteractionsNodes drag threshold', () => {
   beforeEach(() => {
-    vi.stubGlobal(
-      'requestAnimationFrame',
-      ((callback: FrameRequestCallback): number => {
-        callback(0);
-        return 1;
-      }) as typeof requestAnimationFrame
-    );
-    vi.stubGlobal(
-      'cancelAnimationFrame',
-      vi.fn() as unknown as typeof cancelAnimationFrame
-    );
+    vi.stubGlobal('requestAnimationFrame', ((callback: FrameRequestCallback): number => {
+      callback(0);
+      return 1;
+    }) as typeof requestAnimationFrame);
+    vi.stubGlobal('cancelAnimationFrame', vi.fn() as unknown as typeof cancelAnimationFrame);
   });
 
   afterEach(() => {

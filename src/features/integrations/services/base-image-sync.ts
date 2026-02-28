@@ -99,7 +99,7 @@ export const syncBaseImagesForListing = async (
 
     const listingRepo: any = await getProductListingRepository();
     const listing: any = await listingRepo.getListingById(listingId);
-    
+
     if (listing?.productId !== productId) {
       throw notFoundError('Listing not found', { listingId, productId });
     }

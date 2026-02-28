@@ -8,7 +8,10 @@ import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { useAiPathsSettingsQuery, useUpdateAiPathsSettingMutation } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
+import {
+  useAiPathsSettingsQuery,
+  useUpdateAiPathsSettingMutation,
+} from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 
 const AI_PATHS_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
 const TERMINAL_LOCAL_RUN_STATUSES = new Set(['success', 'error']);

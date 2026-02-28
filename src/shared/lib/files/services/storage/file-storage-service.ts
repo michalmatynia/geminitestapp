@@ -5,10 +5,7 @@ import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   fileStorageSourceValues,
 } from '@/shared/lib/files/constants';
-import type {
-  FastCometStorageConfig,
-  FileStorageSource,
-} from '@/shared/lib/files/constants';
+import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

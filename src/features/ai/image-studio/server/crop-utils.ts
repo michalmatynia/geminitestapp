@@ -95,7 +95,10 @@ export const validateCropSourceDimensions = (
     return { ok: false, reason: 'non_positive_dimensions' };
   }
 
-  if (width > IMAGE_STUDIO_CROP_MAX_SOURCE_SIDE_PX || height > IMAGE_STUDIO_CROP_MAX_SOURCE_SIDE_PX) {
+  if (
+    width > IMAGE_STUDIO_CROP_MAX_SOURCE_SIDE_PX ||
+    height > IMAGE_STUDIO_CROP_MAX_SOURCE_SIDE_PX
+  ) {
     return { ok: false, reason: 'max_side_exceeded' };
   }
 
@@ -106,11 +109,7 @@ export const validateCropSourceDimensions = (
   return { ok: true };
 };
 
-export const clampCropRect = (
-  rect: ImageStudioCropRect,
-  width: number,
-  height: number
-): Region => {
+export const clampCropRect = (rect: ImageStudioCropRect, width: number, height: number): Region => {
   const left = Math.floor(rect.x);
   const top = Math.floor(rect.y);
   const requestedWidth = Math.floor(rect.width);

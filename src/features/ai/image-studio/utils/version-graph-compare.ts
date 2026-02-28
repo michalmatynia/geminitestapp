@@ -2,7 +2,6 @@ import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import { readMeta } from './metadata';
 
-
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface CompareRow {
@@ -17,7 +16,7 @@ export interface CompareRow {
 /** Compare generation parameters between two slots, returning rows for a diff table. */
 export function compareGenerationParams(
   slotA: ImageStudioSlotRecord,
-  slotB: ImageStudioSlotRecord,
+  slotB: ImageStudioSlotRecord
 ): CompareRow[] {
   const metaA = readMeta(slotA);
   const metaB = readMeta(slotB);
@@ -53,8 +52,14 @@ export function compareGenerationParams(
     },
     {
       field: 'Output #',
-      a: paramsA?.outputIndex != null ? `${paramsA.outputIndex + 1}/${paramsA.outputCount ?? '?'}` : null,
-      b: paramsB?.outputIndex != null ? `${paramsB.outputIndex + 1}/${paramsB.outputCount ?? '?'}` : null,
+      a:
+        paramsA?.outputIndex != null
+          ? `${paramsA.outputIndex + 1}/${paramsA.outputCount ?? '?'}`
+          : null,
+      b:
+        paramsB?.outputIndex != null
+          ? `${paramsB.outputIndex + 1}/${paramsB.outputCount ?? '?'}`
+          : null,
     },
   ];
 

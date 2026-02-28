@@ -41,7 +41,11 @@ import {
   parseCaseResolverWorkspace,
 } from '../settings';
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
-import { fromCaseResolverCaseNodeId, fromCaseResolverFileNodeId } from '../master-tree';
+import {
+  fromCaseResolverCaseContentFileNodeId,
+  fromCaseResolverCaseNodeId,
+  fromCaseResolverFileNodeId,
+} from '../master-tree';
 import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../types';
 import { useCaseResolverStateFolderActions } from './useCaseResolverState.folder-actions';
 import { useCaseResolverStateAssetActions } from './useCaseResolverState.asset-actions';
@@ -84,12 +88,35 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const searchParams = useSearchParams();
   const requestedFileIdRaw = searchParams.get('fileId');
   const requestedFileId = useMemo((): string | null => {
-    const normalizedRequestedFileId = requestedFileIdRaw?.trim() ?? '';
-    if (!normalizedRequestedFileId) return null;
-    const decodedCaseNodeId = fromCaseResolverCaseNodeId(normalizedRequestedFileId);
-    if (decodedCaseNodeId) return decodedCaseNodeId;
-    const decodedFileNodeId = fromCaseResolverFileNodeId(normalizedRequestedFileId);
-    if (decodedFileNodeId) return decodedFileNodeId;
+    const rawRequestedFileId = requestedFileIdRaw?.trim() ?? '';
+    if (!rawRequestedFileId) return null;
+
+    const resolveNodeIdReference = (value: string): string | null => {
+      const decodedCaseNodeId = fromCaseResolverCaseNodeId(value);
+      if (decodedCaseNodeId) return decodedCaseNodeId;
+      const decodedFileNodeId = fromCaseResolverFileNodeId(value);
+      if (decodedFileNodeId) return decodedFileNodeId;
+      const decodedCaseContentFileNode = fromCaseResolverCaseContentFileNodeId(value);
+      if (decodedCaseContentFileNode?.fileId) return decodedCaseContentFileNode.fileId;
+      return null;
+    };
+
+    const directResolved = resolveNodeIdReference(rawRequestedFileId);
+    if (directResolved) return directResolved;
+
+    let normalizedRequestedFileId = rawRequestedFileId;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const decodedCandidate = decodeURIComponent(normalizedRequestedFileId).trim();
+        if (!decodedCandidate || decodedCandidate === normalizedRequestedFileId) break;
+        const decodedResolved = resolveNodeIdReference(decodedCandidate);
+        if (decodedResolved) return decodedResolved;
+        normalizedRequestedFileId = decodedCandidate;
+      } catch {
+        break;
+      }
+    }
+
     return normalizedRequestedFileId;
   }, [requestedFileIdRaw]);
   const shouldOpenEditorFromQuery = searchParams.get('openEditor') === '1';
@@ -197,6 +224,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
 
   const handledRequestedFileIdRef = useRef<string | null>(null);
   const requestedStoreRefreshFileIdRef = useRef<string | null>(null);
+  const requestedUnavailableAutoRetryFileIdRef = useRef<string | null>(null);
 
   const persistence: UseCaseResolverPersistenceValue = useCaseResolverPersistence({
     initialWorkspaceState,
@@ -329,6 +357,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
     if (!normalizedRequestedFileId) {
       requestedStoreRefreshFileIdRef.current = null;
+      requestedUnavailableAutoRetryFileIdRef.current = null;
       return;
     }
 
@@ -369,6 +398,35 @@ export function useCaseResolverState(): CaseResolverStateValue {
     settingsStore.isFetching,
     settingsStore.isLoading,
     workspace.files,
+  ]);
+
+  useEffect((): void => {
+    const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
+    if (!normalizedRequestedFileId) {
+      requestedUnavailableAutoRetryFileIdRef.current = null;
+      return;
+    }
+    const canAutoRetry =
+      requestedCaseStatus === 'missing' &&
+      requestedCaseIssue === 'workspace_unavailable' &&
+      requestedUnavailableAutoRetryFileIdRef.current !== normalizedRequestedFileId;
+    if (!canAutoRetry) return;
+
+    requestedUnavailableAutoRetryFileIdRef.current = normalizedRequestedFileId;
+    logCaseResolverWorkspaceEvent({
+      source: 'case_view',
+      action: 'requested_context_auto_retry_after_unavailable',
+      message: `requested_file_id=${normalizedRequestedFileId}`,
+    });
+    settingsStoreRef.current.refetch();
+    window.setTimeout((): void => {
+      handleRetryCaseContext();
+    }, 0);
+  }, [
+    handleRetryCaseContext,
+    requestedCaseIssue,
+    requestedCaseStatus,
+    requestedFileId,
   ]);
 
   const creationActions = useCaseResolverStateCreationActions({

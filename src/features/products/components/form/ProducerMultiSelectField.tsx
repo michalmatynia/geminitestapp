@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 
 import type { Producer } from '@/shared/contracts/products';

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
+import {
   getCurrencyRepository,
-  getInternationalizationProvider 
+  getInternationalizationProvider,
 } from '@/features/internationalization/server';
 import { type CreateCurrencyDto } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -10,7 +10,7 @@ import prisma from '@/shared/lib/db/prisma';
 import { type CountryCode } from '@prisma/client';
 
 export async function GET_intl_handler(
-  _req: NextRequest, 
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {
@@ -40,7 +40,7 @@ export async function GET_intl_handler(
 }
 
 export async function POST_intl_handler(
-  req: NextRequest, 
+  req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {
@@ -57,9 +57,13 @@ export async function POST_intl_handler(
       data: {
         code: data['code'] as CountryCode,
         name: data['name'] as string,
-        currencies: data['currencyIds'] ? {
-          create: (data['currencyIds'] as string[]).map((currencyId: string) => ({ currencyId })),
-        } : undefined,
+        currencies: data['currencyIds']
+          ? {
+            create: (data['currencyIds'] as string[]).map((currencyId: string) => ({
+              currencyId,
+            })),
+          }
+          : undefined,
       },
       include: { currencies: true },
     });
@@ -72,9 +76,11 @@ export async function POST_intl_handler(
         code: data['code'] as string,
         name: data['name'] as string,
         nativeName: data['nativeName'] as string,
-        countries: data['countryIds'] ? {
-          create: (data['countryIds'] as string[]).map((countryId: string) => ({ countryId })),
-        } : undefined,
+        countries: data['countryIds']
+          ? {
+            create: (data['countryIds'] as string[]).map((countryId: string) => ({ countryId })),
+          }
+          : undefined,
       },
       include: { countries: true },
     });

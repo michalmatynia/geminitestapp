@@ -65,7 +65,8 @@ const buildLegacyState = (view: {
     handleRunSimulation: async (): Promise<void> => undefined,
     handleSendToAi: async (): Promise<void> => undefined,
     nodeDurations: EMPTY_NODE_DURATIONS,
-    runtimeNodeStatuses: EMPTY_RUNTIME_NODE_STATUSES as UseAiPathsSettingsStateReturn['runtimeNodeStatuses'],
+    runtimeNodeStatuses:
+      EMPTY_RUNTIME_NODE_STATUSES as UseAiPathsSettingsStateReturn['runtimeNodeStatuses'],
     runtimeEvents: EMPTY_RUNTIME_EVENTS as UseAiPathsSettingsStateReturn['runtimeEvents'],
     loading: false,
     saving: false,

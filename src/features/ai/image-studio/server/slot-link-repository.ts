@@ -123,14 +123,13 @@ export async function getImageStudioSlotLinkBySourceAndRelation(
   return doc ? toRecord(doc) : null;
 }
 
-export async function listImageStudioSlotLinks(projectId: string): Promise<ImageStudioSlotLinkRecord[]> {
+export async function listImageStudioSlotLinks(
+  projectId: string
+): Promise<ImageStudioSlotLinkRecord[]> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const collection = db.collection<ImageStudioSlotLinkDocument>(COLLECTION);
-  const docs = await collection
-    .find({ projectId })
-    .sort({ createdAt: 1, _id: 1 })
-    .toArray();
+  const docs = await collection.find({ projectId }).sort({ createdAt: 1, _id: 1 }).toArray();
   return docs.map((doc: ImageStudioSlotLinkDocument) => toRecord(doc));
 }
 

@@ -154,7 +154,9 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
           sanitizedEdges.forEach((edge: Edge): void => {
             if (edge.from !== nodeId || !edge.to) return;
             const targetId = edge.to;
-            const targetNode = normalizedNodes.find((node: AiNode): boolean => node.id === targetId);
+            const targetNode = normalizedNodes.find(
+              (node: AiNode): boolean => node.id === targetId
+            );
             if (!targetNode) return;
             if (targetNode.type === 'model') {
               candidateIds.add(targetId);
@@ -266,9 +268,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
           } else if (rawResult && typeof rawResult === 'object') {
             const nestedResult = (rawResult as Record<string, unknown>)['result'];
             result =
-              typeof nestedResult === 'string'
-                ? nestedResult
-                : JSON.stringify(rawResult ?? '');
+              typeof nestedResult === 'string' ? nestedResult : JSON.stringify(rawResult ?? '');
           } else {
             result = JSON.stringify(rawResult ?? '');
           }

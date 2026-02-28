@@ -42,9 +42,7 @@ export const estimatePromptTokens = (prompt: string): number => {
 export const resolveModelCostProfile = (model: string): ModelCostProfile => {
   const normalizedModel = model.trim().toLowerCase();
   if (!normalizedModel) return DEFAULT_MODEL_COST_PROFILE;
-  const matched = MODEL_COST_PROFILES.find(({ prefix }) =>
-    normalizedModel.startsWith(prefix)
-  );
+  const matched = MODEL_COST_PROFILES.find(({ prefix }) => normalizedModel.startsWith(prefix));
   return matched ? matched.profile : DEFAULT_MODEL_COST_PROFILE;
 };
 

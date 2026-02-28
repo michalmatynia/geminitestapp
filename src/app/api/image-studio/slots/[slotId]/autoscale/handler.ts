@@ -27,24 +27,22 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 
-import { 
-  autoScaleBadRequest, 
-  guessExtension, 
-  isClientAutoScaleMode, 
-  readIdempotencyKey, 
-  sanitizeFilename, 
-  sanitizeSegment 
+import {
+  autoScaleBadRequest,
+  guessExtension,
+  isClientAutoScaleMode,
+  readIdempotencyKey,
+  sanitizeFilename,
+  sanitizeSegment,
 } from '@/features/ai/image-studio/server/image-handler-utils';
-import { 
-  processAutoScalerPayload,
-} from '@/features/ai/image-studio/server/autoscale-service';
-import { 
-  parseAutoScalerRequestPayload, 
+import { processAutoScalerPayload } from '@/features/ai/image-studio/server/autoscale-service';
+import {
+  parseAutoScalerRequestPayload,
   normalizeAutoScaleRequestBody,
   buildClientPayloadSignature,
   readAutoScaleMetadataFromSlot,
   parseAutoScaleResponsePayload,
-  type ImageStudioAutoScaleMetadata
+  type ImageStudioAutoScaleMetadata,
 } from './helpers';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'autoscale');
@@ -112,10 +110,12 @@ export async function postAutoScaleSlotHandler(
     sourceSignature: sourceSlot.id,
     mode: payload.mode,
     layoutSignature,
-    clientPayloadSignature: clientSignature
+    clientPayloadSignature: clientSignature,
   });
-  
-  const requestRelationType = idempotencyKey ? buildAutoScalerRequestRelationType(idempotencyKey) : null;
+
+  const requestRelationType = idempotencyKey
+    ? buildAutoScalerRequestRelationType(idempotencyKey)
+    : null;
   const fingerprintRelationType = buildAutoScalerFingerprintRelationType(fingerprint);
   if (requestRelationType) {
     const existingByRequest = await getImageStudioSlotLinkBySourceAndRelation(
@@ -126,7 +126,8 @@ export async function postAutoScaleSlotHandler(
     if (existingByRequest) {
       const existingSlot = await getImageStudioSlotById(existingByRequest.targetSlotId);
       if (existingSlot) {
-        const existingAutoScale: ImageStudioAutoScaleMetadata = readAutoScaleMetadataFromSlot(existingSlot);
+        const existingAutoScale: ImageStudioAutoScaleMetadata =
+          readAutoScaleMetadataFromSlot(existingSlot);
         const responseBody = parseAutoScaleResponsePayload(
           {
             sourceSlotId: sourceSlot.id,
@@ -171,7 +172,8 @@ export async function postAutoScaleSlotHandler(
     if (existingFingerprintLink) {
       const existingSlot = await getImageStudioSlotById(existingFingerprintLink.targetSlotId);
       if (existingSlot) {
-        const existingAutoScale: ImageStudioAutoScaleMetadata = readAutoScaleMetadataFromSlot(existingSlot);
+        const existingAutoScale: ImageStudioAutoScaleMetadata =
+          readAutoScaleMetadataFromSlot(existingSlot);
         const responseBody = parseAutoScaleResponsePayload(
           {
             sourceSlotId: sourceSlot.id,
@@ -221,13 +223,13 @@ export async function postAutoScaleSlotHandler(
         context: {
           slotId: sourceSlot.id,
           mode: payload.mode,
-        }
+        },
       });
     }
 
     const filename = sanitizeFilename(
       (payload.name || `${sourceSlot.name || 'slot'}_autoscale`) +
-      guessExtension(processed.outputMime)
+        guessExtension(processed.outputMime)
     );
 
     const segment = sanitizeSegment(payload.mode);

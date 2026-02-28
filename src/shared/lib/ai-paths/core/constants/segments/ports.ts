@@ -138,12 +138,7 @@ export const PROMPT_OUTPUT_PORTS = ['prompt', 'images'];
 export const POLL_INPUT_PORTS = ['jobId', 'query', 'value', 'entityId', 'productId', 'bundle'];
 export const POLL_OUTPUT_PORTS = ['result', 'status', 'jobId', 'bundle'];
 export const MODEL_OUTPUT_PORTS = ['result', 'jobId'];
-export const AGENT_INPUT_PORTS = [
-  'prompt',
-  'bundle',
-  'context',
-  'entityJson',
-];
+export const AGENT_INPUT_PORTS = ['prompt', 'bundle', 'context', 'entityJson'];
 export const AGENT_OUTPUT_PORTS = ['result', 'jobId'];
 export const LEARNER_AGENT_INPUT_PORTS = ['prompt', 'bundle'];
 export const LEARNER_AGENT_OUTPUT_PORTS = ['result', 'jobId', 'sources'];

@@ -139,7 +139,9 @@ export function recommendParamUiControl(value: unknown, spec?: ParamSpec): Param
       recommended: sliderOk ? 'slider' : 'number',
       options: ['auto', 'number', 'slider', 'json'],
       confidence: spec?.min !== undefined && spec?.max !== undefined ? 0.85 : 0.65,
-      reason: sliderOk ? null : 'No numeric range detected (add a hint like `// 0–1` to enable a slider).',
+      reason: sliderOk
+        ? null
+        : 'No numeric range detected (add a hint like `// 0–1` to enable a slider).',
       canSlider: sliderOk,
     };
   }

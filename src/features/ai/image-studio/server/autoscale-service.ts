@@ -19,17 +19,15 @@ import {
   validateAutoScalerOutputDimensions,
   validateAutoScalerSourceDimensions,
 } from '@/features/ai/image-studio/server/auto-scaler-utils';
-import {
-  getImageStudioSlotById,
-} from '@/features/ai/image-studio/server/slot-repository';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
 import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
 } from '@/features/ai/image-studio/server/source-image-utils';
-import { 
-  autoScaleBadRequest, 
-  isClientAutoScaleMode, 
-  isServerAutoScaleMode 
+import {
+  autoScaleBadRequest,
+  isClientAutoScaleMode,
+  isServerAutoScaleMode,
 } from './image-handler-utils';
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;

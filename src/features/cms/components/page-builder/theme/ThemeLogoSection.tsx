@@ -2,14 +2,11 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { 
-  Card, 
-  Hint, 
-  Button, 
-  FileUploadTrigger, 
-  FileUploadButton 
-} from '@/shared/ui';
-import { SettingsFieldsRenderer, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { Card, Hint, Button, FileUploadTrigger, FileUploadButton } from '@/shared/ui';
+import {
+  SettingsFieldsRenderer,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 import { useThemeSettings } from '../ThemeSettingsContext';
 export function ThemeLogoSection(): React.JSX.Element {
   useThemeSettings();
@@ -75,9 +72,7 @@ export function ThemeLogoSection(): React.JSX.Element {
           } as SettingsField<{ logoWidth: number }>,
         ]}
         values={{ logoWidth }}
-        onChange={(vals) =>
-          setLogoWidth((vals as unknown as { logoWidth: number }).logoWidth)
-        }
+        onChange={(vals) => setLogoWidth((vals as unknown as { logoWidth: number }).logoWidth)}
       />
       <div className='space-y-2'>
         <FileUploadTrigger

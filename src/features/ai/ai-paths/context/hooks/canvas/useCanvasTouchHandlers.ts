@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { 
+import {
   type TouchPointSample,
   type TouchGestureState,
   type TouchLongPressSelectionState,

@@ -5,9 +5,7 @@ import {
   type StudioSlotsResponse,
   type ImageStudioSlotRecord,
 } from '@/shared/contracts/image-studio';
-import {
-  CROP_REQUEST_TIMEOUT_MS,
-} from '../GenerationToolbar.utils';
+import { CROP_REQUEST_TIMEOUT_MS } from '../GenerationToolbar.utils';
 import {
   polygonsFromShapes,
   renderMaskDataUrlFromPolygons,
@@ -128,9 +126,14 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: Generati
       const { rect, context } = await resolveCropRect();
       setCropStatus('preparing');
       const sourceDim = await resolveWorkingSourceDimensions();
-      const canvasRect = mapImageCropRectToCanvasRect(rect, sourceDim.width, sourceDim.height, context);
+      const canvasRect = mapImageCropRectToCanvasRect(
+        rect,
+        sourceDim.width,
+        sourceDim.height,
+        context
+      );
       if (!canvasRect) throw new Error('Failed to map image crop to canvas.');
-      
+
       const polygons = polygonsFromShapes(maskShapesForExport, 1000, 1000);
       const maskDataUrl = renderMaskDataUrlFromPolygons(polygons, 1000, 1000, 'white', false);
       const uploadBlob = await dataUrlToUploadBlob(maskDataUrl);

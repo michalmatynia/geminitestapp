@@ -5,7 +5,9 @@ import React from 'react';
 export type UseMarkdownSplitResizerProps = {
   splitRef: React.RefObject<HTMLDivElement | null>;
   editorWidth: number | null;
-  onEditorWidthChange?: ((next: number | null | ((prev: number | null) => number | null)) => void) | undefined;
+  onEditorWidthChange?:
+    | ((next: number | null | ((prev: number | null) => number | null)) => void)
+    | undefined;
   isDraggingSplitter: boolean;
   onDraggingSplitterChange?: ((dragging: boolean) => void) | undefined;
   showPreview: boolean;
@@ -55,8 +57,9 @@ export function useMarkdownSplitResizer({
     if (!showPreview) return;
     const container = splitRef.current;
     if (!container) return;
-    updateEditorWidth((prev: number | null): number | null =>
-      prev ?? Math.round(container.getBoundingClientRect().width / 2)
+    updateEditorWidth(
+      (prev: number | null): number | null =>
+        prev ?? Math.round(container.getBoundingClientRect().width / 2)
     );
   }, [splitRef, showPreview, updateEditorWidth]);
 

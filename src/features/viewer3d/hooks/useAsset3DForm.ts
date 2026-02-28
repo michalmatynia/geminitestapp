@@ -5,11 +5,10 @@ import type { Asset3DRecord, Asset3DUpdateInput } from '@/shared/contracts/viewe
 
 import { updateAsset3D } from '../api';
 
-
 export function useAsset3DForm(
   asset: Asset3DRecord,
   onSave: (updated: Asset3DRecord) => void,
-  onClose: () => void,
+  onClose: () => void
 ) {
   const [name, setName] = useState(asset.name ?? '');
   const [description, setDescription] = useState(asset.description ?? '');
@@ -58,7 +57,9 @@ export function useAsset3DForm(
       onSave(updated);
       onClose();
     } catch (err) {
-      logClientError(err, { context: { source: 'Asset3DEditModal', action: 'saveAsset', assetId: asset.id } });
+      logClientError(err, {
+        context: { source: 'Asset3DEditModal', action: 'saveAsset', assetId: asset.id },
+      });
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setIsSaving(false);

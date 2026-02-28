@@ -15,11 +15,15 @@ export interface MarkdownSplitEditorProps {
   sanitizePreviewHtml?: ((value: string) => string) | undefined;
   isCodeMode?: boolean | undefined;
   isPasting?: boolean | undefined;
-  onPaste?: ((event: React.ClipboardEvent<HTMLTextAreaElement>) => void | Promise<void>) | undefined;
+  onPaste?:
+    | ((event: React.ClipboardEvent<HTMLTextAreaElement>) => void | Promise<void>)
+    | undefined;
   textareaRef?: React.RefObject<HTMLTextAreaElement | null> | undefined;
   splitRef?: React.RefObject<HTMLDivElement | null> | undefined;
   editorWidth?: number | null | undefined;
-  onEditorWidthChange?: ((next: number | null | ((prev: number | null) => number | null)) => void) | undefined;
+  onEditorWidthChange?:
+    | ((next: number | null | ((prev: number | null) => number | null)) => void)
+    | undefined;
   isDraggingSplitter?: boolean | undefined;
   onDraggingSplitterChange?: ((dragging: boolean) => void) | undefined;
   contentBackground?: string | undefined;
@@ -61,7 +65,7 @@ export function MarkdownSplitEditor(props: MarkdownSplitEditorProps): React.JSX.
 
   const localSplitRef = React.useRef<HTMLDivElement | null>(null);
   const localTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
-  
+
   const effectiveSplitRef = splitRef ?? localSplitRef;
   const effectiveTextareaRef = textareaRef ?? localTextareaRef;
 
@@ -73,10 +77,7 @@ export function MarkdownSplitEditor(props: MarkdownSplitEditorProps): React.JSX.
     debounceMs,
   });
 
-  const {
-    editorWidth: effectiveEditorWidth,
-    updateDragging,
-  } = useMarkdownSplitResizer({
+  const { editorWidth: effectiveEditorWidth, updateDragging } = useMarkdownSplitResizer({
     splitRef: effectiveSplitRef,
     editorWidth,
     onEditorWidthChange,
@@ -121,7 +122,8 @@ export function MarkdownSplitEditor(props: MarkdownSplitEditorProps): React.JSX.
               color: contentTextColor,
               ...(isCodeMode
                 ? {
-                  fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+                  fontFamily:
+                      'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
                 }
                 : {}),
             }}

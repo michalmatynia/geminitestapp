@@ -69,7 +69,6 @@ export function SimulationDialog(): React.JSX.Element | null {
     [handleConfigChange, handleRunSimulation]
   );
 
-
   const simulationConfig = simulationNode?.config?.simulation ?? { productId: '' };
   const simulationEntityValue = simulationConfig.entityId?.trim()
     ? simulationConfig.entityId

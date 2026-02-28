@@ -6,8 +6,6 @@ import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Button, Tag, ResourceCard } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-
-
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 
 export interface Asset3DCardProps {
@@ -15,10 +13,7 @@ export interface Asset3DCardProps {
   className?: string;
 }
 
-export function Asset3DCard({
-  asset,
-  className,
-}: Asset3DCardProps): React.JSX.Element {
+export function Asset3DCard({ asset, className }: Asset3DCardProps): React.JSX.Element {
   const {
     setPreviewAsset,
     setEditAsset,
@@ -97,7 +92,7 @@ export function Asset3DCard({
               'absolute top-2 right-2 px-2 py-1 rounded text-xs flex items-center gap-1',
               asset.isPublic
                 ? 'bg-emerald-500/10 text-emerald-400'
-                : 'bg-muted text-muted-foreground',
+                : 'bg-muted text-muted-foreground'
             )}
           >
             {asset.isPublic ? (
@@ -133,11 +128,7 @@ export function Asset3DCard({
       {(asset.tags || []).length > 0 && (
         <div className='flex flex-wrap gap-1'>
           {(asset.tags || []).slice(0, 3).map((tag: string) => (
-            <Tag
-              key={tag}
-              label={tag}
-              className='bg-muted text-muted-foreground'
-            />
+            <Tag key={tag} label={tag} className='bg-muted text-muted-foreground' />
           ))}
           {(asset.tags || []).length > 3 && (
             <Tag

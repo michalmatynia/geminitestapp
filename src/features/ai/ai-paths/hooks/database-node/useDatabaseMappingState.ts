@@ -1,8 +1,5 @@
 import { useCallback } from 'react';
-import type { 
-  DatabaseConfig, 
-  UpdaterMapping 
-} from '@/shared/lib/ai-paths';
+import type { DatabaseConfig, UpdaterMapping } from '@/shared/lib/ai-paths';
 
 export function useDatabaseMappingState(args: {
   databaseConfig: DatabaseConfig;
@@ -15,7 +12,9 @@ export function useDatabaseMappingState(args: {
   const updateMapping = useCallback(
     (index: number, patch: Partial<UpdaterMapping>) => {
       const nextMappings = args.mappings.map((m, idx) => (idx === index ? { ...m, ...patch } : m));
-      args.updateSelectedNodeConfig({ database: { ...args.databaseConfig, mappings: nextMappings } });
+      args.updateSelectedNodeConfig({
+        database: { ...args.databaseConfig, mappings: nextMappings },
+      });
     },
     [args]
   );
@@ -23,7 +22,10 @@ export function useDatabaseMappingState(args: {
   const removeMapping = useCallback(
     (index: number) => {
       args.updateSelectedNodeConfig({
-        database: { ...args.databaseConfig, mappings: args.mappings.filter((_, idx) => idx !== index) },
+        database: {
+          ...args.databaseConfig,
+          mappings: args.mappings.filter((_, idx) => idx !== index),
+        },
       });
     },
     [args]
@@ -59,7 +61,9 @@ export function useDatabaseMappingState(args: {
       }
     });
     if (nextMappings.length > 0)
-      args.updateSelectedNodeConfig({ database: { ...args.databaseConfig, mappings: nextMappings } });
+      args.updateSelectedNodeConfig({
+        database: { ...args.databaseConfig, mappings: nextMappings },
+      });
   }, [args]);
 
   return {

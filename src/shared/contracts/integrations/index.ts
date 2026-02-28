@@ -8,7 +8,14 @@ export type { ImportTemplateParameterImport as BaseImportParameterImportSettings
 
 import { z } from 'zod';
 import { namedDtoSchema } from '../base';
-import { productListingSchema, type ProductListing, type ProductListingExportEvent, type CreateProductListing, type ProductListingWithDetails, type ListingAttempt } from './listings';
+import {
+  productListingSchema,
+  type ProductListing,
+  type ProductListingExportEvent,
+  type CreateProductListing,
+  type ProductListingWithDetails,
+  type ListingAttempt,
+} from './listings';
 import { type Integration, type ImageTransformOptions, type ImageRetryPreset } from './base';
 import { type IntegrationConnection } from './connections';
 import { type TemplateMapping, type Template } from './templates';
@@ -562,11 +569,20 @@ export const normalizeBaseImportParameterImportSettings = (
   }
   const v = value as Record<string, unknown>;
   return {
-    enabled: typeof v['enabled'] === 'boolean' ? v['enabled'] : defaultBaseImportParameterImportSettings.enabled,
+    enabled:
+      typeof v['enabled'] === 'boolean'
+        ? v['enabled']
+        : defaultBaseImportParameterImportSettings.enabled,
     mode: v['mode'] === 'mapped' ? 'mapped' : 'all',
     languageScope: v['languageScope'] === 'default_only' ? 'default_only' : 'catalog_languages',
-    createMissingParameters: typeof v['createMissingParameters'] === 'boolean' ? v['createMissingParameters'] : defaultBaseImportParameterImportSettings.createMissingParameters,
-    overwriteExistingValues: typeof v['overwriteExistingValues'] === 'boolean' ? v['overwriteExistingValues'] : defaultBaseImportParameterImportSettings.overwriteExistingValues,
+    createMissingParameters:
+      typeof v['createMissingParameters'] === 'boolean'
+        ? v['createMissingParameters']
+        : defaultBaseImportParameterImportSettings.createMissingParameters,
+    overwriteExistingValues:
+      typeof v['overwriteExistingValues'] === 'boolean'
+        ? v['overwriteExistingValues']
+        : defaultBaseImportParameterImportSettings.overwriteExistingValues,
     matchBy: v['matchBy'] === 'name_only' ? 'name_only' : 'base_id_then_name',
   };
 };

@@ -456,8 +456,6 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
 }
 
 export async function logSystemError(input: Omit<SystemLogInput, 'level'>): Promise<void> {
-   
-   
   await logSystemEvent({ ...input, level: 'error' });
 }
 

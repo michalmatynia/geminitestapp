@@ -109,7 +109,9 @@ describe('Canvas model selection badge', () => {
     );
 
     expect(screen.getByText('NODE MODEL')).toBeTruthy();
-    expect(container.querySelector('[data-node-model-selection-badge="node-model-1"]')).toBeTruthy();
+    expect(
+      container.querySelector('[data-node-model-selection-badge="node-model-1"]')
+    ).toBeTruthy();
   });
 
   it('shows BRAIN DEFAULT when a model node inherits the Brain fallback model', () => {

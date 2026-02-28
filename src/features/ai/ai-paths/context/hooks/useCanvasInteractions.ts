@@ -5,14 +5,21 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 
-import { useCanvasState, useCanvasActions, useCanvasRefs, type PanState, type DragState, type ConnectingState } from './useCanvas';
+import {
+  useCanvasState,
+  useCanvasActions,
+  useCanvasRefs,
+  type PanState,
+  type DragState,
+  type ConnectingState,
+} from './useCanvas';
 import { useEdgePaths, type EdgePath, type EdgeRoutingMode } from './useEdgePaths';
 import { useSelectionState, useSelectionActions } from './useSelection';
 
 import { useGraphState, useGraphActions } from '../GraphContext';
 import { useRuntimeState, useRuntimeActions } from '../RuntimeContext';
 
-import { 
+import {
   type MarqueeSelectionState,
   type TouchLongPressIndicatorState,
   type MarqueeMode,
@@ -41,12 +48,15 @@ import {
   type UseCanvasInteractionsTouchValue,
 } from './useCanvasInteractions.touch';
 
-import { useCanvasStateHandlers, type UseCanvasStateHandlersValue } from './canvas/useCanvasStateHandlers';
-import { 
+import {
+  useCanvasStateHandlers,
+  type UseCanvasStateHandlersValue,
+} from './canvas/useCanvasStateHandlers';
+import {
   useCanvasEventHandlers,
   type UseCanvasEventHandlersValue,
 } from './canvas/useCanvasEventHandlers';
-import { 
+import {
   useCanvasTouchHandlers,
   type UseCanvasTouchHandlersValue,
 } from './canvas/useCanvasTouchHandlers';
@@ -63,9 +73,17 @@ export function useCanvasInteractions(args?: {
   const { confirmNodeSwitch = async () => true } = args ?? {};
 
   // Context: Canvas/Viewport
-  const { view, panState, edgeRoutingMode, isPanning, dragState, connecting, connectingPos } = useCanvasState();
-  const { updateView, startPan, startDrag, endDrag, startConnection, endConnection, setConnectingPos } =
-    useCanvasActions();
+  const { view, panState, edgeRoutingMode, isPanning, dragState, connecting, connectingPos } =
+    useCanvasState();
+  const {
+    updateView,
+    startPan,
+    startDrag,
+    endDrag,
+    startConnection,
+    endConnection,
+    setConnectingPos,
+  } = useCanvasActions();
   const { viewportRef, canvasRef } = useCanvasRefs();
 
   // Context: Graph
@@ -74,7 +92,7 @@ export function useCanvasInteractions(args?: {
 
   // Context: Runtime
   const { setRuntimeState } = useRuntimeActions();
-  const { runtimeState } = useRuntimeState();
+  useRuntimeState();
 
   // Context: Selection
   const { selectedNodeId, selectedNodeIds, selectedEdgeId, selectionToolMode, selectionScopeMode } =
@@ -102,17 +120,14 @@ export function useCanvasInteractions(args?: {
     edges,
     setNodes,
     setRuntimeState,
-    selectionToolMode: (selectionToolMode as unknown as MarqueeMode),
-    selectionScopeMode: (selectionScopeMode as unknown as 'replace' | 'add' | 'toggle'),
+    selectionToolMode: selectionToolMode as unknown as MarqueeMode,
+    selectionScopeMode: selectionScopeMode as unknown as 'replace' | 'add' | 'toggle',
     setNodeSelection,
     toggleNodeSelection,
     startPan,
   });
 
-  const { 
-    resolveActiveNodeSelectionIds, 
-    updateLastPointerCanvasPosFromClient 
-  } = stateHandlers;
+  const { resolveActiveNodeSelectionIds, updateLastPointerCanvasPosFromClient } = stateHandlers;
 
   const latestViewRef = useRef(view);
   latestViewRef.current = view;
@@ -156,25 +171,27 @@ export function useCanvasInteractions(args?: {
     toast: toast,
   });
 
-  const connectionActions: UseCanvasInteractionsConnectionsValue = useCanvasInteractionsConnections({
-    nodes,
-    edges,
-    isPathLocked,
-    notifyLocked: stateHandlers.notifyLocked,
-    confirmNodeSwitch,
-    setEdges,
-    setRuntimeState,
-    pruneRuntimeInputsInternal: stateHandlers.pruneRuntimeInputsInternal,
-    selectedEdgeId,
-    selectEdge,
-    startConnection,
-    endConnection,
-    connecting,
-    setConnectingPos,
-    view,
-    viewportRef,
-    toast: toast,
-  });
+  const connectionActions: UseCanvasInteractionsConnectionsValue = useCanvasInteractionsConnections(
+    {
+      nodes,
+      edges,
+      isPathLocked,
+      notifyLocked: stateHandlers.notifyLocked,
+      confirmNodeSwitch,
+      setEdges,
+      setRuntimeState,
+      pruneRuntimeInputsInternal: stateHandlers.pruneRuntimeInputsInternal,
+      selectedEdgeId,
+      selectEdge,
+      startConnection,
+      endConnection,
+      connecting,
+      setConnectingPos,
+      view,
+      viewportRef,
+      toast: toast,
+    }
+  );
 
   const clipboard: UseCanvasInteractionsClipboardValue = useCanvasInteractionsClipboard({
     isPathLocked,
@@ -315,7 +332,8 @@ export function useCanvasInteractions(args?: {
 }
 
 export interface UseCanvasInteractionsReturn
-  extends UseCanvasInteractionsNodesValue,
+  extends
+    UseCanvasInteractionsNodesValue,
     UseCanvasInteractionsConnectionsValue,
     UseCanvasInteractionsClipboardValue,
     UseCanvasEventHandlersValue,
@@ -333,7 +351,11 @@ export interface UseCanvasInteractionsReturn
   handlePanMove: () => void;
   handlePanEnd: () => void;
   ConfirmationModal: React.FC;
-  pruneRuntimeInputs: (state: RuntimeState, removedEdges: Edge[], remainingEdges: Edge[]) => RuntimeState;
+  pruneRuntimeInputs: (
+    state: RuntimeState,
+    removedEdges: Edge[],
+    remainingEdges: Edge[]
+  ) => RuntimeState;
   isPanning: boolean;
   maybeStartTouchPanInertia: (lastSample: TouchPointSample) => void;
 }

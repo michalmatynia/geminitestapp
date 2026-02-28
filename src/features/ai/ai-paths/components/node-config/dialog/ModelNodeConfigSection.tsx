@@ -36,7 +36,8 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
     (!selectedModelId && !effectiveModelId);
   const knownModels = brainModelOptions.models;
   const selectedModelMissingFromCatalog =
-    Boolean(selectedModelId) && !knownModels.some((modelId: string): boolean => modelId === selectedModelId);
+    Boolean(selectedModelId) &&
+    !knownModels.some((modelId: string): boolean => modelId === selectedModelId);
   const modelOptions = [
     {
       value: '',
@@ -143,19 +144,20 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
       </div>
       {routingMisconfigured ? (
         <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
-          AI Brain routing for <code>ai_paths</code> is not ready. Enable the feature, keep
-          provider set to Model, and set a default model ID in AI Brain.
+          AI Brain routing for <code>ai_paths</code> is not ready. Enable the feature, keep provider
+          set to Model, and set a default model ID in AI Brain.
         </Card>
       ) : null}
       {selectedModelId ? (
         <Card variant='subtle-compact' padding='sm' className='text-[11px] text-gray-300'>
-          This node will run with <span className='text-gray-100'>{selectedModelId}</span>.
-          {' '}If cleared, it will inherit <span className='text-gray-100'>{effectiveModelId || 'the AI Brain default'}</span>.
+          This node will run with <span className='text-gray-100'>{selectedModelId}</span>. If
+          cleared, it will inherit{' '}
+          <span className='text-gray-100'>{effectiveModelId || 'the AI Brain default'}</span>.
         </Card>
       ) : (
         <Card variant='subtle-compact' padding='sm' className='text-[11px] text-gray-300'>
-          This node inherits the AI Brain default model:
-          {' '}<span className='text-gray-100'>{effectiveModelId || 'Not configured'}</span>.
+          This node inherits the AI Brain default model:{' '}
+          <span className='text-gray-100'>{effectiveModelId || 'Not configured'}</span>.
         </Card>
       )}
       {selectedModelMissingFromCatalog ? (
@@ -179,9 +181,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
           variant={modelConfig.vision ? 'success' : 'default'}
           size='xs'
           type='button'
-          onClick={(): void =>
-            updateModelConfig({ vision: !modelConfig.vision })
-          }
+          onClick={(): void => updateModelConfig({ vision: !modelConfig.vision })}
         >
           {modelConfig.vision ? 'Enabled' : 'Disabled'}
         </Button>

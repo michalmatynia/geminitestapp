@@ -33,21 +33,21 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 
-import { 
-  centerBadRequest, 
-  guessExtension, 
-  isClientCenterMode, 
-  readIdempotencyKey, 
-  sanitizeFilename, 
-  sanitizeSegment 
+import {
+  centerBadRequest,
+  guessExtension,
+  isClientCenterMode,
+  readIdempotencyKey,
+  sanitizeFilename,
+  sanitizeSegment,
 } from '@/features/ai/image-studio/server/image-handler-utils';
 import { processCenterPayload } from '@/features/ai/image-studio/server/center-service';
-import { 
-  parseCenterRequestPayload, 
+import {
+  parseCenterRequestPayload,
   normalizeCenterRequestBody,
   buildClientPayloadSignature,
   readCenterMetadataFromSlot,
-  parseCenterResponsePayload
+  parseCenterResponsePayload,
 } from './helpers';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'center');
@@ -64,10 +64,7 @@ export async function postCenterSlotHandler(
 ): Promise<Response> {
   const slotId = params.slotId?.trim() ?? '';
   if (!slotId) {
-    throw centerBadRequest(
-      IMAGE_STUDIO_CENTER_ERROR_CODES.INVALID_PAYLOAD,
-      'Slot id is required.'
-    );
+    throw centerBadRequest(IMAGE_STUDIO_CENTER_ERROR_CODES.INVALID_PAYLOAD, 'Slot id is required.');
   }
 
   const startedAt = Date.now();
@@ -128,7 +125,9 @@ export async function postCenterSlotHandler(
         : null,
   });
   const fingerprintRelationType = buildCenterFingerprintRelationType(fingerprint);
-  const requestRelationType = idempotencyKey ? buildCenterRequestRelationType(idempotencyKey) : null;
+  const requestRelationType = idempotencyKey
+    ? buildCenterRequestRelationType(idempotencyKey)
+    : null;
 
   if (requestRelationType) {
     const existingByRequest = await getImageStudioSlotLinkBySourceAndRelation(
@@ -145,7 +144,8 @@ export async function postCenterSlotHandler(
             sourceSlotId: sourceSlot.id,
             slot: existingSlot,
             mode: payload.mode,
-            effectiveMode: (existingCenter.effectiveMode as unknown as ImageStudioCenterMode) ?? payload.mode,
+            effectiveMode:
+              (existingCenter.effectiveMode as unknown as ImageStudioCenterMode) ?? payload.mode,
             sourceObjectBounds: existingCenter.sourceObjectBounds as ImageStudioCenterObjectBounds,
             targetObjectBounds: existingCenter.targetObjectBounds as ImageStudioCenterObjectBounds,
             layout: existingCenter.layout as ImageStudioCenterLayoutMetadata,
@@ -186,7 +186,8 @@ export async function postCenterSlotHandler(
             sourceSlotId: sourceSlot.id,
             slot: existingSlot,
             mode: payload.mode,
-            effectiveMode: (existingCenter.effectiveMode as unknown as ImageStudioCenterMode) ?? payload.mode,
+            effectiveMode:
+              (existingCenter.effectiveMode as unknown as ImageStudioCenterMode) ?? payload.mode,
             sourceObjectBounds: existingCenter.sourceObjectBounds as ImageStudioCenterObjectBounds,
             targetObjectBounds: existingCenter.targetObjectBounds as ImageStudioCenterObjectBounds,
             layout: existingCenter.layout as ImageStudioCenterLayoutMetadata,

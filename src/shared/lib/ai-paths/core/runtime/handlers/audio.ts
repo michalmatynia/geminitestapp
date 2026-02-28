@@ -208,7 +208,9 @@ export const handleAudioOscillator: NodeHandler = ({
   nodeInputs,
 }: NodeHandlerContext): RuntimePortValues => {
   const configRaw = node.config?.['audioOscillator'];
-  const config = (isRecord(configRaw) ? configRaw : DEFAULT_OSCILLATOR_SIGNAL) as unknown as OscillatorSignal;
+  const config = (isRecord(configRaw)
+    ? configRaw
+    : DEFAULT_OSCILLATOR_SIGNAL) as unknown as OscillatorSignal;
   const triggerValue = coerceInput(nodeInputs['trigger']);
   const armed = triggerValue === undefined ? true : Boolean(triggerValue);
 
@@ -244,12 +246,16 @@ export const handleAudioSpeaker: NodeHandler = async ({
   nodeInputs,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   const configRaw = node.config?.['audioSpeaker'];
-  const config = (isRecord(configRaw) ? configRaw : {
-    enabled: true,
-    autoPlay: true,
-    gain: 1,
-    stopPrevious: true,
-  }) as Record<string, unknown>;
+  const config = (
+    isRecord(configRaw)
+      ? configRaw
+      : {
+        enabled: true,
+        autoPlay: true,
+        gain: 1,
+        stopPrevious: true,
+      }
+  ) as Record<string, unknown>;
 
   if (config['enabled'] === false) {
     stopActivePlayback(node.id);

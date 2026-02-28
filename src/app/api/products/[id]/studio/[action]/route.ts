@@ -19,7 +19,7 @@ export const GET = apiHandlerWithParams<StudioActionParams>(
     if (action === 'audit') return getAudit(req, ctx, params);
     if (action === 'variants') return getVariants(req, ctx, params);
     if (action === 'preflight') return getPreflight(req, ctx, params);
-    
+
     throw badRequestError(`Invalid studio action for GET: ${action}`);
   },
   { source: 'products.[id].studio.[action].GET' }
@@ -32,7 +32,7 @@ export const POST = apiHandlerWithParams<StudioActionParams>(
     if (action === 'accept') return postAccept(req, ctx, params);
     if (action === 'send') return postSend(req, ctx, params);
     if (action === 'link') return postLink(req, ctx, params);
-    
+
     throw badRequestError(`Invalid studio action for POST: ${action}`);
   },
   { source: 'products.[id].studio.[action].POST', logSuccess: true }

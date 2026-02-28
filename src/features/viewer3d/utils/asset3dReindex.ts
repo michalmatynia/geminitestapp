@@ -28,10 +28,7 @@ const deriveAssetName = (filename: string): string | null => {
   // Common uploader pattern: `${Date.now()}-${originalName}`
   const withoutExt = filename.replace(/\.[^/.]+$/, '');
   const withoutTimestampPrefix = withoutExt.replace(/^\d{10,}-/, '');
-  const cleaned = withoutTimestampPrefix
-    .replace(/[-_]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const cleaned = withoutTimestampPrefix.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
   if (!cleaned) return null;
   return toTitleCase(cleaned);
 };
@@ -44,8 +41,12 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
   skipped: number;
   createdIds: string[];
 }> {
-  const entries: import('fs').Dirent[] = await fs.readdir(assets3dDiskDir, { withFileTypes: true }).catch(() => []);
-  const diskFiles: string[] = entries.filter((entry: import('fs').Dirent) => entry.isFile()).map((entry: import('fs').Dirent) => entry.name);
+  const entries: import('fs').Dirent[] = await fs
+    .readdir(assets3dDiskDir, { withFileTypes: true })
+    .catch(() => []);
+  const diskFiles: string[] = entries
+    .filter((entry: import('fs').Dirent) => entry.isFile())
+    .map((entry: import('fs').Dirent) => entry.name);
   const supported: string[] = diskFiles.filter(isSupported3DFile);
 
   if (supported.length === 0) {
@@ -63,7 +64,9 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
     where: { filename: { in: supported } },
     select: { filename: true },
   });
-  const existingNames: Set<string> = new Set(existing.map((row: { filename: string }) => row.filename));
+  const existingNames: Set<string> = new Set(
+    existing.map((row: { filename: string }) => row.filename)
+  );
 
   const missing: string[] = supported.filter((filename: string) => !existingNames.has(filename));
   if (missing.length === 0) {
@@ -78,33 +81,35 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
   }
 
   const createdIds: string[] = [];
-  const created: number = await prisma.$transaction(async (tx: Prisma.TransactionClient): Promise<number> => {
-    let createdCount = 0;
-    for (const filename of missing) {
-      const ext = `.${filename.split('.').pop() ?? ''}`.toLowerCase() as Supported3DExtension;
-      const format = SUPPORTED_3D_FORMATS[ext];
-      const stat = await fs.stat(path.join(assets3dDiskDir, filename));
+  const created: number = await prisma.$transaction(
+    async (tx: Prisma.TransactionClient): Promise<number> => {
+      let createdCount = 0;
+      for (const filename of missing) {
+        const ext = `.${filename.split('.').pop() ?? ''}`.toLowerCase() as Supported3DExtension;
+        const format = SUPPORTED_3D_FORMATS[ext];
+        const stat = await fs.stat(path.join(assets3dDiskDir, filename));
 
-      const record = await tx.asset3D.create({
-        data: {
-          name: deriveAssetName(filename),
-          description: null,
-          filename,
-          filepath: `${assets3dPublicDir}/${filename}`,
-          mimetype: format?.mimetype ?? 'application/octet-stream',
-          size: stat.size,
-          tags: [],
-          category: null,
-          metadata: Prisma.JsonNull,
-          isPublic: false,
-        },
-        select: { id: true },
-      });
-      createdIds.push(record.id);
-      createdCount++;
+        const record = await tx.asset3D.create({
+          data: {
+            name: deriveAssetName(filename),
+            description: null,
+            filename,
+            filepath: `${assets3dPublicDir}/${filename}`,
+            mimetype: format?.mimetype ?? 'application/octet-stream',
+            size: stat.size,
+            tags: [],
+            category: null,
+            metadata: Prisma.JsonNull,
+            isPublic: false,
+          },
+          select: { id: true },
+        });
+        createdIds.push(record.id);
+        createdCount++;
+      }
+      return createdCount;
     }
-    return createdCount;
-  });
+  );
 
   return {
     diskFiles: diskFiles.length,

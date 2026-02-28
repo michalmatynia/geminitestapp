@@ -4,18 +4,14 @@ import {
 } from '@/features/ai/image-studio/server/run-repository';
 import {
   listImageStudioSlots,
-  type ImageStudioSlotRecord
+  type ImageStudioSlotRecord,
 } from '@/features/ai/image-studio/server/slot-repository';
 import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
-import {
-  enqueueImageStudioRunJob,
-} from '@/features/ai/image-studio/workers/imageStudioRunQueue';
-import { 
-  type ImageStudioSequenceGenerateStep,
-} from '@/features/ai/image-studio/utils/studio-settings';
-import type { 
+import { enqueueImageStudioRunJob } from '@/features/ai/image-studio/workers/imageStudioRunQueue';
+import { type ImageStudioSequenceGenerateStep } from '@/features/ai/image-studio/utils/studio-settings';
+import type {
   ImageStudioSequenceRunRecord,
-  ImageStudioSequenceMaskContext
+  ImageStudioSequenceMaskContext,
 } from '../sequence-run-repository';
 import { sleep } from './utils';
 
@@ -30,7 +26,7 @@ export async function executeGenerateStep(params: {
 }): Promise<{ nextSlotId: string; producedSlotIds: string[]; generatedRunId: string }> {
   const { run, step, currentSlot } = params;
   const config = step.config;
-  
+
   const promptTemplate = config.promptTemplate || '';
   const prompt = resolvePromptPlaceholders(promptTemplate, {
     projectId: run.projectId,
@@ -61,11 +57,11 @@ export async function executeGenerateStep(params: {
 
   const producedSlots = await listImageStudioSlots(run.projectId);
   const newSlots = producedSlots
-    .filter(s => {
+    .filter((s) => {
       const metadata = s.metadata;
       return metadata?.['generationRunId'] === genRun.id;
     })
-    .map(s => s.id);
+    .map((s) => s.id);
 
   if (newSlots.length === 0) {
     throw new Error('Generation completed but no output slots found.');

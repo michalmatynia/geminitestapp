@@ -36,10 +36,10 @@ const ENTITY_MAP: Record<string, string> = {
 
 const decodeHtmlEntity = (value: string): string => {
   if (!value?.includes('&')) return value;
-  
+
   // Fast path for common entities
   let result = value.replace(/&[a-z0-9#]+;/gi, (match) => ENTITY_MAP[match.toLowerCase()] || match);
-  
+
   if (!result.includes('&')) return result;
 
   // Fallback to DOM only if there are still potential entities and we're in browser
@@ -69,10 +69,7 @@ const normalizePlainText = (value: string): string =>
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
-const ensureContentWithinLimit = (
-  value: string,
-  warnings: string[]
-): string => {
+const ensureContentWithinLimit = (value: string, warnings: string[]): string => {
   if (value.length <= MAX_DOCUMENT_INPUT_CHARS) return value;
   warnings.push(
     `Content exceeded ${MAX_DOCUMENT_INPUT_CHARS.toLocaleString()} chars and was truncated.`
@@ -93,10 +90,7 @@ const renderInlineMarkdown = (value: string): string => {
   const withCode = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
   const withStrong = withCode.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   const withEm = withStrong.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  const withImages = withEm.replace(
-    /!\[([^\]]*)\]\(([^)]+)\)/g,
-    '<img src="$2" alt="$1" />'
-  );
+  const withImages = withEm.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
   return withImages.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
     '<a href="$2" target="_blank" rel="noreferrer">$1</a>'
@@ -152,7 +146,9 @@ const markdownToHtml = (value: string): string => {
       closeList();
       const level = headingMatch[1]?.length ?? 1;
       const headingLevel = Math.max(1, Math.min(6, level));
-      htmlParts.push(`<h${headingLevel}>${renderInlineMarkdown(headingMatch[2] ?? '')}</h${headingLevel}>`);
+      htmlParts.push(
+        `<h${headingLevel}>${renderInlineMarkdown(headingMatch[2] ?? '')}</h${headingLevel}>`
+      );
       return;
     }
 
@@ -201,8 +197,7 @@ const normalizeMarkdown = (value: string): string =>
 const hasBlockTag = (value: string): boolean =>
   /<(h1|h2|h3|h4|h5|h6|p|ul|ol|li|table|pre|blockquote|hr)\b/i.test(value);
 
-export const hasHtmlMarkup = (value: string): boolean =>
-  /<\/?[a-z][^>]*>/i.test(value);
+export const hasHtmlMarkup = (value: string): boolean => /<\/?[a-z][^>]*>/i.test(value);
 
 export const stripHtmlToPlainText = (html: string): string => {
   const decoded = decodeHtmlEntity(html);
@@ -332,14 +327,12 @@ export const deriveDocumentContent = async (
   };
 };
 
-export const normalizeRawDocumentModeFromContent = (
-  input: {
-    mode?: string | null | undefined;
-    rawContent?: string | null | undefined;
-    rawMarkdown?: string | null | undefined;
-    rawHtml?: string | null | undefined;
-  }
-): DocumentPersistenceMode => {
+export const normalizeRawDocumentModeFromContent = (input: {
+  mode?: string | null | undefined;
+  rawContent?: string | null | undefined;
+  rawMarkdown?: string | null | undefined;
+  rawHtml?: string | null | undefined;
+}): DocumentPersistenceMode => {
   const fromMode = normalizeEditorMode(input.mode);
   if (input.mode === 'markdown' || input.mode === 'wysiwyg' || input.mode === 'code') {
     return fromMode;
@@ -357,9 +350,8 @@ export const normalizeRawDocumentModeFromContent = (
   return 'markdown';
 };
 
-export const toStorageDocumentValue = (
-  canonical: DocumentContentCanonical
-): string => (canonical.mode === 'wysiwyg' ? canonical.html : canonical.markdown);
+export const toStorageDocumentValue = (canonical: DocumentContentCanonical): string =>
+  canonical.mode === 'wysiwyg' ? canonical.html : canonical.markdown;
 
 export const restoreDisplayValueForMode = (
   canonical: DocumentContentCanonical,

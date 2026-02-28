@@ -42,12 +42,17 @@ import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import { SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import type { HeadingLevel, TextAlignOption, RichTextEditorFontOption, RichTextEditorProps } from './RichTextEditorTypes';
-import { 
-  fontFamilyMark, 
-  underlineMark, 
-  inlineTextAlignMark, 
-  textAlignExtension, 
+import type {
+  HeadingLevel,
+  TextAlignOption,
+  RichTextEditorFontOption,
+  RichTextEditorProps,
+} from './RichTextEditorTypes';
+import {
+  fontFamilyMark,
+  underlineMark,
+  inlineTextAlignMark,
+  textAlignExtension,
 } from './rich-text/RichTextEditorExtensions';
 import { ToolbarButton } from './rich-text/RichTextEditorToolbar';
 
@@ -93,15 +98,12 @@ export default function RichTextEditorImpl({
   const lastValueRef = useRef(value);
   const hasAcceptedFocusedUpdateRef = useRef(false);
   const headingLevelsSignature = headingLevels.join(',');
-  const normalizedFontFamilyOptions = useMemo<RichTextEditorFontOption[]>(
-    () => {
-      if (fontFamilyOptions && fontFamilyOptions.length > 0) {
-        return fontFamilyOptions;
-      }
-      return defaultFontFamilyOptions;
-    },
-    [fontFamilyOptions]
-  );
+  const normalizedFontFamilyOptions = useMemo<RichTextEditorFontOption[]>(() => {
+    if (fontFamilyOptions && fontFamilyOptions.length > 0) {
+      return fontFamilyOptions;
+    }
+    return defaultFontFamilyOptions;
+  }, [fontFamilyOptions]);
 
   const normalizedHeadingLevels = useMemo<HeadingLevel[]>(() => {
     const normalized = headingLevels
@@ -166,7 +168,14 @@ export default function RichTextEditorImpl({
     }
 
     return activeExtensions;
-  }, [allowFontFamily, allowImage, allowTable, allowTaskList, allowTextAlign, normalizedHeadingLevels]);
+  }, [
+    allowFontFamily,
+    allowImage,
+    allowTable,
+    allowTaskList,
+    allowTextAlign,
+    normalizedHeadingLevels,
+  ]);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -224,7 +233,7 @@ export default function RichTextEditorImpl({
       required: true,
       onConfirm: (href: string) => {
         editor.chain().focus().setLink({ href }).run();
-      }
+      },
     });
   }, [editor, prompt]);
 
@@ -237,79 +246,80 @@ export default function RichTextEditorImpl({
       required: true,
       onConfirm: (src: string) => {
         editor.chain().focus().setImage({ src }).run();
-      }
+      },
     });
   }, [editor, allowImage, prompt]);
 
   const addTable = useCallback((): void => {
     if (!editor || !allowTable) return;
-    editor
-      .chain()
-      .focus()
-      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-      .run();
+    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }, [allowTable, editor]);
 
-  const setTextAlign = useCallback((nextValue: TextAlignOption): void => {
-    if (!allowTextAlign || !editor) return;
-    editor.chain().focus().run();
-    const { from, to, empty } = editor.state.selection;
-    if (empty) return;
+  const setTextAlign = useCallback(
+    (nextValue: TextAlignOption): void => {
+      if (!allowTextAlign || !editor) return;
+      editor.chain().focus().run();
+      const { from, to, empty } = editor.state.selection;
+      if (empty) return;
 
-    let hasAlignableBlock = false;
-    let hasPartiallySelectedBlock = false;
-    editor.state.doc.nodesBetween(from, to, (node, position): void => {
-      if (node.type.name !== 'paragraph' && node.type.name !== 'heading') return;
-      const contentStart = position + 1;
-      const contentEnd = position + node.nodeSize - 1;
-      const intersectsSelection = to > contentStart && from < contentEnd;
-      if (!intersectsSelection) return;
-      hasAlignableBlock = true;
-      if (from > contentStart || to < contentEnd) {
-        hasPartiallySelectedBlock = true;
-      }
-    });
+      let hasAlignableBlock = false;
+      let hasPartiallySelectedBlock = false;
+      editor.state.doc.nodesBetween(from, to, (node, position): void => {
+        if (node.type.name !== 'paragraph' && node.type.name !== 'heading') return;
+        const contentStart = position + 1;
+        const contentEnd = position + node.nodeSize - 1;
+        const intersectsSelection = to > contentStart && from < contentEnd;
+        if (!intersectsSelection) return;
+        hasAlignableBlock = true;
+        if (from > contentStart || to < contentEnd) {
+          hasPartiallySelectedBlock = true;
+        }
+      });
 
-    if (hasAlignableBlock && hasPartiallySelectedBlock) {
-      if (nextValue === 'left') {
-        editor.chain().focus().unsetMark('inlineTextAlignStyle').run();
+      if (hasAlignableBlock && hasPartiallySelectedBlock) {
+        if (nextValue === 'left') {
+          editor.chain().focus().unsetMark('inlineTextAlignStyle').run();
+          return;
+        }
+        editor
+          .chain()
+          .focus()
+          .unsetMark('inlineTextAlignStyle')
+          .setMark('inlineTextAlignStyle', { textAlign: nextValue })
+          .run();
         return;
       }
-      editor
-        .chain()
-        .focus()
-        .unsetMark('inlineTextAlignStyle')
-        .setMark('inlineTextAlignStyle', { textAlign: nextValue })
-        .run();
-      return;
-    }
 
-    const transaction = editor.state.tr;
-    let changed = false;
-    editor.state.doc.nodesBetween(from, to, (node, position): void => {
-      if (node.type.name !== 'paragraph' && node.type.name !== 'heading') return;
-      const currentAlign = typeof node.attrs['textAlign'] === 'string'
-        ? node.attrs['textAlign']
-        : 'left';
-      if (currentAlign === nextValue) return;
-      changed = true;
-      transaction.setNodeMarkup(position, undefined, {
-        ...node.attrs,
-        textAlign: nextValue,
+      const transaction = editor.state.tr;
+      let changed = false;
+      editor.state.doc.nodesBetween(from, to, (node, position): void => {
+        if (node.type.name !== 'paragraph' && node.type.name !== 'heading') return;
+        const currentAlign =
+          typeof node.attrs['textAlign'] === 'string' ? node.attrs['textAlign'] : 'left';
+        if (currentAlign === nextValue) return;
+        changed = true;
+        transaction.setNodeMarkup(position, undefined, {
+          ...node.attrs,
+          textAlign: nextValue,
+        });
       });
-    });
-    if (!changed) return;
-    editor.view.dispatch(transaction.scrollIntoView());
-  }, [allowTextAlign, editor]);
+      if (!changed) return;
+      editor.view.dispatch(transaction.scrollIntoView());
+    },
+    [allowTextAlign, editor]
+  );
 
-  const isTextAlignActive = useCallback((alignment: TextAlignOption): boolean => {
-    if (!allowTextAlign || !editor) return false;
-    return (
-      editor.isActive('inlineTextAlignStyle', { textAlign: alignment }) ||
-      editor.isActive('paragraph', { textAlign: alignment }) ||
-      editor.isActive('heading', { textAlign: alignment })
-    );
-  }, [allowTextAlign, editor]);
+  const isTextAlignActive = useCallback(
+    (alignment: TextAlignOption): boolean => {
+      if (!allowTextAlign || !editor) return false;
+      return (
+        editor.isActive('inlineTextAlignStyle', { textAlign: alignment }) ||
+        editor.isActive('paragraph', { textAlign: alignment }) ||
+        editor.isActive('heading', { textAlign: alignment })
+      );
+    },
+    [allowTextAlign, editor]
+  );
 
   const activeFontFamilyValue = useMemo((): string => {
     if (!allowFontFamily || !editor) return '__default__';
@@ -319,10 +329,7 @@ export default function RichTextEditorImpl({
   }, [allowFontFamily, editor, value]);
 
   const fontFamilySelectOptions = useMemo(
-    () => [
-      { value: '__default__', label: 'Font' },
-      ...normalizedFontFamilyOptions,
-    ],
+    () => [{ value: '__default__', label: 'Font' }, ...normalizedFontFamilyOptions],
     [normalizedFontFamilyOptions]
   );
 
@@ -514,20 +521,12 @@ export default function RichTextEditorImpl({
           <LinkIcon className='size-4' />
         </ToolbarButton>
         {allowImage ? (
-          <ToolbarButton
-            title='Insert image'
-            onClick={addImage}
-            variant={variant}
-          >
+          <ToolbarButton title='Insert image' onClick={addImage} variant={variant}>
             <ImageIcon className='size-4' />
           </ToolbarButton>
         ) : null}
         {allowTable ? (
-          <ToolbarButton
-            title='Insert table'
-            onClick={addTable}
-            variant={variant}
-          >
+          <ToolbarButton title='Insert table' onClick={addTable} variant={variant}>
             <TableIcon className='size-4' />
           </ToolbarButton>
         ) : null}

@@ -163,7 +163,7 @@ export async function listSimpleParameters(
   const filtered = all.filter((parameter: ProductSimpleParameter) => {
     if (parameter.catalogId !== catalogId) return false;
     if (!search) return true;
-    const values = [(parameter.name_en || ''), parameter.name_pl ?? '', parameter.name_de ?? ''];
+    const values = [parameter.name_en || '', parameter.name_pl ?? '', parameter.name_de ?? ''];
     return values.some((value: string) => value.toLowerCase().includes(search));
   });
   return sortSimpleParameters(filtered);
@@ -181,7 +181,8 @@ export async function createSimpleParameter(
   const all = await readSimpleParameters();
   const duplicate = all.find(
     (item: ProductSimpleParameter): boolean =>
-      item.catalogId === catalogId && normalizeNameKey(item.name_en || '') === normalizeNameKey(nameEn)
+      item.catalogId === catalogId &&
+      normalizeNameKey(item.name_en || '') === normalizeNameKey(nameEn)
   );
   if (duplicate) {
     throw conflictError('A parameter with this name already exists in this catalog', {
@@ -230,8 +231,8 @@ export async function updateSimpleParameter(
       : current.catalogId;
   const nextNameEn =
     input.name_en !== undefined
-      ? toTrimmedString(input.name_en) || (current.name_en || '')
-      : (current.name_en || '');
+      ? toTrimmedString(input.name_en) || current.name_en || ''
+      : current.name_en || '';
 
   const duplicate = all.find(
     (item: ProductSimpleParameter): boolean =>

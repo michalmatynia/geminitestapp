@@ -3,11 +3,7 @@
 import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 
-import {
-  createProduct,
-  updateProduct,
-  deleteProduct,
-} from '@/features/products/api';
+import { createProduct, updateProduct, deleteProduct } from '@/features/products/api';
 import {
   type UseProductsFilters,
   type UseProductsOptions,

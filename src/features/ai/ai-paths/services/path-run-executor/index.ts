@@ -1,10 +1,6 @@
 import 'server-only';
 
-import {
-  cloneJsonSafe,
-  normalizeNodes,
-  sanitizeEdges,
-} from '@/shared/lib/ai-paths';
+import { cloneJsonSafe, normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
@@ -28,9 +24,7 @@ import type {
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
-import type {
-  RuntimeProfileSummaryDto,
-} from '@/shared/contracts/ai-paths-runtime';
+import type { RuntimeProfileSummaryDto } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   EMPTY_RUNTIME_STATE,
@@ -116,7 +110,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
 
   const nodes = normalizeNodes(run.graph?.nodes ?? []);
   const edges = sanitizeEdges(nodes, run.graph?.edges ?? []);
-  const triggerNodeId = resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
+  const triggerNodeId =
+    resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
   const runtimeState = parseRuntimeState(run.runtimeState);
 
   const accInputs: Record<string, RuntimePortValues> = mergeRuntimePortMaps(
@@ -362,7 +357,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
           const finishedAt = new Date().toISOString();
           const rawStatus = nextOutputs['status'] as AiPathRunStatus | undefined;
-          const status = (cached ? 'cached' : (rawStatus != null ? toRuntimeLifecycleStatus(rawStatus) : null)) ?? 'completed';
+          const status =
+            (cached ? 'cached' : rawStatus != null ? toRuntimeLifecycleStatus(rawStatus) : null) ??
+            'completed';
 
           profiling.finalizeRuntimeNodeSpan({
             spanId: nodeSpanId,
@@ -416,13 +413,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeFinish' });
         }
       },
-      onNodeError: async ({
-        node,
-        nodeInputs,
-        error,
-        iteration,
-        runStartedAt: cbRunStartedAt,
-      }) => {
+      onNodeError: async ({ node, nodeInputs, error, iteration, runStartedAt: cbRunStartedAt }) => {
         try {
           resolvedRunId = run.id;
           resolvedRunStartedAt = cbRunStartedAt;
@@ -471,7 +462,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             throttledSaveIntermediateState(),
           ];
           await Promise.all(tasks);
-          void recordRuntimeNodeStatus({ runId: run.id, nodeId: node.id, status: 'failed' }).catch(() => {});
+          void recordRuntimeNodeStatus({ runId: run.id, nodeId: node.id, status: 'failed' }).catch(
+            () => {}
+          );
         } catch (error) {
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeError' });
         }
@@ -496,11 +489,15 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     if (runtimeHaltReason === 'cancelled') {
       finalStatus = 'canceled';
     } else if (runtimeHaltReason === 'blocked') {
-      if (shouldFailBlockedRun({
-        runBlocked: true,
-        blockedRunPolicy: (run.meta?.['blockedRunPolicy'] as 'fail_run' | 'complete_with_warning') ?? 'complete_with_warning',
-        nodeValidationEnabled,
-      })) {
+      if (
+        shouldFailBlockedRun({
+          runBlocked: true,
+          blockedRunPolicy:
+            (run.meta?.['blockedRunPolicy'] as 'fail_run' | 'complete_with_warning') ??
+            'complete_with_warning',
+          nodeValidationEnabled,
+        })
+      ) {
         finalStatus = 'failed';
         finalError = buildBlockedRunFailureMessage(
           collectBlockedNodeDiagnostics(nodes, accOutputs)
@@ -538,7 +535,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   } catch (error) {
     if (dbRunMissing) return;
     const finishedAt = new Date().toISOString();
-    const isCancelled = error instanceof GraphExecutionCancelled || runAbortController.signal.aborted;
+    const isCancelled =
+      error instanceof GraphExecutionCancelled || runAbortController.signal.aborted;
     const status: AiPathRunStatus = isCancelled ? 'canceled' : 'failed';
 
     const finalRuntimeState = await buildCurrentRuntimeStateSnapshot();

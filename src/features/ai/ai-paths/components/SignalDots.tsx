@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 
 import type { PathFlowIntensity } from '@/shared/lib/ai-paths';

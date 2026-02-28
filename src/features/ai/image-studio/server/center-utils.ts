@@ -63,7 +63,9 @@ export const buildCenterLayoutSignature = (
   return createHash('sha1').update(JSON.stringify(normalized)).digest('hex').slice(0, 20);
 };
 
-const normalizeModeForFingerprint = (mode: ImageStudioCenterMode): NormalizedCenterModeForFingerprint =>
+const normalizeModeForFingerprint = (
+  mode: ImageStudioCenterMode
+): NormalizedCenterModeForFingerprint =>
   mode === 'client_object_layout_v1' || mode === 'server_object_layout_v1'
     ? 'object_layout_v1'
     : 'alpha_bbox';
@@ -96,7 +98,10 @@ export const validateCenterSourceDimensions = (
   if (!(width > 0 && height > 0)) {
     return { ok: false, reason: 'non_positive_dimensions' };
   }
-  if (width > IMAGE_STUDIO_CENTER_MAX_SOURCE_SIDE_PX || height > IMAGE_STUDIO_CENTER_MAX_SOURCE_SIDE_PX) {
+  if (
+    width > IMAGE_STUDIO_CENTER_MAX_SOURCE_SIDE_PX ||
+    height > IMAGE_STUDIO_CENTER_MAX_SOURCE_SIDE_PX
+  ) {
     return { ok: false, reason: 'max_side_exceeded' };
   }
   if (width * height > IMAGE_STUDIO_CENTER_MAX_SOURCE_PIXELS) {
@@ -121,7 +126,7 @@ export const resolveAlphaObjectBounds = (
 
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
-      const alpha = pixelData[((y * width) + x) * 4 + 3];
+      const alpha = pixelData[(y * width + x) * 4 + 3];
       if (typeof alpha !== 'number' || alpha <= alphaThreshold) continue;
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;

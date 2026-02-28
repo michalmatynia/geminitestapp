@@ -4,13 +4,13 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { fetchAnalyticsSummary, type AnalyticsRange } from '@/shared/lib/analytics/api';
 import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
-import type { AnalyticsScopeDto as AnalyticsScope, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
+import type {
+  AnalyticsScopeDto as AnalyticsScope,
+  AnalyticsSummaryDto,
+} from '@/shared/contracts/analytics';
 import type { SingleQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
-import {
-  createSingleQueryV2,
-  createCreateMutationV2,
-} from '@/shared/lib/query-factories-v2';
+import { createSingleQueryV2, createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { analyticsKeys } from '@/shared/lib/query-key-exports';
 
 export { analyticsKeys };
@@ -41,7 +41,9 @@ export function useAnalyticsSummary(input?: {
   });
 }
 
-export function useAnalyticsInsights(options: { limit?: number; enabled?: boolean } = {}): SingleQuery<{ insights: AiInsightRecord[] }> {
+export function useAnalyticsInsights(
+  options: { limit?: number; enabled?: boolean } = {}
+): SingleQuery<{ insights: AiInsightRecord[] }> {
   const limit = options.limit ?? 5;
   const enabled = options.enabled ?? true;
 
@@ -49,9 +51,10 @@ export function useAnalyticsInsights(options: { limit?: number; enabled?: boolea
   return createSingleQueryV2({
     id: String(limit),
     queryKey,
-    queryFn: () => api.get<{ insights: AiInsightRecord[] }>('/api/analytics/insights', {
-      params: { limit }
-    }),
+    queryFn: () =>
+      api.get<{ insights: AiInsightRecord[] }>('/api/analytics/insights', {
+        params: { limit },
+      }),
     enabled,
     meta: {
       source: 'analytics.hooks.useAnalyticsInsights',
@@ -86,7 +89,7 @@ export function useTrackEventMutation(): MutationResult<void, Record<string, unk
   return createCreateMutationV2({
     mutationFn: async (payload: Record<string, unknown>) => {
       const body = JSON.stringify(payload);
-      
+
       if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
         const blob = new Blob([body], { type: 'application/json' });
         const ok = navigator.sendBeacon('/api/analytics/events', blob);

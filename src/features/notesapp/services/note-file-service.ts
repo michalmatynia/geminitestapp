@@ -4,15 +4,9 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { noteService } from '@/features/notesapp/server';
-import {
-  ALLOWED_MIME_EXACT,
-  MAX_IMAGE_BYTES,
-  notesRoot,
-} from '@/shared/lib/files/constants';
+import { ALLOWED_MIME_EXACT, MAX_IMAGE_BYTES, notesRoot } from '@/shared/lib/files/constants';
 import { createFileUploadEvent } from '@/shared/lib/files/services/file-upload-events';
-import {
-  uploadToConfiguredStorage,
-} from '@/shared/lib/files/services/storage/file-storage-service';
+import { uploadToConfiguredStorage } from '@/shared/lib/files/services/storage/file-storage-service';
 import { deleteFileFromStorage } from '@/shared/lib/files/file-uploader';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { NoteFileRecord } from '@/shared/contracts/notes';

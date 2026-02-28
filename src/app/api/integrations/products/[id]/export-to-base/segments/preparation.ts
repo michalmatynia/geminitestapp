@@ -17,9 +17,9 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { badRequestError } from '@/shared/errors/app-error';
 import { type CategoryMappingWithDetails } from '@/shared/contracts/integrations';
-import { 
-  type BaseExportRequestData, 
-  type BaseFieldMapping, 
+import {
+  type BaseExportRequestData,
+  type BaseFieldMapping,
   type BaseExportProductLike,
   toTrimmedString,
   matchesTemplateField,
@@ -27,13 +27,14 @@ import {
   CATEGORY_TEMPLATE_PRODUCT_FIELDS,
   PRODUCER_ID_TEMPLATE_FIELDS,
   TAG_ID_TEMPLATE_FIELDS,
-  toTimeMs
+  toTimeMs,
 } from './common';
 
 export const getProducerRefId = (value: unknown): string => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
   const record = value as Record<string, unknown>;
-  const idValue = record['producerId'] ?? record['producer_id'] ?? record['manufacturerId'] ?? record['id'];
+  const idValue =
+    record['producerId'] ?? record['producer_id'] ?? record['manufacturerId'] ?? record['id'];
   if (typeof idValue === 'string') return idValue.trim();
   if (typeof idValue === 'number') return String(idValue);
   return '';
@@ -73,7 +74,7 @@ const remapLegacyParameterSourceMappings = async (args: {
     const paramNameById = new Map<string, string>();
     allParameters.forEach((p) => {
       paramNameById.set(p.id, p.name_en);
-      if ((p.name_en).toLowerCase() !== p.id.toLowerCase()) {
+      if (p.name_en.toLowerCase() !== p.id.toLowerCase()) {
         paramNameById.set(p.id.toLowerCase(), p.name_en);
       }
     });
@@ -82,7 +83,8 @@ const remapLegacyParameterSourceMappings = async (args: {
       const sourceKey = String(mapping['sourceKey'] || '');
       if (!sourceKey.startsWith('parameter:')) return mapping;
       const parameterId = parseMappedParameterId(sourceKey);
-      const parameterName = paramNameById.get(parameterId) || paramNameById.get(parameterId.toLowerCase());
+      const parameterName =
+        paramNameById.get(parameterId) || paramNameById.get(parameterId.toLowerCase());
       if (parameterName && parameterName !== parameterId) {
         return { ...mapping, sourceKey: `parameter:${parameterName}` };
       }
@@ -496,7 +498,8 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
       );
 
       const matchingMappings = categoryMappings.filter(
-        (mapping: CategoryMappingWithDetails) => mapping.isActive && mapping.internalCategoryId === internalCategoryId
+        (mapping: CategoryMappingWithDetails) =>
+          mapping.isActive && mapping.internalCategoryId === internalCategoryId
       );
       const validMappings = matchingMappings.filter((mapping: CategoryMappingWithDetails) => {
         const externalCategoryId = toTrimmedString(mapping.externalCategory?.externalId);
@@ -514,7 +517,9 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
       const externalCategoryIds = Array.from(
         new Set(
           prioritizedMappings
-            .map((mapping: CategoryMappingWithDetails) => toTrimmedString(mapping.externalCategory?.externalId))
+            .map((mapping: CategoryMappingWithDetails) =>
+              toTrimmedString(mapping.externalCategory?.externalId)
+            )
             .filter(Boolean)
         )
       );
@@ -531,9 +536,10 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
           `Multiple active Base.com category mappings found for this category. Keep only one active mapping and retry. Found: ${mappingLabels.join(', ')}`
         );
       }
-      const selectedMapping =
-        (([...prioritizedMappings].sort((a: CategoryMappingWithDetails, b: CategoryMappingWithDetails) => toTimeMs(b.updatedAt ?? 0) - toTimeMs(a.updatedAt ?? 0))[0] as CategoryMappingWithDetails) ??
-        null) as CategoryMappingWithDetails | null;
+      const selectedMapping = (([...prioritizedMappings].sort(
+        (a: CategoryMappingWithDetails, b: CategoryMappingWithDetails) =>
+          toTimeMs(b.updatedAt ?? 0) - toTimeMs(a.updatedAt ?? 0)
+      )[0] as CategoryMappingWithDetails) ?? null) as CategoryMappingWithDetails | null;
 
       if (!selectedMapping) {
         if (matchingMappings.length > 0) {

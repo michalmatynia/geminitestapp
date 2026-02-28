@@ -208,7 +208,7 @@ export const resolveConfiguredRequiredInputPorts = (
     ...Object.keys(node.config?.runtime?.inputContracts ?? {}),
     ...Array.from(connectedPorts),
   ]);
-  node.inputs.forEach((port: string): void => {
+  (node.inputs ?? []).forEach((port: string): void => {
     configuredPorts.add(port);
   });
   const explicitRequired = Array.from(configuredPorts).filter(

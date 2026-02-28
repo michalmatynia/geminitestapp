@@ -112,6 +112,8 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
   return backfillNodePortContracts(normalized).nodes.map(
     (node: AiNode): AiNode => ({
       ...node,
+      inputs: node.inputs ?? [],
+      outputs: node.outputs ?? [],
       instanceId: node.id,
       nodeTypeId: resolveNodeTypeId(node, palette),
     })

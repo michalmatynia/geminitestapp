@@ -4,11 +4,12 @@ import { createParserMappings, ensureUniquePorts, normalizePortName } from '../.
 
 export const normalizeMapperNode = (node: AiNode): AiNode => {
   const mapperConfig = node.config?.mapper;
+  const nodeOutputs = node.outputs ?? [];
   const outputs =
     mapperConfig?.outputs && mapperConfig.outputs.length > 0
       ? mapperConfig.outputs
-      : node.outputs.length > 0
-        ? node.outputs
+      : nodeOutputs.length > 0
+        ? nodeOutputs
         : ['value', 'result'];
   return {
     ...node,

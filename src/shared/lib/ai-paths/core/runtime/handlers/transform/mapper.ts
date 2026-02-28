@@ -73,7 +73,7 @@ export const handleMapper: NodeHandler = ({
         .map((edge) => edge.fromPort as string)
     );
 
-    mapperConfig.outputs.forEach((output: string): void => {
+    (mapperConfig.outputs ?? []).forEach((output: string): void => {
       const mapping = mapperConfig.mappings?.[output]?.trim() ?? '';
       const value = mapping
         ? resolveMappedValue(mapping)

@@ -54,6 +54,13 @@ export type BrainCapabilityDefinition = {
   modelFamily: BrainModelFamily;
 };
 
+const AI_PATHS_COMPATIBLE_MODEL_FAMILIES: readonly BrainModelFamily[] = [
+  'chat',
+  'validation',
+  'vision_extract',
+  'ocr',
+];
+
 export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabilityDefinition> = {
   'ai_paths.model': {
     key: 'ai_paths.model',
@@ -392,6 +399,15 @@ export const resolveBrainAssignment = (
 export const getBrainCapabilityDefinition = (
   capability: AiBrainCapabilityKey
 ): BrainCapabilityDefinition => BRAIN_CAPABILITY_REGISTRY[capability];
+
+export const getBrainCapabilityModelFamilies = (
+  capability: AiBrainCapabilityKey
+): readonly BrainModelFamily[] => {
+  if (capability === 'ai_paths.model') {
+    return AI_PATHS_COMPATIBLE_MODEL_FAMILIES;
+  }
+  return [getBrainCapabilityDefinition(capability).modelFamily];
+};
 
 export const getDefaultCapabilityForFeature = (feature: AiBrainFeature): AiBrainCapabilityKey =>
   DEFAULT_BRAIN_CAPABILITY_BY_FEATURE[feature];

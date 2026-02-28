@@ -461,4 +461,5 @@ export async function logSystemError(input: Omit<SystemLogInput, 'level'>): Prom
   await logSystemEvent({ ...input, level: 'error' });
 }
 
+export { ErrorSystem } from '../../utils/observability/error-system';
 export { getSystemLogById, getSystemLogMetrics, listSystemLogs } from './system-log-repository';

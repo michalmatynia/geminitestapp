@@ -68,7 +68,7 @@ describe('AI Paths runs list handler', () => {
       ),
       mockContext
     );
-    const payload = (await response.json()) as AiPathRunListResult;
+    const payload: any = await response.json();
 
     expect(response.status).toBe(200);
     expect(listRunsMock).toHaveBeenCalledWith(

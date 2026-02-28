@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import {
-  getBrainCapabilityDefinition,
+  getBrainCapabilityModelFamilies,
   type AiBrainAssignment,
   type AiBrainCapabilityKey,
   type AiBrainFeature,
@@ -48,18 +48,18 @@ export function useBrainModelOptions({
   const settingsStore = useSettingsStore();
   const { assignment, effectiveModelId } = useBrainAssignment({ feature, capability });
   const modelsQuery = useBrainModels({ enabled });
-  const targetFamily = capability ? getBrainCapabilityDefinition(capability).modelFamily : null;
+  const targetFamilies = capability ? getBrainCapabilityModelFamilies(capability) : null;
 
   const models = useMemo((): string[] => {
     const discovered = Array.isArray(modelsQuery.data?.models)
       ? (modelsQuery.data?.models ?? []).filter((modelId) => {
-        if (!targetFamily) return true;
+        if (!targetFamilies) return true;
         const descriptor = modelsQuery.data?.descriptors?.[modelId];
-        return descriptor?.family === targetFamily;
+        return Boolean(descriptor?.family && targetFamilies.includes(descriptor.family));
       })
       : [];
     return normalizeUnique([...discovered, ...(effectiveModelId ? [effectiveModelId] : [])]);
-  }, [effectiveModelId, modelsQuery.data?.descriptors, modelsQuery.data?.models, targetFamily]);
+  }, [effectiveModelId, modelsQuery.data?.descriptors, modelsQuery.data?.models, targetFamilies]);
 
   const sourceWarnings = useMemo((): string[] => {
     const message = modelsQuery.data?.warning?.message?.trim() ?? '';

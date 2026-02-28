@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
-import { ActivityTypes, logActivity } from '@/shared/lib/observability/system-logger';
 import { parseJsonBody } from '@/features/products/server';
+import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import { logActivity } from '@/shared/utils/observability/activity-service';
 
 import type { z } from 'zod';
 

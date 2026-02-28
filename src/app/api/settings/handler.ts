@@ -10,7 +10,6 @@ import {
   FILE_STORAGE_SOURCE_SETTING_KEY,
 } from '@/features/files/constants/storage-settings';
 import { invalidateFileStorageSettingsCache } from '@/features/files/services/storage/file-storage-service';
-import { ErrorSystem, logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -29,6 +28,7 @@ import {
 } from '@/shared/lib/db/database-engine-constants';
 import { invalidateDatabaseEnginePolicyCache } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import prisma from '@/shared/lib/db/prisma';
 import {
   SettingRecord,
@@ -45,6 +45,7 @@ import {
 } from '@/shared/lib/settings-cache';
 import { isLiteSettingsKey } from '@/shared/lib/settings-lite-keys';
 import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
 

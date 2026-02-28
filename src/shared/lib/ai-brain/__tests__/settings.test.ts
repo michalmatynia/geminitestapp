@@ -4,6 +4,7 @@ import {
   defaultBrainSettings,
   getDefaultCapabilityForFeature,
   getBrainCapabilityDefinition,
+  getBrainCapabilityModelFamilies,
   resolveBrainCapabilityAssignment,
   sanitizeBrainAssignment,
   sanitizeBrainAssignmentForProviders,
@@ -68,5 +69,15 @@ describe('ai-brain settings helpers', () => {
     );
 
     expect(sanitized.provider).toBe('model');
+  });
+
+  it('allows AI Paths to surface chat and compatible multimodal model families', () => {
+    expect(getBrainCapabilityModelFamilies('ai_paths.model')).toEqual([
+      'chat',
+      'validation',
+      'vision_extract',
+      'ocr',
+    ]);
+    expect(getBrainCapabilityModelFamilies('chatbot.reply')).toEqual(['chat']);
   });
 });

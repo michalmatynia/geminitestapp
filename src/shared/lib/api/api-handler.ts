@@ -257,7 +257,7 @@ export function apiHandler(
 
         // Log successful requests if configured
         if (options.logSuccess) {
-          void (logSystemEvent as any)({
+          void logSystemEvent({
             level: options.successLogLevel ?? 'info',
             message: `${options.source} completed successfully`,
             source: options.source,
@@ -378,7 +378,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
           const response = await handler(request, handlerContext, params);
 
           if (options.logSuccess) {
-            void (logSystemEvent as any)({
+            void logSystemEvent({
               level: options.successLogLevel ?? 'info',
               message: `${options.source} completed successfully`,
               source: options.source,
@@ -502,7 +502,7 @@ async function createErrorResponseWithTiming(
   const bodyShape = context.body !== undefined ? summarizeBodyShape(context.body) : null;
 
   // Log the error with full context
-  void (logSystemEvent as any)({
+  void logSystemEvent({
     level,
     message: resolved.message,
     source: options.source,

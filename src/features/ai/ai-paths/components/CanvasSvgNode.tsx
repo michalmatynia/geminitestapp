@@ -133,6 +133,7 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
   const showPortLabels = detailLevel === 'full' && view.scale >= 0.88;
   const showNodeId = detailLevel !== 'skeleton' && view.scale >= 0.64;
   const showRuntimeBadges = detailLevel !== 'skeleton' && view.scale >= 0.68;
+  const showModelSelectionBadge = detailLevel !== 'skeleton' && view.scale >= 0.72;
   const connectorHitRadius = React.useMemo((): number => {
     const scaled = connectorHitTargetPx / Math.max(0.001, view.scale);
     return Math.max(PORT_SIZE / 2 + 1, scaled);
@@ -182,6 +183,13 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
     detailLevel === 'skeleton' && node.title.length > 24
       ? `${node.title.slice(0, 23)}...`
       : node.title;
+  const selectedModelId =
+    node.type === 'model' && typeof node.config?.model?.modelId === 'string'
+      ? node.config.model.modelId.trim()
+      : '';
+  const usesBrainDefaultModel = node.type === 'model' && selectedModelId.length === 0;
+  const modelSelectionLabel = usesBrainDefaultModel ? 'BRAIN DEFAULT' : 'NODE MODEL';
+  const modelSelectionBadgeWidth = Math.max(76, modelSelectionLabel.length * 6 + 14);
   const showNodeAnimations =
     enableNodeAnimations && (detailLevel !== 'skeleton' || isSelected || isPrimarySelected);
   const handleNodeDoubleClick = (event: React.MouseEvent<SVGRectElement>): void => {
@@ -266,6 +274,34 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
       >
         {titleText}
       </text>
+
+      {node.type === 'model' && showModelSelectionBadge ? (
+        <g
+          transform='translate(10 24)'
+          data-node-model-selection-badge={node.id}
+          pointerEvents='none'
+        >
+          <rect
+            width={modelSelectionBadgeWidth}
+            height={14}
+            rx={4}
+            fill={usesBrainDefaultModel ? 'rgba(245, 158, 11, 0.14)' : 'rgba(14, 165, 233, 0.14)'}
+            stroke={usesBrainDefaultModel ? 'rgba(245, 158, 11, 0.45)' : 'rgba(14, 165, 233, 0.45)'}
+            strokeWidth='0.75'
+          />
+          <text
+            x={modelSelectionBadgeWidth / 2}
+            y={10}
+            textAnchor='middle'
+            fill={usesBrainDefaultModel ? '#fcd34d' : '#7dd3fc'}
+            fontSize='8'
+            fontWeight='600'
+            style={{ userSelect: 'none' }}
+          >
+            {modelSelectionLabel}
+          </text>
+        </g>
+      ) : null}
 
       {showNodeId && (
         <text

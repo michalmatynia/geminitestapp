@@ -206,4 +206,27 @@ describe('CanvasBoard world transform', () => {
     expect(handlePointerDownNode).toHaveBeenCalledTimes(1);
     expect(handlePanStart).not.toHaveBeenCalled();
   });
+
+  it('forwards pointer move and up events to canvas pan handlers with the event payload', () => {
+    const handlePanMove = vi.fn();
+    const handlePanEnd = vi.fn();
+    useCanvasBoardStateMock.mockReturnValue({
+      ...buildState(),
+      handlePanMove,
+      handlePanEnd,
+    });
+
+    const { container } = render(<CanvasBoard />);
+    const canvasHost = container.querySelector('div.touch-none.select-none.overscroll-none');
+    expect(canvasHost).toBeTruthy();
+    if (!canvasHost) return;
+
+    fireEvent.pointerMove(canvasHost, { clientX: 222, clientY: 333 });
+    fireEvent.pointerUp(canvasHost, { clientX: 222, clientY: 333 });
+
+    expect(handlePanMove).toHaveBeenCalledTimes(1);
+    expect(handlePanMove.mock.calls[0]?.[0]).toBeTruthy();
+    expect(handlePanEnd).toHaveBeenCalledTimes(1);
+    expect(handlePanEnd.mock.calls[0]?.[0]).toBeTruthy();
+  });
 });

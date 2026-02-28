@@ -1,10 +1,11 @@
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import { getFolderTreeInstanceSettingsHref } from '@/shared/utils/folder-tree-profiles-v2';
 import { fromCaseResolverCaseNodeId } from '@/features/case-resolver/master-tree';
 
 export const parseBoolean = (value: unknown): boolean => value === true;
 export const CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF =
-  '/admin/settings/folder-trees#folder-tree-instance-case_resolver_cases';
+  getFolderTreeInstanceSettingsHref('case_resolver_cases');
 export const buildCaseResolverCaseHref = (caseId: string): string =>
   `/admin/case-resolver?fileId=${encodeURIComponent(caseId)}`;
 

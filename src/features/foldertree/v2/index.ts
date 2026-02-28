@@ -2,6 +2,7 @@ export * from './adapter/createMasterFolderTreeAdapterV3';
 export * from './components/FolderTreeViewportV2';
 export * from './hooks/useFolderTreeInstanceV2';
 export * from './operations/external-drop';
+export * from './operations/drop';
 export * from './operations/internal-drop';
 export * from './runtime/MasterFolderTreeRuntimeProvider';
 export * from './settings';

@@ -30,6 +30,7 @@ export * from './filters-container';
 export * from './vector-canvas';
 export * from './tree';
 export * from './FolderTreePanel';
+export * from './MasterTreeSettingsButton';
 
 export * from './badge';
 export * from './data-table';

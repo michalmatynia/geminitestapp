@@ -6,8 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
-  applyInternalMasterTreeDrop,
-  isInternalMasterTreeNode,
+  handleMasterTreeDrop,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import {
@@ -388,25 +387,23 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
               { draggedNodeId, targetId, position, rootDropZone },
               ctlr
             ): Promise<void> => {
-              const isInternal = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
-              if (!isInternal) return;
-
-              // File-on-file center drop → link as related documents
-              if (position === 'inside' && targetId !== null) {
-                const draggedFileId = fromCaseResolverFileNodeId(draggedNodeId);
-                const targetFileId = fromCaseResolverFileNodeId(targetId);
-                if (draggedFileId && targetFileId) {
-                  onLinkRelatedFiles(draggedFileId, targetFileId);
-                  return;
-                }
-              }
-
-              await applyInternalMasterTreeDrop({
+              await handleMasterTreeDrop({
+                input: {
+                  draggedNodeId,
+                  targetId,
+                  position,
+                  rootDropZone,
+                },
                 controller: ctlr,
-                draggedNodeId,
-                targetId,
-                position,
-                rootDropZone,
+                onInternalDrop: ({ input }): boolean => {
+                  // File-on-file center drop → link as related documents
+                  if (input.position !== 'inside' || input.targetId === null) return false;
+                  const draggedFileId = fromCaseResolverFileNodeId(input.draggedNodeId);
+                  const targetFileId = fromCaseResolverFileNodeId(input.targetId);
+                  if (!draggedFileId || !targetFileId) return false;
+                  onLinkRelatedFiles(draggedFileId, targetFileId);
+                  return true;
+                },
               });
             }}
             renderNode={(nodeProps: FolderTreeViewportRenderNodeInput) => (

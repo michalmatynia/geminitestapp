@@ -54,6 +54,20 @@ type ActiveDragSessionState = {
   offsetY: number;
 };
 
+type PointerCaptureTarget =
+  | (Element & {
+      setPointerCapture?: (pointerId: number) => void;
+      releasePointerCapture?: (pointerId: number) => void;
+      hasPointerCapture?: (pointerId: number) => boolean;
+    })
+  | null;
+
+type PointerCaptureState = {
+  nodeId: string;
+  pointerId: number;
+  target: PointerCaptureTarget;
+};
+
 export function useCanvasInteractionsNodes({
   nodes,
   edges,
@@ -139,17 +153,84 @@ export function useCanvasInteractionsNodes({
   const dragCandidateRef = useRef<DragCandidateState | null>(null);
   const activeDragSessionRef = useRef<ActiveDragSessionState | null>(null);
   const suppressedClickNodeIdRef = useRef<string | null>(null);
+  const pointerCaptureRef = useRef<PointerCaptureState | null>(null);
   const rafIdRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    return () => {
+  const flushPendingDragUpdate = useCallback((): void => {
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+    if (pendingDragRef.current) {
+      const { nodeId: id, x, y } = pendingDragRef.current;
+      updateNode(id, { position: { x, y } });
       pendingDragRef.current = null;
-      dragSelectionRef.current = null;
+    }
+  }, [updateNode]);
+
+  const forceEndNodeDrag = useCallback(
+    (pointerId?: number): void => {
+      const activePointerCapture = pointerCaptureRef.current;
+      if (
+        activePointerCapture &&
+        (pointerId == null || pointerId === activePointerCapture.pointerId)
+      ) {
+        releasePointerCaptureSafe(activePointerCapture.target, activePointerCapture.pointerId);
+        pointerCaptureRef.current = null;
+      }
+
+      const hadActiveDrag =
+        activeDragSessionRef.current !== null ||
+        dragState !== null ||
+        pendingDragRef.current !== null ||
+        rafIdRef.current !== null;
       dragCandidateRef.current = null;
       activeDragSessionRef.current = null;
+      dragSelectionRef.current = null;
+      flushPendingDragUpdate();
+      if (hadActiveDrag) {
+        endDrag();
+      }
+    },
+    [dragState, endDrag, flushPendingDragUpdate]
+  );
+
+  useEffect(() => {
+    const handleWindowPointerUp = (event: PointerEvent): void => {
+      const hasCapture = pointerCaptureRef.current !== null;
+      const hasPendingNodeDragCandidate = dragCandidateRef.current !== null;
+      const hasActiveNodeDrag = activeDragSessionRef.current !== null || dragState !== null;
+      if (!hasCapture && !hasPendingNodeDragCandidate && !hasActiveNodeDrag) return;
+      forceEndNodeDrag(event.pointerId);
+    };
+
+    const handleWindowPointerCancel = (event: PointerEvent): void => {
+      const hasCapture = pointerCaptureRef.current !== null;
+      const hasPendingNodeDragCandidate = dragCandidateRef.current !== null;
+      const hasActiveNodeDrag = activeDragSessionRef.current !== null || dragState !== null;
+      if (!hasCapture && !hasPendingNodeDragCandidate && !hasActiveNodeDrag) return;
+      forceEndNodeDrag(event.pointerId);
+    };
+
+    const handleWindowBlur = (): void => {
+      const hasCapture = pointerCaptureRef.current !== null;
+      const hasPendingNodeDragCandidate = dragCandidateRef.current !== null;
+      const hasActiveNodeDrag = activeDragSessionRef.current !== null || dragState !== null;
+      if (!hasCapture && !hasPendingNodeDragCandidate && !hasActiveNodeDrag) return;
+      forceEndNodeDrag();
+    };
+
+    window.addEventListener('pointerup', handleWindowPointerUp, true);
+    window.addEventListener('pointercancel', handleWindowPointerCancel, true);
+    window.addEventListener('blur', handleWindowBlur);
+    return (): void => {
+      window.removeEventListener('pointerup', handleWindowPointerUp, true);
+      window.removeEventListener('pointercancel', handleWindowPointerCancel, true);
+      window.removeEventListener('blur', handleWindowBlur);
+      forceEndNodeDrag();
       suppressedClickNodeIdRef.current = null;
     };
-  }, []);
+  }, [dragState, forceEndNodeDrag]);
 
   const handlePointerDownNode = useCallback(
     async (event: React.PointerEvent<Element>, nodeId: string): Promise<void> => {
@@ -172,6 +253,11 @@ export function useCanvasInteractionsNodes({
       }
 
       setPointerCaptureSafe(target, pointerId);
+      pointerCaptureRef.current = {
+        nodeId,
+        pointerId,
+        target,
+      };
       const node = nodes.find((item) => item.id === nodeId);
       if (!node) return;
       const pointerCanvas = updateLastPointerCanvasPosFromClient(clientX, clientY);
@@ -328,7 +414,13 @@ export function useCanvasInteractionsNodes({
         dragState?.nodeId === nodeId;
 
       if (!isPendingClickOnlyInteraction && !isActiveDragInteraction) return;
-      releasePointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
+      const activePointerCapture = pointerCaptureRef.current;
+      if (activePointerCapture?.pointerId === event.pointerId) {
+        releasePointerCaptureSafe(activePointerCapture.target, activePointerCapture.pointerId);
+        pointerCaptureRef.current = null;
+      } else {
+        releasePointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
+      }
       dragCandidateRef.current = null;
 
       if (!isActiveDragInteraction) {
@@ -337,22 +429,14 @@ export function useCanvasInteractionsNodes({
       }
 
       // Flush any pending RAF drag update
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
-        rafIdRef.current = null;
-      }
-      if (pendingDragRef.current) {
-        const { nodeId: id, x, y } = pendingDragRef.current;
-        updateNode(id, { position: { x, y } });
-        pendingDragRef.current = null;
-      }
+      flushPendingDragUpdate();
 
       activeDragSessionRef.current = null;
       dragSelectionRef.current = null;
       suppressedClickNodeIdRef.current = nodeId;
       endDrag();
     },
-    [dragState, endDrag, updateNode]
+    [dragState, endDrag, flushPendingDragUpdate]
   );
 
   const consumeSuppressedNodeClick = useCallback((nodeId: string): boolean => {

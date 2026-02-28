@@ -6,8 +6,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
-  applyInternalMasterTreeDrop,
-  isInternalMasterTreeNode,
+  handleMasterTreeDrop,
 } from '@/features/foldertree/v2';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { FolderTreePanel } from '@/shared/ui';
@@ -155,45 +154,43 @@ export function NotesAppFolderTree(): React.JSX.Element {
             { draggedNodeId, targetId, position, rootDropZone },
             ctlr
           ): Promise<void> => {
-            const isInternalDrag = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
-
-            if (isInternalDrag) {
-              await applyInternalMasterTreeDrop({
-                controller: ctlr,
+            await handleMasterTreeDrop({
+              input: {
                 draggedNodeId,
                 targetId,
                 position,
                 rootDropZone,
-              });
-              return;
-            }
+              },
+              controller: ctlr,
+              onExternalDrop: async ({ input, controller }): Promise<void> => {
+                const action = resolveNotesExternalDropAction({
+                  draggedNodeId: input.draggedNodeId,
+                  targetId: input.targetId,
+                  nodes: controller.nodes,
+                  roots: controller.roots,
+                  rootDropZone: input.rootDropZone,
+                });
+                if (!action) return;
 
-            const action = resolveNotesExternalDropAction({
-              draggedNodeId,
-              targetId,
-              nodes: ctlr.nodes,
-              roots: ctlr.roots,
-              rootDropZone,
+                if (action.type === 'relate_notes') {
+                  await operations.handleRelateNotes(action.noteId, action.targetNoteId);
+                  return;
+                }
+                if (action.type === 'move_note') {
+                  await operations.handleMoveNoteToFolder(action.noteId, action.targetFolderId);
+                  return;
+                }
+                if (action.type === 'reorder_folder_root_top') {
+                  await operations.handleReorderFolder(
+                    action.folderId,
+                    action.anchorFolderId,
+                    'before'
+                  );
+                  return;
+                }
+                await operations.handleMoveFolderToFolder(action.folderId, action.targetFolderId);
+              },
             });
-            if (!action) return;
-
-            if (action.type === 'relate_notes') {
-              await operations.handleRelateNotes(action.noteId, action.targetNoteId);
-              return;
-            }
-            if (action.type === 'move_note') {
-              await operations.handleMoveNoteToFolder(action.noteId, action.targetFolderId);
-              return;
-            }
-            if (action.type === 'reorder_folder_root_top') {
-              await operations.handleReorderFolder(
-                action.folderId,
-                action.anchorFolderId,
-                'before'
-              );
-              return;
-            }
-            await operations.handleMoveFolderToFolder(action.folderId, action.targetFolderId);
           }}
           renderNode={(nodeProps) => (
             <NotesAppTreeNode

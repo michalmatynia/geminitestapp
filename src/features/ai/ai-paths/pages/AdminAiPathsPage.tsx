@@ -2,20 +2,31 @@
 
 import { useEffect, useState } from 'react';
 
+import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { Tabs, TabsList, TabsTrigger, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { AiPathsSettings } from '../components/AiPathsSettings';
+import { FocusModeTogglePortal } from '../components/FocusModeTogglePortal';
 
 export function AdminAiPathsPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<'canvas' | 'paths' | 'docs'>('canvas');
   const [mounted, setMounted] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const { setIsMenuHidden } = useAdminLayout();
 
   useEffect((): void | (() => void) => {
     const id = requestAnimationFrame(() => setMounted(true));
     return (): void => cancelAnimationFrame(id);
   }, []);
+
+  useEffect(() => {
+    const shouldHideAdminMenu = activeTab === 'canvas' && isFocusMode;
+    setIsMenuHidden(shouldHideAdminMenu);
+    return (): void => {
+      setIsMenuHidden(false);
+    };
+  }, [activeTab, isFocusMode, setIsMenuHidden]);
 
   const wrapperClass = isFocusMode
     ? 'h-[calc(100%+2rem)] w-[calc(100%+2rem)] -m-4'
@@ -23,6 +34,12 @@ export function AdminAiPathsPage(): React.JSX.Element {
 
   return (
     <div className={wrapperClass}>
+      {activeTab === 'canvas' ? (
+        <FocusModeTogglePortal
+          isFocusMode={isFocusMode}
+          onToggleFocusMode={() => setIsFocusMode((current) => !current)}
+        />
+      ) : null}
       <div
         className={`mb-2 flex items-center justify-between gap-4 px-1 ${isFocusMode ? 'hidden' : ''}`}
       >

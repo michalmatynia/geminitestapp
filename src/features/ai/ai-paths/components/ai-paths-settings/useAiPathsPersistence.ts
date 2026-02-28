@@ -10,6 +10,8 @@ import {
   PATH_INDEX_KEY,
   createDefaultPathConfig,
   normalizeNodes,
+  sanitizeEdges,
+  normalizeAiPathsValidationConfig,
   migratePathConfigCollections,
   repairPathNodeIdentities,
   stableStringify,
@@ -31,6 +33,7 @@ import {
   type PathSaveOptions,
   type UseAiPathsPersistenceArgs,
   type UseAiPathsPersistenceResult,
+  resolvePreferredActivePathId,
 } from './useAiPathsPersistence.types';
 
 import { usePreferencePersistence } from './hooks/persistence/usePreferencePersistence';
@@ -43,17 +46,37 @@ export function useAiPathsPersistence(
   const {
     activePathId,
     expandedPaletteGroups,
+    normalizeTriggerLabel,
     loadNonce,
     loading,
     paletteCollapsed,
     pathConfigs,
     reportAiPathsError,
     setAiPathsValidation,
+    setActivePathId,
+    setActiveTrigger,
+    setBlockedRunPolicy,
+    setConfigOpen,
+    setEdges,
+    setExecutionMode,
+    setFlowIntensity,
     setHistoryRetentionOptionsMax,
     setHistoryRetentionPasses,
+    setIsPathActive,
+    setIsPathLocked,
+    setLastRunAt,
     setLoading,
+    setNodes,
+    setParserSamples,
+    setPathDescription,
     setPathConfigs,
+    setPathName,
     setPaths,
+    setRunMode,
+    setRuntimeState,
+    setSelectedNodeId,
+    setStrictFlowMode,
+    setUpdaterSamples,
     toast,
     isPathLocked,
     isPathActive,
@@ -133,21 +156,93 @@ export function useAiPathsPersistence(
           }
         }
 
-        if (userPrefs?.activePathId) {
-          const configId = userPrefs.activePathId;
-          const configItem = settings.find((s) => s.key === `path_config_${configId}`);
+        const preferredActivePathId = resolvePreferredActivePathId(userPrefs);
+        const fallbackActivePathId = loadedPaths[0]?.id ?? null;
+        const resolvedActivePathId =
+          preferredActivePathId &&
+          loadedPaths.some((path: PathMeta): boolean => path.id === preferredActivePathId)
+            ? preferredActivePathId
+            : fallbackActivePathId;
+
+        if (resolvedActivePathId) {
+          const configItem = settings.find((s) => s.key === `path_config_${resolvedActivePathId}`);
+          let config: PathConfig = createDefaultPathConfig(resolvedActivePathId);
           if (configItem?.value) {
             try {
-              let config = JSON.parse(configItem.value) as PathConfig;
-              config = migratePathConfigCollections(config).config;
-              config = repairPathNodeIdentities(config).config;
-              config.nodes = normalizeNodes(config.nodes);
-              setPathConfigs((prev) => ({ ...prev, [configId]: config }));
+              config = JSON.parse(configItem.value) as PathConfig;
             } catch (error) {
               logClientError(error, {
-                context: { source: 'useAiPathsPersistence', action: 'loadConfigMigration' },
+                context: {
+                  source: 'useAiPathsPersistence',
+                  action: 'parsePathConfig',
+                  pathId: resolvedActivePathId,
+                },
               });
             }
+          }
+          try {
+            config = migratePathConfigCollections(config).config;
+            config = repairPathNodeIdentities(config).config;
+            config.nodes = normalizeNodes(config.nodes);
+          } catch (error) {
+            logClientError(error, {
+              context: { source: 'useAiPathsPersistence', action: 'loadConfigMigration' },
+            });
+          }
+
+          setActivePathId(resolvedActivePathId);
+          setPathConfigs((prev) => ({ ...prev, [resolvedActivePathId]: config }));
+
+          const normalizedNodes = normalizeNodes(config.nodes);
+          setNodes(normalizedNodes);
+          setEdges(sanitizeEdges(normalizedNodes, config.edges));
+          setPathName(config.name);
+          setPathDescription(config.description);
+          setActiveTrigger(normalizeTriggerLabel(config.trigger));
+          setExecutionMode(
+            config.executionMode === 'local' || config.executionMode === 'server'
+              ? config.executionMode
+              : 'server'
+          );
+          setFlowIntensity(
+            config.flowIntensity === 'off' ||
+              config.flowIntensity === 'low' ||
+              config.flowIntensity === 'medium' ||
+              config.flowIntensity === 'high'
+              ? config.flowIntensity
+              : 'medium'
+          );
+          setRunMode(
+            config.runMode === 'automatic' ||
+              config.runMode === 'manual' ||
+              config.runMode === 'step'
+              ? config.runMode
+              : config.runMode === 'queue'
+                ? 'automatic'
+                : 'manual'
+          );
+          setStrictFlowMode(config.strictFlowMode !== false);
+          setBlockedRunPolicy(
+            config.blockedRunPolicy === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run'
+          );
+          setAiPathsValidation(normalizeAiPathsValidationConfig(config.aiPathsValidation));
+          setParserSamples(config.parserSamples ?? {});
+          setUpdaterSamples(config.updaterSamples ?? {});
+          setRuntimeState(config.runtimeState ?? {});
+          setLastRunAt(config.lastRunAt ?? null);
+          setIsPathLocked(Boolean(config.isLocked));
+          setIsPathActive(config.isActive !== false);
+          const preferredNodeId = config.uiState?.selectedNodeId ?? null;
+          const selectedNodeId =
+            preferredNodeId &&
+            normalizedNodes.some((node): boolean => node.id === preferredNodeId)
+              ? preferredNodeId
+              : (normalizedNodes[0]?.id ?? null);
+          setSelectedNodeId(selectedNodeId);
+          setConfigOpen(false);
+
+          if (resolvedActivePathId !== preferredActivePathId) {
+            void prefs.persistActivePathPreference(resolvedActivePathId);
           }
         }
         setUiStateLoaded(true);

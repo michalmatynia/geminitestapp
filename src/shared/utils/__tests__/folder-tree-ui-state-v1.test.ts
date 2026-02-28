@@ -42,6 +42,26 @@ describe('folder-tree-ui-state-v1', () => {
       expandedNodeIds: [],
       panelCollapsed: false,
     });
+    expect(parsed.case_resolver_cases).toEqual({
+      expandedNodeIds: [],
+      panelCollapsed: false,
+    });
+    expect(parsed.validator_list_tree).toEqual({
+      expandedNodeIds: [],
+      panelCollapsed: false,
+    });
+    expect(parsed.validator_pattern_tree).toEqual({
+      expandedNodeIds: [],
+      panelCollapsed: false,
+    });
+    expect(parsed.prompt_exploder_hierarchy).toEqual({
+      expandedNodeIds: [],
+      panelCollapsed: false,
+    });
+    expect(parsed.brain_catalog_tree).toEqual({
+      expandedNodeIds: [],
+      panelCollapsed: false,
+    });
   });
 
   it('serializes valid maps without mutation', () => {

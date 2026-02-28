@@ -6,15 +6,17 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
-  applyInternalMasterTreeDrop,
+  handleMasterTreeDrop,
   isInternalMasterTreeNode,
 } from '@/features/foldertree/v2';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
+  getFolderTreeInstanceSettingsHref,
   type MasterTreeDropPosition,
   type MasterTreeId,
   type MasterTreeNode,
 } from '@/shared/utils';
+import { MasterTreeSettingsButton } from '@/shared/ui';
 import {
   DRAG_KEYS,
   getFirstDragValue,
@@ -23,6 +25,7 @@ import {
 import { normalizeTreePath } from '@/shared/utils/tree-operations';
 
 import { useSlotsState } from '../context/SlotsContext';
+import { useSlotsActions } from '../context/SlotsContext';
 import {
   buildMasterNodesFromStudioTree,
   findMasterNodeAncestorIds,
@@ -47,9 +50,6 @@ type SlotTreeRevealRequest = {
   nonce: number;
 };
 
-const getMasterInstanceSettingsHref = (): string =>
-  '/admin/settings/folder-trees#folder-tree-instance-image_studio';
-
 const resolveExternalDraggedNodeId = (dataTransfer: DataTransfer): MasterTreeId | null => {
   const slotId = getFirstDragValue(dataTransfer, [DRAG_KEYS.ASSET_ID], null);
   if (slotId) return toSlotMasterNodeId(slotId);
@@ -66,6 +66,12 @@ export function SlotTree({
   revealRequest?: SlotTreeRevealRequest | null;
 }): React.JSX.Element {
   const { slots, virtualFolders: folders, selectedFolder, selectedSlotId } = useSlotsState();
+  const {
+    moveSlot: persistMoveSlot,
+    handleMoveFolder: persistMoveFolder,
+    handleRenameFolder: persistRenameFolder,
+    updateSlotMutation,
+  } = useSlotsActions();
 
   const masterNodes = useMemo(
     () => buildMasterNodesFromStudioTree(slots, folders),
@@ -85,6 +91,27 @@ export function SlotTree({
     [slots]
   );
 
+  const renameSlot = useCallback(
+    async (input: { id: string; data: { name: string } }): Promise<void> => {
+      await updateSlotMutation.mutateAsync(input);
+    },
+    [updateSlotMutation]
+  );
+
+  const slotTreeAdapter = useMemo(
+    () =>
+      createImageStudioMasterTreeAdapter({
+        slotById,
+        moveSlot: async ({ slot, targetFolder }) => {
+          await persistMoveSlot({ slot, targetFolder });
+        },
+        moveFolder: persistMoveFolder,
+        renameFolder: persistRenameFolder,
+        renameSlot,
+      }),
+    [persistMoveFolder, persistMoveSlot, persistRenameFolder, renameSlot, slotById]
+  );
+
   const {
     profile,
     appearance: { placeholderClasses, rootDropUi, resolveIcon },
@@ -95,7 +122,7 @@ export function SlotTree({
     instance: 'image_studio',
     nodes: masterNodes,
     selectedNodeId: selectedMasterNodeId,
-    adapter: undefined,
+    adapter: slotTreeAdapter,
   });
 
   const stickySelectionMode = profile.interactions.selectionBehavior === 'toggle_only';
@@ -126,26 +153,6 @@ export function SlotTree({
     ConfirmationModal,
     deleteSlotMutationPending,
   } = actions;
-
-  const slotTreeAdapter = useMemo(
-    () =>
-      createImageStudioMasterTreeAdapter({
-        slotById,
-        moveSlot: (args) => moveSlot(args),
-        moveFolder: onMoveFolder,
-        renameFolder: onRenameFolder,
-        renameSlot: updateSlot,
-      }),
-    [onMoveFolder, onRenameFolder, slotById, updateSlot, moveSlot]
-  );
-
-  // Re-run the adapter hook manually since we need it for the controller
-  useEffect(() => {
-    if (controller && slotTreeAdapter) {
-      // In a real scenario, the adapter should be part of the initial useMasterFolderTreeInstance call.
-      // For this refactor, we are mimicking the behavior.
-    }
-  }, [controller, slotTreeAdapter]);
 
   const icons = useMemo(
     () => ({
@@ -366,33 +373,32 @@ export function SlotTree({
             { draggedNodeId, targetId, position, rootDropZone },
             ctlr
           ): Promise<void> => {
-            const isInternalNode = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
-            if (isInternalNode) {
-              await applyInternalMasterTreeDrop({
-                controller: ctlr,
+            await handleMasterTreeDrop({
+              input: {
                 draggedNodeId,
                 targetId,
                 position,
                 rootDropZone,
-              });
-              return;
-            }
+              },
+              controller: ctlr,
+              onExternalDrop: async ({ input, controller }): Promise<void> => {
+                const action = resolveImageStudioExternalDropAction({
+                  draggedNodeId: input.draggedNodeId,
+                  targetId: input.targetId,
+                  nodes: controller.nodes,
+                });
+                if (!action) return;
 
-            const action = resolveImageStudioExternalDropAction({
-              draggedNodeId,
-              targetId,
-              nodes: ctlr.nodes,
+                if (action.type === 'move_slot') {
+                  const slot = slotById.get(action.slotId);
+                  if (!slot) return;
+                  await moveSlot({ slot, targetFolder: action.targetFolder });
+                  return;
+                }
+
+                await onMoveFolder(action.folderPath, action.targetFolder);
+              },
             });
-            if (!action) return;
-
-            if (action.type === 'move_slot') {
-              const slot = slotById.get(action.slotId);
-              if (!slot) return;
-              await moveSlot({ slot, targetFolder: action.targetFolder });
-              return;
-            }
-
-            await onMoveFolder(action.folderPath, action.targetFolder);
           }}
           renderNode={(props) => {
             if (fromFolderMasterNodeId(props.node.id) !== null) {
@@ -401,23 +407,10 @@ export function SlotTree({
             return <CardNodeItem {...props} />;
           }}
         />
-        <button
-          type='button'
-          className='absolute bottom-2 right-2 z-20 inline-flex size-6 items-center justify-center rounded-full border border-border bg-muted/80 text-[11px] font-semibold lowercase text-gray-300 shadow-sm transition hover:bg-muted hover:text-white'
-          title='Open master tree instance settings'
-          aria-label='Open master tree instance settings'
-          onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
-            event.stopPropagation();
-          }}
-          onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-            event.preventDefault();
-            event.stopPropagation();
-            if (typeof window === 'undefined') return;
-            window.location.assign(getMasterInstanceSettingsHref());
-          }}
-        >
-          m
-        </button>
+        <MasterTreeSettingsButton
+          instance='image_studio'
+          href={getFolderTreeInstanceSettingsHref('image_studio')}
+        />
         <ConfirmationModal />
       </div>
     </SlotTreeContext.Provider>

@@ -116,6 +116,15 @@ export const agentPlanPreferencesSchema = z.object({
 
 export type AgentPlanPreferences = z.infer<typeof agentPlanPreferencesSchema>;
 
+export const agentRuntimeExecutionPreferencesSchema = z.object({
+  ignoreRobotsTxt: z.boolean().optional(),
+  requireHumanApproval: z.boolean().optional(),
+});
+
+export type AgentRuntimeExecutionPreferences = z.infer<
+  typeof agentRuntimeExecutionPreferencesSchema
+>;
+
 export const agentCheckpointSchema = z.object({
   steps: z.array(planStepSchema),
   activeStepId: z.string().nullable(),
@@ -282,7 +291,7 @@ export const agentExecutionContextSchema = z.object({
   memoryKey: z.string().nullable(),
   memoryContext: z.array(z.string()),
   settings: agentPlanSettingsSchema,
-  preferences: agentPlanPreferencesSchema,
+  preferences: agentRuntimeExecutionPreferencesSchema,
   resolvedModel: z.string(),
   memoryValidationModel: z.string().nullable(),
   memorySummarizationModel: z.string(),

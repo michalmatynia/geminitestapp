@@ -1,24 +1,17 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
-  applyInternalMasterTreeDrop,
   FolderTreeViewportV2,
   MasterFolderTreeRuntimeProvider,
   type FolderTreeViewportRenderNodeInput,
-  useFolderTreeInstanceV2,
 } from '@/features/foldertree/v2';
 import type {
-  FolderTreeProfileV2,
-  MasterFolderTreeController,
+  MasterFolderTreeAdapterV3,
+  MasterFolderTreeTransaction,
 } from '@/shared/contracts/master-folder-tree';
-import type {
-  MasterTreeDropPosition,
-  MasterTreeId,
-} from '@/shared/utils/master-folder-tree-contract';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useToast } from '@/shared/ui';
 
 import type { AiBrainCatalogEntry } from '../settings';
 import { BrainCatalogNodeItem } from './BrainCatalogNodeItem';
@@ -27,43 +20,6 @@ import {
   createBrainCatalogNodeEntryMap,
   resolveBrainCatalogOrderFromNodes,
 } from './brain-catalog-master-tree';
-
-const BRAIN_CATALOG_TREE_PROFILE: FolderTreeProfileV2 = {
-  version: 2,
-  placeholders: {
-    preset: 'classic',
-    style: 'line',
-    emphasis: 'subtle',
-    rootDropLabel: 'Move here',
-    inlineDropLabel: '',
-  },
-  icons: {
-    slots: {
-      folderClosed: null,
-      folderOpen: null,
-      file: null,
-      root: null,
-      dragHandle: null,
-    },
-    byKind: {},
-  },
-  nesting: {
-    defaultAllow: false,
-    blockedTargetKinds: [],
-    rules: [
-      {
-        childType: 'file',
-        childKinds: ['brain-catalog-entry'],
-        targetType: 'root',
-        targetKinds: ['*'],
-        allow: true,
-      },
-    ],
-  },
-  interactions: {
-    selectionBehavior: 'click_away',
-  },
-};
 
 export interface BrainCatalogTreeProps {
   entries: AiBrainCatalogEntry[];
@@ -80,54 +36,41 @@ export function BrainCatalogTree({
   onRemove,
   isPending = false,
 }: BrainCatalogTreeProps): React.JSX.Element {
-  const { toast } = useToast();
-
   const masterNodes = useMemo(() => buildBrainCatalogMasterNodes(entries), [entries]);
-
-  const controller = useFolderTreeInstanceV2({
-    instanceId: 'brain_catalog_tree',
-    profile: BRAIN_CATALOG_TREE_PROFILE,
-    initialNodes: masterNodes,
-  });
-
-  useEffect(() => {
-    void controller.replaceNodes(masterNodes, 'external_sync');
-  }, [masterNodes]);
-
   const entryByNodeId = useMemo(() => createBrainCatalogNodeEntryMap(entries), [entries]);
 
-  const onNodeDrop = useCallback(
-    async (
-      input: {
-        draggedNodeId: MasterTreeId;
-        targetId: MasterTreeId | null;
-        position: MasterTreeDropPosition;
-        rootDropZone?: 'top' | 'bottom' | undefined;
-      },
-      ctrlr: MasterFolderTreeController
-    ): Promise<void> => {
-      await applyInternalMasterTreeDrop({
-        controller: ctrlr,
-        draggedNodeId: input.draggedNodeId,
-        targetId: input.targetId,
-        position: input.position,
-        rootDropZone: input.rootDropZone,
-      });
+  const entryByNodeIdRef = useRef(entryByNodeId);
+  useEffect(() => {
+    entryByNodeIdRef.current = entryByNodeId;
+  }, [entryByNodeId]);
 
-      try {
-        const reordered = resolveBrainCatalogOrderFromNodes(ctrlr.nodes, entryByNodeId);
-        onChange(reordered);
-      } catch (error: unknown) {
-        logClientError(error, {
-          context: { source: 'BrainCatalogTree', action: 'reorder' },
-        });
-        toast(error instanceof Error ? error.message : 'Failed to reorder catalog entries.', {
-          variant: 'error',
-        });
-      }
-    },
-    [entryByNodeId, onChange, toast]
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  const adapter = useMemo<MasterFolderTreeAdapterV3>(
+    () => ({
+      apply: async (tx: MasterFolderTreeTransaction) => {
+        const reordered = resolveBrainCatalogOrderFromNodes(tx.nextNodes, entryByNodeIdRef.current);
+        onChangeRef.current(reordered);
+        return {
+          tx,
+          appliedAt: Date.now(),
+        };
+      },
+    }),
+    []
   );
+
+  const {
+    appearance: { rootDropUi },
+    controller,
+  } = useMasterFolderTreeInstance({
+    instance: 'brain_catalog_tree',
+    nodes: masterNodes,
+    adapter,
+  });
 
   const renderNode = useCallback(
     (input: FolderTreeViewportRenderNodeInput): React.ReactNode => {
@@ -154,12 +97,11 @@ export function BrainCatalogTree({
     <MasterFolderTreeRuntimeProvider>
       <FolderTreeViewportV2
         controller={controller}
+        rootDropUi={rootDropUi}
         renderNode={renderNode}
-        onNodeDrop={onNodeDrop}
         enableDnd={!isPending}
         emptyLabel='No catalog entries'
       />
     </MasterFolderTreeRuntimeProvider>
   );
 }
-

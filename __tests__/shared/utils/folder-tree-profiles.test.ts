@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   folderTreeInstanceValues,
+  folderTreePersistFeedbackByInstance,
   folderTreePlaceholderPresetOptions,
+  folderTreeSettingsMetaByInstance,
+  getFolderTreeInstanceSettingsHref,
   getFolderTreePlaceholderClasses,
 } from '@/shared/utils/folder-tree-profiles-v2';
 
@@ -15,6 +18,10 @@ describe('folder-tree-profiles-v2', () => {
       'cms_page_builder',
       'case_resolver',
       'case_resolver_cases',
+      'validator_list_tree',
+      'validator_pattern_tree',
+      'prompt_exploder_hierarchy',
+      'brain_catalog_tree',
     ]);
   });
 
@@ -24,11 +31,29 @@ describe('folder-tree-profiles-v2', () => {
     expect(getFolderTreePlaceholderClasses('vivid').lineActive).toContain('bg-fuchsia');
   });
 
+  it('exposes settings metadata and persist feedback for every instance', () => {
+    folderTreeInstanceValues.forEach((instance) => {
+      expect(folderTreeSettingsMetaByInstance[instance].title.length).toBeGreaterThan(0);
+      expect(folderTreeSettingsMetaByInstance[instance].description.length).toBeGreaterThan(0);
+      expect(folderTreeSettingsMetaByInstance[instance].fileHint.length).toBeGreaterThan(0);
+      expect(folderTreeSettingsMetaByInstance[instance].folderHint.length).toBeGreaterThan(0);
+      expect(folderTreePersistFeedbackByInstance[instance].successMessage.length).toBeGreaterThan(0);
+    });
+  });
+
   it('exposes selectable placeholder options', () => {
     expect(folderTreePlaceholderPresetOptions).toEqual([
       { value: 'sublime', label: 'Sublime' },
       { value: 'classic', label: 'Classic' },
       { value: 'vivid', label: 'Vivid' },
     ]);
+  });
+
+  it('builds settings hrefs for every instance', () => {
+    folderTreeInstanceValues.forEach((instance) => {
+      expect(getFolderTreeInstanceSettingsHref(instance)).toBe(
+        `/admin/settings/folder-trees#folder-tree-instance-${instance}`
+      );
+    });
   });
 });

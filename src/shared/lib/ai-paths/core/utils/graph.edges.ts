@@ -2,7 +2,20 @@ import type { AiNode, Edge, ConnectionValidation } from '@/shared/contracts/ai-p
 import { isValidConnection, normalizePortName } from './graph.ports';
 import { arePortTypesCompatible, formatPortDataTypes, getPortDataTypes } from './port-types';
 
+const coerceEdgeList = (edges: unknown): Edge[] => {
+  if (Array.isArray(edges)) {
+    return edges as Edge[];
+  }
+  if (edges && typeof edges === 'object') {
+    return Object.values(edges as Record<string, unknown>).filter(
+      (value: unknown): value is Edge => Boolean(value) && typeof value === 'object'
+    );
+  }
+  return [];
+};
+
 export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
+  const edgeList = coerceEdgeList(edges);
   const nodeMap = new Map(nodes.map((node: AiNode) => [node.id, node]));
   const resolveNodeId = (
     primary: string | undefined,
@@ -41,7 +54,7 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
     `${fromNodeId}::${toNodeId}`;
   const triggerFetcherPairsWithSignal = new Set<string>();
   const emittedTriggerFetcherPairs = new Set<string>();
-  edges.forEach((edge: Edge): void => {
+  edgeList.forEach((edge: Edge): void => {
     const fromNodeId = resolveNodeId(edge.from, edge.source);
     const toNodeId = resolveNodeId(edge.to, edge.target);
     if (!fromNodeId || !toNodeId) return;
@@ -54,7 +67,7 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
       triggerFetcherPairsWithSignal.add(triggerFetcherPairKey(fromNodeId, toNodeId));
     }
   });
-  return edges.flatMap((edge: Edge) => {
+  return edgeList.flatMap((edge: Edge) => {
     const fromNodeId = resolveNodeId(edge.from, edge.source);
     const toNodeId = resolveNodeId(edge.to, edge.target);
     if (!fromNodeId || !toNodeId) return [];

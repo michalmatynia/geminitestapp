@@ -1,7 +1,11 @@
 import { useCallback, useRef } from 'react';
 import type { AiNode, RuntimeState, Edge } from '@/shared/lib/ai-paths';
 import type { Toast } from '@/shared/contracts/ui';
-import { getMarqueeRect, setPointerCaptureSafe } from '../useCanvasInteractions.helpers';
+import {
+  getMarqueeRect,
+  setPointerCaptureSafe,
+  releasePointerCaptureSafe,
+} from '../useCanvasInteractions.helpers';
 import type { MarqueeMode, MarqueeSelectionState } from '../useCanvasInteractions.helpers';
 
 export interface UseCanvasStateHandlersValue {
@@ -30,9 +34,17 @@ export interface UseCanvasStateHandlersValue {
   handlePanStart: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
   handlePanMove: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
   handlePanEnd: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
+  forcePanEnd: () => void;
   lastPointerCanvasPosRef: React.MutableRefObject<{ x: number; y: number }>;
   hasCanvasKeyboardFocusRef: React.MutableRefObject<boolean>;
 }
+
+type PanCaptureTarget =
+  | (Element & {
+      releasePointerCapture?: (pointerId: number) => void;
+      hasPointerCapture?: (pointerId: number) => boolean;
+    })
+  | null;
 
 export function useCanvasStateHandlers(args: {
   isPathLocked: boolean;
@@ -56,6 +68,8 @@ export function useCanvasStateHandlers(args: {
 
   const lastPointerCanvasPosRef = useRef({ x: 0, y: 0 });
   const hasCanvasKeyboardFocusRef = useRef(false);
+  const panPointerIdRef = useRef<number | null>(null);
+  const panCaptureTargetRef = useRef<PanCaptureTarget>(null);
 
   const notifyLocked = useCallback((): void => {
     toast('This path is locked. Unlock it in Path Settings to make changes.', {
@@ -170,6 +184,7 @@ export function useCanvasStateHandlers(args: {
 
   const handlePanStart = useCallback(
     (event: React.MouseEvent | React.PointerEvent | React.TouchEvent): void => {
+      if (!event) return;
       let clientX: number | undefined;
       let clientY: number | undefined;
 
@@ -195,7 +210,10 @@ export function useCanvasStateHandlers(args: {
       }
 
       if (!('touches' in event) && 'pointerId' in event) {
-        setPointerCaptureSafe(args.viewportRef.current, event.pointerId);
+        const pointerTarget = event.currentTarget instanceof Element ? event.currentTarget : null;
+        setPointerCaptureSafe(pointerTarget, event.pointerId);
+        panPointerIdRef.current = event.pointerId;
+        panCaptureTargetRef.current = pointerTarget;
       }
 
       startPan(clientX, clientY);
@@ -211,6 +229,7 @@ export function useCanvasStateHandlers(args: {
 
   const handlePanMove = useCallback(
     (event: React.MouseEvent | React.PointerEvent | React.TouchEvent): void => {
+      if (!event) return;
       if (!args.panState) return;
 
       let clientX: number | undefined;
@@ -232,12 +251,23 @@ export function useCanvasStateHandlers(args: {
     [args.panState, updateView, updateLastPointerCanvasPosFromClient]
   );
 
+  const forcePanEnd = useCallback((): void => {
+    const pointerId = panPointerIdRef.current;
+    if (pointerId !== null) {
+      releasePointerCaptureSafe(panCaptureTargetRef.current, pointerId);
+    }
+    panPointerIdRef.current = null;
+    panCaptureTargetRef.current = null;
+    endPan();
+    setIsPanning(false);
+  }, [endPan, setIsPanning]);
+
   const handlePanEnd = useCallback(
-    (_event: React.MouseEvent | React.PointerEvent | React.TouchEvent): void => {
-      endPan();
-      setIsPanning(false);
+    (event: React.MouseEvent | React.PointerEvent | React.TouchEvent): void => {
+      if (!event) return;
+      forcePanEnd();
     },
-    [endPan, setIsPanning]
+    [forcePanEnd]
   );
 
   return {
@@ -251,6 +281,7 @@ export function useCanvasStateHandlers(args: {
     handlePanStart,
     handlePanMove,
     handlePanEnd,
+    forcePanEnd,
     lastPointerCanvasPosRef,
     hasCanvasKeyboardFocusRef,
   };

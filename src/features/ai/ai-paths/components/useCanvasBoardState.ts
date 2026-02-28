@@ -351,11 +351,11 @@ export function useCanvasBoardState({
     handlePanStart: (event) => {
       canvasInteractions.handlePanStart(event);
     },
-    handlePanMove: (_event) => {
-      canvasInteractions.handlePanMove();
+    handlePanMove: (event) => {
+      canvasInteractions.handlePanMove(event);
     },
-    handlePanEnd: (_event) => {
-      canvasInteractions.handlePanEnd();
+    handlePanEnd: (event) => {
+      canvasInteractions.handlePanEnd(event);
     },
     handleWheel: (event) => {
       canvasInteractions.handleWheel(event);

@@ -1,23 +1,19 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
-  applyInternalMasterTreeDrop,
   FolderTreeViewportV2,
   MasterFolderTreeRuntimeProvider,
-  useFolderTreeInstanceV2,
 } from '@/features/foldertree/v2';
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
-import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
-import type { FolderTreeProfileV2 } from '@/shared/contracts/master-folder-tree';
 import type {
-  MasterTreeDropPosition,
-  MasterTreeId,
-} from '@/shared/utils/master-folder-tree-contract';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useToast } from '@/shared/ui';
+  MasterFolderTreeAdapterV3,
+  MasterFolderTreeTransaction,
+} from '@/shared/contracts/master-folder-tree';
+import { FolderTreePanel } from '@/shared/ui';
 
 import {
   buildValidatorListMasterNodes,
@@ -25,48 +21,6 @@ import {
 } from './validator-list-master-tree';
 import { ValidatorListTreeContext } from './ValidatorListTreeContext';
 import { ValidatorListNodeItem } from './ValidatorListNodeItem';
-
-// ─── Tree Profile ─────────────────────────────────────────────────────────────
-
-const VALIDATOR_LIST_MASTER_SETTINGS_HREF = '/admin/settings/folder-trees';
-
-const VALIDATOR_LIST_TREE_PROFILE: FolderTreeProfileV2 = {
-  version: 2,
-  placeholders: {
-    preset: 'classic',
-    style: 'line',
-    emphasis: 'subtle',
-    rootDropLabel: 'Move here',
-    inlineDropLabel: '',
-  },
-  icons: {
-    slots: {
-      folderClosed: null,
-      folderOpen: null,
-      file: null,
-      root: null,
-      dragHandle: null,
-    },
-    byKind: {},
-  },
-  nesting: {
-    defaultAllow: false,
-    blockedTargetKinds: [],
-    rules: [
-      // Lists can only be at root (flat list, no nesting)
-      {
-        childType: 'file',
-        childKinds: ['validator-list'],
-        targetType: 'root',
-        targetKinds: ['*'],
-        allow: true,
-      },
-    ],
-  },
-  interactions: {
-    selectionBehavior: 'click_away',
-  },
-};
 
 // ─── ValidatorListTree ────────────────────────────────────────────────────────
 
@@ -87,58 +41,41 @@ export function ValidatorListTree({
   onRemove,
   isPending,
 }: ValidatorListTreeProps): React.JSX.Element {
-  const { toast } = useToast();
-
   const masterNodes = useMemo(() => buildValidatorListMasterNodes(lists), [lists]);
-
-  const controller = useFolderTreeInstanceV2({
-    instanceId: 'validator_list_tree',
-    profile: VALIDATOR_LIST_TREE_PROFILE,
-    initialNodes: masterNodes,
-  });
-
-  // Sync when parent `lists` state changes (e.g. after add or external reset)
-  useEffect(() => {
-    void controller.replaceNodes(masterNodes, 'external_sync');
-    // controller is a stable object; masterNodes changes drive the sync
-  }, [masterNodes]);
-
   const listById = useMemo(() => new Map(lists.map((l) => [l.id, l])), [lists]);
 
-  const onNodeDrop = useCallback(
-    async (
-      input: {
-        draggedNodeId: MasterTreeId;
-        targetId: MasterTreeId | null;
-        position: MasterTreeDropPosition;
-        rootDropZone?: 'top' | 'bottom' | undefined;
-      },
-      ctrlr: MasterFolderTreeController
-    ): Promise<void> => {
-      // Apply the internal tree move first (the viewport does not do this when
-      // a custom onNodeDrop is provided)
-      await applyInternalMasterTreeDrop({
-        controller: ctrlr,
-        draggedNodeId: input.draggedNodeId,
-        targetId: input.targetId,
-        position: input.position,
-        rootDropZone: input.rootDropZone,
-      });
+  const listByIdRef = useRef(listById);
+  useEffect(() => {
+    listByIdRef.current = listById;
+  }, [listById]);
 
-      try {
-        const reordered = resolveValidatorListOrderFromNodes(ctrlr.nodes, listById);
-        onReorder(reordered);
-      } catch (error: unknown) {
-        logClientError(error, {
-          context: { source: 'ValidatorListTree', action: 'reorder' },
-        });
-        toast(error instanceof Error ? error.message : 'Failed to reorder lists.', {
-          variant: 'error',
-        });
-      }
-    },
-    [listById, onReorder, toast]
+  const onReorderRef = useRef(onReorder);
+  useEffect(() => {
+    onReorderRef.current = onReorder;
+  }, [onReorder]);
+
+  const adapter = useMemo<MasterFolderTreeAdapterV3>(
+    () => ({
+      apply: async (tx: MasterFolderTreeTransaction) => {
+        const reordered = resolveValidatorListOrderFromNodes(tx.nextNodes, listByIdRef.current);
+        onReorderRef.current(reordered);
+        return {
+          tx,
+          appliedAt: Date.now(),
+        };
+      },
+    }),
+    []
   );
+
+  const {
+    appearance: { rootDropUi },
+    controller,
+  } = useMasterFolderTreeInstance({
+    instance: 'validator_list_tree',
+    nodes: masterNodes,
+    adapter,
+  });
 
   const contextValue = useMemo(
     () => ({
@@ -174,32 +111,15 @@ export function ValidatorListTree({
   return (
     <MasterFolderTreeRuntimeProvider>
       <ValidatorListTreeContext.Provider value={contextValue}>
-        <div className='relative'>
+        <FolderTreePanel masterInstance='validator_list_tree'>
           <FolderTreeViewportV2
             controller={controller}
+            rootDropUi={rootDropUi}
             renderNode={renderNode}
-            onNodeDrop={onNodeDrop}
             enableDnd={!isPending}
             emptyLabel='No validation pattern lists'
           />
-          <button
-            type='button'
-            className='absolute bottom-2 right-2 z-20 inline-flex size-6 items-center justify-center rounded-full border border-border bg-muted/80 text-[11px] font-semibold lowercase text-gray-300 shadow-sm transition hover:bg-muted hover:text-white'
-            title='Open master tree instance settings'
-            aria-label='Open master tree instance settings'
-            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.stopPropagation();
-            }}
-            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.preventDefault();
-              event.stopPropagation();
-              if (typeof window === 'undefined') return;
-              window.location.assign(VALIDATOR_LIST_MASTER_SETTINGS_HREF);
-            }}
-          >
-            m
-          </button>
-        </div>
+        </FolderTreePanel>
       </ValidatorListTreeContext.Provider>
     </MasterFolderTreeRuntimeProvider>
   );

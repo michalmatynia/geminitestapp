@@ -15,11 +15,11 @@ import {
 import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
-  applyInternalMasterTreeDrop,
+  handleMasterTreeDrop,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import { CaseListSearchPanel } from './list/search';
-import { Button, Card, StandardDataTablePanel } from '@/shared/ui';
+import { Button, Card, MasterTreeSettingsButton, StandardDataTablePanel } from '@/shared/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
@@ -494,12 +494,14 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       ctlr: MasterFolderTreeController
     ): Promise<void> => {
       if (isHierarchyLocked) return;
-      await applyInternalMasterTreeDrop({
+      await handleMasterTreeDrop({
+        input: {
+          draggedNodeId,
+          targetId,
+          position,
+          rootDropZone,
+        },
         controller: ctlr,
-        draggedNodeId,
-        targetId,
-        position,
-        rootDropZone,
       });
     },
     [isHierarchyLocked]
@@ -686,23 +688,10 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
             }}
             renderNode={handleRenderNode}
           />
-          <button
-            type='button'
-            className='absolute bottom-2 right-2 z-20 inline-flex size-6 items-center justify-center rounded-full border border-border bg-muted/80 text-[11px] font-semibold lowercase text-gray-300 shadow-sm transition hover:bg-muted hover:text-white'
-            title='Open master tree instance settings'
-            aria-label='Open master tree instance settings'
-            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.stopPropagation();
-            }}
-            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.preventDefault();
-              event.stopPropagation();
-              if (typeof window === 'undefined') return;
-              window.location.assign(CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF);
-            }}
-          >
-            m
-          </button>
+          <MasterTreeSettingsButton
+            instance='case_resolver_cases'
+            href={CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF}
+          />
         </div>
       )}
     </StandardDataTablePanel>

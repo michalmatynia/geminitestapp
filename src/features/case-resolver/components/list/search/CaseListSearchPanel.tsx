@@ -13,6 +13,7 @@ import {
 import React, { useCallback, useRef, useState } from 'react';
 
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import { MasterTreeSettingsButton } from '@/shared/ui';
 
 import { CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF, formatCaseTimestamp } from '../case-list-utils';
 import {
@@ -292,23 +293,10 @@ export function CaseListSearchPanel({
       </div>
 
       {/* 'm' instance logo */}
-      <button
-        type='button'
-        className='absolute bottom-2 right-2 z-20 inline-flex size-6 items-center justify-center rounded-full border border-border bg-muted/80 text-[11px] font-semibold lowercase text-gray-300 shadow-sm transition hover:bg-muted hover:text-white'
-        title='Open master tree instance settings'
-        aria-label='Open master tree instance settings'
-        onMouseDown={(event): void => {
-          event.stopPropagation();
-        }}
-        onClick={(event): void => {
-          event.preventDefault();
-          event.stopPropagation();
-          if (typeof window === 'undefined') return;
-          window.location.assign(CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF);
-        }}
-      >
-        m
-      </button>
+      <MasterTreeSettingsButton
+        instance='case_resolver_cases'
+        href={CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF}
+      />
     </div>
   );
 }

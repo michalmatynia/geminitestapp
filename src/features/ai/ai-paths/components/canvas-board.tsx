@@ -269,6 +269,7 @@ export function CanvasBoard({
           }}
           onPointerMove={handlePanMove}
           onPointerUp={handlePanEnd}
+          onPointerCancel={handlePanEnd}
           onWheel={handleWheel}
           onDragOver={handleDragOver}
           onDrop={handleDrop}

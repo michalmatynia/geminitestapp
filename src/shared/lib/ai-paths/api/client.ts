@@ -297,6 +297,15 @@ async function apiDelete<T>(url: string): Promise<ApiResponse<T>> {
   return apiFetch<T>(url, { method: 'DELETE', headers });
 }
 
+const coerceDbProvider = (
+  provider: unknown
+): 'auto' | 'mongodb' | 'prisma' | undefined => {
+  if (provider === 'auto' || provider === 'mongodb' || provider === 'prisma') {
+    return provider;
+  }
+  return undefined;
+};
+
 // ============================================================================
 // Database API
 // ============================================================================
@@ -306,21 +315,41 @@ export const dbApi = {
    * Execute a database action (aggregate, find, insert, update, delete)
    */
   async action<T = unknown>(payload: DbActionPayload): Promise<ApiResponse<T>> {
-    return apiPost<T>('/api/ai-paths/db-action', payload);
+    return apiPost<T>('/api/ai-paths/db-command', payload);
   },
 
   /**
    * Execute a database query
    */
   async query<T = unknown>(payload: DbQueryPayload): Promise<ApiResponse<T>> {
-    return apiPost<T>('/api/ai-paths/db-query', payload);
+    const provider = coerceDbProvider(payload.provider);
+    return apiPost<T>('/api/ai-paths/db-command', {
+      ...(provider ? { provider } : {}),
+      collection: payload.collection,
+      ...(payload.collectionMap ? { collectionMap: payload.collectionMap } : {}),
+      action: payload.single ? 'findOne' : 'find',
+      query: payload.query,
+      ...(payload.projection !== undefined ? { projection: payload.projection } : {}),
+      ...(payload.sort !== undefined ? { sort: payload.sort } : {}),
+      ...(payload.limit !== undefined ? { limit: payload.limit } : {}),
+      ...(payload.idType !== undefined ? { idType: payload.idType } : {}),
+    });
   },
 
   /**
    * Execute a database update
    */
   async update<T = unknown>(payload: DbUpdatePayload): Promise<ApiResponse<T>> {
-    return apiPost<T>('/api/ai-paths/db-update', payload);
+    const provider = coerceDbProvider(payload.provider);
+    return apiPost<T>('/api/ai-paths/db-command', {
+      ...(provider ? { provider } : {}),
+      collection: payload.collection,
+      ...(payload.collectionMap ? { collectionMap: payload.collectionMap } : {}),
+      action: payload.single === false ? 'updateMany' : 'updateOne',
+      filter: payload.query,
+      update: payload.updates,
+      ...(payload.idType !== undefined ? { idType: payload.idType } : {}),
+    });
   },
 
   /**

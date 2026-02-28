@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
@@ -251,6 +251,29 @@ export function useCanvasInteractions(args?: {
     if (!marqueeSelection) return null;
     return getMarqueeRect(marqueeSelection);
   }, [marqueeSelection]);
+
+  useEffect(() => {
+    if (!panState) return;
+
+    const handleWindowPointerUp = (): void => {
+      stateHandlers.forcePanEnd();
+    };
+    const handleWindowPointerCancel = (): void => {
+      stateHandlers.forcePanEnd();
+    };
+    const handleWindowBlur = (): void => {
+      stateHandlers.forcePanEnd();
+    };
+
+    window.addEventListener('pointerup', handleWindowPointerUp, true);
+    window.addEventListener('pointercancel', handleWindowPointerCancel, true);
+    window.addEventListener('blur', handleWindowBlur);
+    return (): void => {
+      window.removeEventListener('pointerup', handleWindowPointerUp, true);
+      window.removeEventListener('pointercancel', handleWindowPointerCancel, true);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, [panState, stateHandlers]);
 
   return {
     // nodeActions

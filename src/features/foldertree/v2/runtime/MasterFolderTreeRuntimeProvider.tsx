@@ -16,6 +16,15 @@ export type FolderTreeRuntimeBus = {
   getInstanceIds: () => string[];
   getCachedSearchIndex: (instanceId: string) => string[] | null;
   setCachedSearchIndex: (instanceId: string, nodeIds: string[]) => void;
+  /**
+   * Register a keyboard handler for an instance. The handler is invoked when
+   * the instance is focused and a keydown event fires on the window.
+   * Returns an unregister cleanup function.
+   */
+  registerKeyboardHandler: (
+    instanceId: string,
+    handler: (event: KeyboardEvent) => void
+  ) => () => void;
   recordMetric: (
     metric:
       | 'transaction_conflict'
@@ -38,6 +47,7 @@ export function MasterFolderTreeRuntimeProvider({
 }): React.JSX.Element {
   const instancesRef = useRef<Map<string, FolderTreeRuntimeInstanceInfo>>(new Map());
   const searchCacheRef = useRef<Map<string, string[]>>(new Map());
+  const keyboardHandlersRef = useRef<Map<string, (event: KeyboardEvent) => void>>(new Map());
   const metricsRef = useRef<Record<string, number>>({});
   const [focusedInstanceId, setFocusedInstanceId] = useState<string | null>(null);
 
@@ -48,6 +58,7 @@ export function MasterFolderTreeRuntimeProvider({
         return (): void => {
           instancesRef.current.delete(instance.id);
           searchCacheRef.current.delete(instance.id);
+          keyboardHandlersRef.current.delete(instance.id);
           setFocusedInstanceId((current: string | null) =>
             current === instance.id ? null : current
           );
@@ -63,6 +74,15 @@ export function MasterFolderTreeRuntimeProvider({
       setCachedSearchIndex: (instanceId: string, nodeIds: string[]): void => {
         searchCacheRef.current.set(instanceId, [...nodeIds]);
       },
+      registerKeyboardHandler: (
+        instanceId: string,
+        handler: (event: KeyboardEvent) => void
+      ): (() => void) => {
+        keyboardHandlersRef.current.set(instanceId, handler);
+        return (): void => {
+          keyboardHandlersRef.current.delete(instanceId);
+        };
+      },
       recordMetric: (metric, value = 1): void => {
         metricsRef.current[metric] = (metricsRef.current[metric] ?? 0) + value;
       },
@@ -74,26 +94,33 @@ export function MasterFolderTreeRuntimeProvider({
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.defaultPrevented) return;
-      const isUndoShortcut =
-        (event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'z';
-      if (!isUndoShortcut) return;
 
       const target = event.target;
-      if (
+      const isInputField =
         target instanceof HTMLElement &&
-        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-      ) {
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+
+      const isUndoShortcut =
+        (event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'z';
+
+      if (isUndoShortcut && !isInputField) {
+        const focusedId = focusedInstanceId;
+        if (!focusedId) return;
+        const instance = instancesRef.current.get(focusedId);
+        if (!instance?.undo) return;
+        if (instance.canUndo && !instance.canUndo()) return;
+        event.preventDefault();
+        void instance.undo();
         return;
       }
 
-      const focusedId = focusedInstanceId;
-      if (!focusedId) return;
-      const instance = instancesRef.current.get(focusedId);
-      if (!instance?.undo) return;
-      if (instance.canUndo && !instance.canUndo()) return;
-
-      event.preventDefault();
-      void instance.undo();
+      // Dispatch to registered keyboard handler for focused instance
+      if (!isInputField) {
+        const focusedId = focusedInstanceId;
+        if (!focusedId) return;
+        const handler = keyboardHandlersRef.current.get(focusedId);
+        handler?.(event);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -118,6 +145,9 @@ const fallbackRuntimeBus: FolderTreeRuntimeBus = {
   getInstanceIds: () => [],
   getCachedSearchIndex: () => null,
   setCachedSearchIndex: () => {
+    // no-op
+  },
+  registerKeyboardHandler: () => (): void => {
     // no-op
   },
   recordMetric: () => {

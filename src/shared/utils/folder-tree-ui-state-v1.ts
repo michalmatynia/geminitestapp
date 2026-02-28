@@ -29,28 +29,24 @@ const entrySchema: z.ZodType<FolderTreeUiStateV1Entry> = z.object({
   panelCollapsed: z.boolean(),
 });
 
-const mapSchema: z.ZodType<FolderTreeUiStateV1Map> = z.object({
-  notes: entrySchema,
-  image_studio: entrySchema,
-  product_categories: entrySchema,
-  cms_page_builder: entrySchema,
-  case_resolver: entrySchema,
-  case_resolver_cases: entrySchema,
-});
+const folderTreeUiStateShape = Object.fromEntries(
+  folderTreeInstanceValues.map((instance: FolderTreeInstance) => [instance, entrySchema])
+) as Record<FolderTreeInstance, z.ZodType<FolderTreeUiStateV1Entry>>;
+
+const mapSchema: z.ZodType<FolderTreeUiStateV1Map> = z.object(folderTreeUiStateShape);
 
 const createDefaultEntry = (): FolderTreeUiStateV1Entry => ({
   expandedNodeIds: [],
   panelCollapsed: false,
 });
 
-export const createDefaultFolderTreeUiStateV1 = (): FolderTreeUiStateV1Map => ({
-  notes: createDefaultEntry(),
-  image_studio: createDefaultEntry(),
-  product_categories: createDefaultEntry(),
-  cms_page_builder: createDefaultEntry(),
-  case_resolver: createDefaultEntry(),
-  case_resolver_cases: createDefaultEntry(),
-});
+export const createDefaultFolderTreeUiStateV1 = (): FolderTreeUiStateV1Map => {
+  const defaults = {} as FolderTreeUiStateV1Map;
+  folderTreeInstanceValues.forEach((instance: FolderTreeInstance) => {
+    defaults[instance] = createDefaultEntry();
+  });
+  return defaults;
+};
 
 const coerceEntry = (
   candidate: unknown,

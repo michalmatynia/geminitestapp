@@ -15,6 +15,11 @@ describe('folder-tree-profiles-v2', () => {
     expect(parsed.product_categories.version).toBe(2);
     expect(parsed.cms_page_builder.version).toBe(2);
     expect(parsed.case_resolver.version).toBe(2);
+    expect(parsed.case_resolver_cases.version).toBe(2);
+    expect(parsed.validator_list_tree.version).toBe(2);
+    expect(parsed.validator_pattern_tree.version).toBe(2);
+    expect(parsed.prompt_exploder_hierarchy.version).toBe(2);
+    expect(parsed.brain_catalog_tree.version).toBe(2);
   });
 
   it('normalizes nesting kinds to lowercase and applies them in canNest rules', () => {
@@ -159,5 +164,29 @@ describe('folder-tree-profiles-v2', () => {
         targetFolderKind: 'root',
       })
     ).toBe(true);
+  });
+
+  it('keeps validator list tree flat at root', () => {
+    const profile = defaultFolderTreeProfilesV2.validator_list_tree;
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'file',
+        nodeKind: 'validator-list',
+        targetType: 'root',
+        targetFolderKind: 'root',
+      })
+    ).toBe(true);
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'file',
+        nodeKind: 'validator-list',
+        targetType: 'folder',
+        targetFolderKind: 'sequence-group',
+      })
+    ).toBe(false);
   });
 });

@@ -5,9 +5,10 @@ import OpenAI from 'openai';
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 
 import { inferBrainRuntimeVendor, normalizeBrainRuntimeModelId } from './server-runtime-client';
+import { resolveOllamaBaseUrl } from './ollama-config';
 import { readStoredSettingValue } from './server';
 
-const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
+const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 
 const resolveOpenAiApiKey = async (): Promise<string> => {
   const apiKey =

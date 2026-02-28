@@ -400,7 +400,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
         )
         : null}
 
-      {!isFocusMode && typeof document !== 'undefined' && activePath
+      {!isFocusMode && typeof document !== 'undefined'
         ? createPortal(
           <div className='flex items-center justify-end gap-2'>
             {autoSaveLabel ? (

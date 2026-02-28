@@ -8,6 +8,7 @@ import {
   type MasterFolderTreeController,
   type MasterFolderTreePersistOperation,
   type MasterTreeDropPositionDto,
+  type MasterTreeId,
   type UseMasterFolderTreeOptions,
 } from '@/shared/contracts/master-folder-tree';
 import { defaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
@@ -21,6 +22,7 @@ import {
   normalizeNodesV2,
   reorderNodeV2,
 } from '../core/engine';
+import { getAncestorIds } from '../operations/expansion';
 import { useMasterFolderTreeRuntime } from '../runtime/MasterFolderTreeRuntimeProvider';
 import { createFolderTreeStore, type FolderTreeStore } from '../store/createFolderTreeStore';
 import { useFolderTreeStoreSelector } from '../store/useFolderTreeStoreSelector';
@@ -99,6 +101,7 @@ const createInitialState = (options: UseMasterFolderTreeOptions): FolderTreeStat
       options.initialSelectedNodeId && validNodeIds.has(options.initialSelectedNodeId)
         ? options.initialSelectedNodeId
         : null,
+    selectedNodeIds: [],
     expandedNodeIds: initialExpandedNodeIds,
     renamingNodeId: null,
     renameDraft: '',
@@ -265,6 +268,65 @@ export function useFolderTreeInstanceV2(
     }));
   }, [store]);
 
+  const executeAdapterTransaction = useCallback(
+    async ({
+      tx,
+      operationType,
+    }: {
+      tx: FolderTreeTransaction;
+      operationType: MasterFolderTreePersistOperation['type'];
+    }): Promise<
+      | {
+          ok: true;
+          applied: FolderTreeAppliedTransaction;
+        }
+      | {
+          ok: false;
+          error: NonNullable<FolderTreeState['lastError']>;
+        }
+    > => {
+      if (!adapter) {
+        return {
+          ok: true,
+          applied: createAppliedTx(tx),
+        };
+      }
+
+      let stage: 'prepare' | 'apply' | 'commit' = 'prepare';
+      try {
+        const prepared = adapter.prepare ? await adapter.prepare(tx) : createPreparedTx(tx);
+        stage = 'apply';
+        const applied = (await adapter.apply(tx, prepared)) ?? createAppliedTx(tx);
+        stage = 'commit';
+        if (adapter.commit) {
+          await adapter.commit(tx, applied);
+        }
+        return {
+          ok: true,
+          applied,
+        };
+      } catch (error) {
+        if (isConflictError(error)) {
+          runtime.recordMetric('transaction_conflict');
+        } else {
+          runtime.recordMetric('transaction_rollback');
+        }
+        if (adapter.rollback) {
+          try {
+            await adapter.rollback(tx, stage, error);
+          } catch {
+            // no-op
+          }
+        }
+        return {
+          ok: false,
+          error: normalizeError(operationType, error),
+        };
+      }
+    },
+    [adapter, runtime]
+  );
+
   const applyPersistedOperation = useCallback(
     async ({
       operation,
@@ -319,67 +381,49 @@ export function useFolderTreeInstanceV2(
         nextNodes: nextState.nodes,
       };
 
-      let stage: 'prepare' | 'apply' | 'commit' = 'prepare';
-      try {
-        const prepared = adapter.prepare ? await adapter.prepare(tx) : createPreparedTx(tx);
-        stage = 'apply';
-        const applied = (await adapter.apply(tx, prepared)) ?? createAppliedTx(tx);
-        stage = 'commit';
-        if (adapter.commit) {
-          await adapter.commit(tx, applied);
-        }
-
-        if (Array.isArray(applied.nodes)) {
-          const normalizedAppliedNodes = normalizeNodesV2(applied.nodes);
-          store.patchState((current: FolderTreeState) => ({
-            ...current,
-            nodes: normalizedAppliedNodes,
-            isApplying: false,
-            lastError: null,
-            version:
-              applied.version !== undefined && Number.isFinite(applied.version)
-                ? applied.version
-                : current.version + 1,
-          }));
-        } else {
-          store.patchState((current: FolderTreeState) => ({
-            ...current,
-            isApplying: false,
-            lastError: null,
-            version:
-              applied.version !== undefined && Number.isFinite(applied.version)
-                ? applied.version
-                : current.version + 1,
-          }));
-        }
-
-        return toActionOk();
-      } catch (error) {
-        if (isConflictError(error)) {
-          runtime.recordMetric('transaction_conflict');
-        } else {
-          runtime.recordMetric('transaction_rollback');
-        }
-        if (adapter.rollback) {
-          try {
-            await adapter.rollback(tx, stage, error);
-          } catch {
-            // no-op
-          }
-        }
-
-        const normalizedError = normalizeError(operation.type, error);
+      const execution = await executeAdapterTransaction({
+        tx,
+        operationType: operation.type,
+      });
+      if (!execution.ok) {
         store.setState({
           ...previousSnapshot,
           isApplying: false,
-          lastError: normalizedError,
+          lastError: execution.error,
           dragState: null,
           version: previousSnapshot.version,
         });
-        return createErrorAction(normalizedError!.code, normalizedError!.message);
+        return createErrorAction(execution.error.code, execution.error.message);
       }
+
+      const applied = execution.applied;
+      if (Array.isArray(applied.nodes)) {
+        const normalizedAppliedNodes = normalizeNodesV2(applied.nodes);
+        store.patchState((current: FolderTreeState) => ({
+          ...current,
+          nodes: normalizedAppliedNodes,
+          isApplying: false,
+          lastError: null,
+          version:
+            applied.version !== undefined && Number.isFinite(applied.version)
+              ? applied.version
+              : current.version + 1,
+        }));
+      } else {
+        store.patchState((current: FolderTreeState) => ({
+          ...current,
+          isApplying: false,
+          lastError: null,
+          version:
+            applied.version !== undefined && Number.isFinite(applied.version)
+              ? applied.version
+              : current.version + 1,
+        }));
+      }
+
+      return toActionOk();
     },
-    [adapter, instanceId, maxUndoEntries, runtime, store]
+    [adapter, executeAdapterTransaction, instanceId, maxUndoEntries, store]
   );
 
   const canDropNode = useCallback(
@@ -478,6 +522,92 @@ export function useFolderTreeInstanceV2(
   const collapseAll = useCallback((): void => {
     setExpandedNodeIds([]);
   }, [setExpandedNodeIds]);
+
+  const expandToNode = useCallback(
+    (nodeId: MasterTreeId): void => {
+      const ancestors = getAncestorIds(store.getState().nodes, nodeId);
+      if (ancestors.length === 0) return;
+      store.patchState((prev: FolderTreeState) => {
+        const expanded = new Set(prev.expandedNodeIds);
+        let changed = false;
+        ancestors.forEach((id) => {
+          if (!expanded.has(id)) {
+            expanded.add(id);
+            changed = true;
+          }
+        });
+        if (!changed) return prev;
+        return {
+          ...prev,
+          expandedNodeIds: Array.from(expanded),
+        };
+      });
+    },
+    [store]
+  );
+
+  const toggleSelectNode = useCallback(
+    (nodeId: MasterTreeId): void => {
+      store.patchState((prev: FolderTreeState) => {
+        const next = new Set(prev.selectedNodeIds);
+        if (next.has(nodeId)) {
+          next.delete(nodeId);
+        } else {
+          next.add(nodeId);
+        }
+        return {
+          ...prev,
+          selectedNodeIds: Array.from(next),
+        };
+      });
+    },
+    [store]
+  );
+
+  const selectNodeRange = useCallback(
+    (anchorId: MasterTreeId, nodeId: MasterTreeId, visibleNodeIds: MasterTreeId[]): void => {
+      const fromIdx = visibleNodeIds.indexOf(anchorId);
+      const toIdx = visibleNodeIds.indexOf(nodeId);
+      if (fromIdx === -1 || toIdx === -1) return;
+      const lo = Math.min(fromIdx, toIdx);
+      const hi = Math.max(fromIdx, toIdx);
+      const rangeIds = visibleNodeIds.slice(lo, hi + 1);
+      store.patchState((prev: FolderTreeState) => ({
+        ...prev,
+        selectedNodeIds: rangeIds,
+        selectedNodeId: nodeId,
+      }));
+    },
+    [store]
+  );
+
+  const selectAllNodes = useCallback((): void => {
+    store.patchState((prev: FolderTreeState) => ({
+      ...prev,
+      selectedNodeIds: prev.nodes.map((n) => n.id),
+    }));
+  }, [store]);
+
+  const clearMultiSelection = useCallback((): void => {
+    store.patchState((prev: FolderTreeState) => {
+      if (prev.selectedNodeIds.length === 0) return prev;
+      return {
+        ...prev,
+        selectedNodeIds: [],
+      };
+    });
+  }, [store]);
+
+  const setSelectedNodeIds = useCallback(
+    (nodeIds: MasterTreeId[]): void => {
+      const ids = Array.from(new Set(nodeIds));
+      store.patchState((prev: FolderTreeState) => ({
+        ...prev,
+        selectedNodeIds: ids,
+      }));
+    },
+    [store]
+  );
 
   const startRename = useCallback(
     (nodeId: string): void => {
@@ -781,48 +911,31 @@ export function useFolderTreeInstanceV2(
       nextNodes: entry.nodes,
     };
 
-    let stage: 'prepare' | 'apply' | 'commit' = 'prepare';
-    try {
-      const prepared = adapter.prepare ? await adapter.prepare(tx) : createPreparedTx(tx);
-      stage = 'apply';
-      const applied = (await adapter.apply(tx, prepared)) ?? createAppliedTx(tx);
-      stage = 'commit';
-      if (adapter.commit) {
-        await adapter.commit(tx, applied);
-      }
-
+    const execution = await executeAdapterTransaction({
+      tx,
+      operationType: 'replace_nodes',
+    });
+    if (!execution.ok) {
       store.patchState((prev: FolderTreeState) => ({
         ...prev,
         isApplying: false,
-        lastError: null,
-        version:
-          applied.version !== undefined && Number.isFinite(applied.version)
-            ? applied.version
-            : prev.version + 1,
+        lastError: execution.error,
       }));
-      return toActionOk();
-    } catch (error) {
-      if (isConflictError(error)) {
-        runtime.recordMetric('transaction_conflict');
-      } else {
-        runtime.recordMetric('transaction_rollback');
-      }
-      if (adapter.rollback) {
-        try {
-          await adapter.rollback(tx, stage, error);
-        } catch {
-          // no-op
-        }
-      }
-      const normalizedError = normalizeError('replace_nodes', error);
-      store.patchState((prev: FolderTreeState) => ({
-        ...prev,
-        isApplying: false,
-        lastError: normalizedError,
-      }));
-      return createErrorAction(normalizedError!.code, normalizedError!.message);
+      return createErrorAction(execution.error.code, execution.error.message);
     }
-  }, [adapter, instanceId, runtime, store]);
+
+    const applied = execution.applied;
+    store.patchState((prev: FolderTreeState) => ({
+      ...prev,
+      isApplying: false,
+      lastError: null,
+      version:
+        applied.version !== undefined && Number.isFinite(applied.version)
+          ? applied.version
+          : prev.version + 1,
+    }));
+    return toActionOk();
+  }, [adapter, executeAdapterTransaction, instanceId, store]);
 
   const dropDraggedNode = useCallback(
     async (
@@ -848,6 +961,10 @@ export function useFolderTreeInstanceV2(
   );
 
   const expandedNodeSet = useMemo(() => new Set(state.expandedNodeIds), [state.expandedNodeIds]);
+  const selectedNodeIdsSet = useMemo(
+    () => new Set(state.selectedNodeIds),
+    [state.selectedNodeIds]
+  );
   const selectedNode = useMemo(
     () => state.nodes.find((node) => node.id === state.selectedNodeId) ?? null,
     [state.nodes, state.selectedNodeId]
@@ -894,6 +1011,13 @@ export function useFolderTreeInstanceV2(
       refreshFromAdapter,
       undo,
       clearError,
+      expandToNode,
+      selectedNodeIds: selectedNodeIdsSet,
+      toggleSelectNode,
+      selectNodeRange,
+      selectAllNodes,
+      clearMultiSelection,
+      setSelectedNodeIds,
     }),
     [
       state.nodes,
@@ -908,6 +1032,7 @@ export function useFolderTreeInstanceV2(
       validationIssues,
       selectedNode,
       expandedNodeSet,
+      selectedNodeIdsSet,
       canDropNode,
       selectNode,
       setExpandedNodeIds,
@@ -931,6 +1056,12 @@ export function useFolderTreeInstanceV2(
       refreshFromAdapter,
       undo,
       clearError,
+      expandToNode,
+      toggleSelectNode,
+      selectNodeRange,
+      selectAllNodes,
+      clearMultiSelection,
+      setSelectedNodeIds,
     ]
   );
 

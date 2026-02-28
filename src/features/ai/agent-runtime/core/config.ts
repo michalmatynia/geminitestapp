@@ -1,4 +1,8 @@
-import type { AgentPlanPreferences, AgentPlanSettings } from '@/shared/contracts/agent-runtime';
+import type {
+  AgentPlanPreferences,
+  AgentPlanSettings,
+  AgentRuntimeExecutionPreferences,
+} from '@/shared/contracts/agent-runtime';
 
 export const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 export const MAX_PLAN_STEPS = 12;
@@ -9,8 +13,6 @@ export const MAX_SELF_CHECKS = 4;
 export const LOOP_GUARD_THRESHOLD = 2;
 export const LOOP_BACKOFF_BASE_MS = 2000;
 export const LOOP_BACKOFF_MAX_MS = 12000;
-export const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
-export const DEFAULT_OLLAMA_MODEL = 'qwen3-vl:30b';
 export const DEFAULT_AGENT_SETTINGS: AgentPlanSettings = {
   maxSteps: MAX_PLAN_STEPS,
   maxStepAttempts: MAX_STEP_ATTEMPTS,
@@ -76,7 +78,7 @@ export function resolveAgentPlanSettings(planState: unknown): AgentPlanSettings 
   };
 }
 
-export function resolveAgentPreferences(planState: unknown): AgentPlanPreferences {
+export function resolveAgentPreferences(planState: unknown): AgentRuntimeExecutionPreferences {
   const rawPreferences =
     planState && typeof planState === 'object'
       ? (planState as { preferences?: AgentPlanPreferences }).preferences
@@ -84,43 +86,5 @@ export function resolveAgentPreferences(planState: unknown): AgentPlanPreference
   return {
     ignoreRobotsTxt: Boolean(rawPreferences?.ignoreRobotsTxt),
     requireHumanApproval: Boolean(rawPreferences?.requireHumanApproval),
-    memoryValidationModel:
-      typeof rawPreferences?.memoryValidationModel === 'string'
-        ? rawPreferences.memoryValidationModel
-        : undefined,
-    plannerModel:
-      typeof rawPreferences?.plannerModel === 'string' ? rawPreferences.plannerModel : undefined,
-    selfCheckModel:
-      typeof rawPreferences?.selfCheckModel === 'string'
-        ? rawPreferences.selfCheckModel
-        : undefined,
-    extractionValidationModel:
-      typeof rawPreferences?.extractionValidationModel === 'string'
-        ? rawPreferences.extractionValidationModel
-        : undefined,
-    toolRouterModel:
-      typeof rawPreferences?.toolRouterModel === 'string'
-        ? rawPreferences.toolRouterModel
-        : undefined,
-    loopGuardModel:
-      typeof rawPreferences?.loopGuardModel === 'string'
-        ? rawPreferences.loopGuardModel
-        : undefined,
-    approvalGateModel:
-      typeof rawPreferences?.approvalGateModel === 'string'
-        ? rawPreferences.approvalGateModel
-        : undefined,
-    memorySummarizationModel:
-      typeof rawPreferences?.memorySummarizationModel === 'string'
-        ? rawPreferences.memorySummarizationModel
-        : undefined,
-    selectorInferenceModel:
-      typeof rawPreferences?.selectorInferenceModel === 'string'
-        ? rawPreferences.selectorInferenceModel
-        : undefined,
-    outputNormalizationModel:
-      typeof rawPreferences?.outputNormalizationModel === 'string'
-        ? rawPreferences.outputNormalizationModel
-        : undefined,
   };
 }

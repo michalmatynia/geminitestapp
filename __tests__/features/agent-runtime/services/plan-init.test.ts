@@ -79,6 +79,32 @@ describe('Agent Runtime - Plan Initialization', () => {
     expect(result.stepIndex).toBe(0);
   });
 
+  it('ignores legacy model-role preferences from checkpoint state', async () => {
+    const inputWithCheckpoint = {
+      ...mockInput,
+      checkpoint: {
+        steps: [{ id: 'step-1', title: 'Checkpoint Step' }],
+        activeStepId: 'step-1',
+        preferences: {
+          ignoreRobotsTxt: true,
+          requireHumanApproval: true,
+          plannerModel: 'legacy-planner',
+          selfCheckModel: 'legacy-self-check',
+          loopGuardModel: 'legacy-loop-guard',
+          approvalGateModel: 'legacy-approval-gate',
+          memorySummarizationModel: 'legacy-memory-summarization',
+        },
+      } as any,
+    };
+
+    const result = await initializePlanState(inputWithCheckpoint);
+
+    expect(result.preferences).toEqual({
+      ignoreRobotsTxt: true,
+      requireHumanApproval: true,
+    });
+  });
+
   it('should handle resume request in checkpoint', async () => {
     const inputWithResume = {
       ...mockInput,

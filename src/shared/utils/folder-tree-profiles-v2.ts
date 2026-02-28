@@ -1,22 +1,30 @@
 import { z } from 'zod';
 
 import type {
+  FolderTreeBadgeSpec,
   FolderTreeIconSlot,
+  FolderTreeKeyboardConfig,
+  FolderTreeMultiSelectConfig,
   FolderTreeNestingRuleV2,
   FolderTreePlaceholderEmphasis,
   FolderTreePlaceholderPreset,
   FolderTreePlaceholderStyle,
   FolderTreeProfileV2,
+  FolderTreeSearchConfig,
   FolderTreeSelectionBehavior,
 } from '../contracts/master-folder-tree';
 
 export type {
+  FolderTreeBadgeSpec,
   FolderTreeIconSlot,
+  FolderTreeKeyboardConfig,
+  FolderTreeMultiSelectConfig,
   FolderTreeNestingRuleV2,
   FolderTreePlaceholderEmphasis,
   FolderTreePlaceholderPreset,
   FolderTreePlaceholderStyle,
   FolderTreeProfileV2,
+  FolderTreeSearchConfig,
   FolderTreeSelectionBehavior,
 };
 
@@ -35,6 +43,10 @@ export const folderTreeInstanceValues = [
   'cms_page_builder',
   'case_resolver',
   'case_resolver_cases',
+  'validator_list_tree',
+  'validator_pattern_tree',
+  'prompt_exploder_hierarchy',
+  'brain_catalog_tree',
 ] as const;
 
 export type FolderTreeInstance = (typeof folderTreeInstanceValues)[number];
@@ -125,6 +137,141 @@ export const folderTreeIconSlotValues: FolderTreeIconSlot[] = [
 
 export type FolderTreeProfilesV2Map = Record<FolderTreeInstance, FolderTreeProfileV2>;
 
+export type FolderTreeInstanceSettingsMeta = {
+  title: string;
+  description: string;
+  fileHint: string;
+  folderHint: string;
+};
+
+export type FolderTreePersistFeedback = {
+  notifySuccess: boolean;
+  notifyError: boolean;
+  successMessage: string;
+};
+
+export const folderTreeSettingsMetaByInstance: Record<
+  FolderTreeInstance,
+  FolderTreeInstanceSettingsMeta
+> = {
+  notes: {
+    title: 'Notes App',
+    description: 'Controls the notes folder tree shown in the Notes workspace.',
+    fileHint: 'Example: note',
+    folderHint: 'Example: folder',
+  },
+  image_studio: {
+    title: 'Image Studio',
+    description: 'Controls folder/card nesting and placeholders in Image Studio.',
+    fileHint: 'Example: card, generation, mask',
+    folderHint: 'Example: folder',
+  },
+  product_categories: {
+    title: 'Product Categories',
+    description: 'Controls nesting behavior and visuals in Product Category tree.',
+    fileHint: 'Usually empty for categories-only trees.',
+    folderHint: 'Example: category',
+  },
+  cms_page_builder: {
+    title: 'CMS Page Builder',
+    description: 'Controls drop placeholders in the CMS structure tree.',
+    fileHint: 'Example: section, block',
+    folderHint: 'Example: zone, section',
+  },
+  case_resolver: {
+    title: 'Case Resolver',
+    description: 'Controls folder/case nesting and placeholders in Case Resolver.',
+    fileHint: 'Example: case_file, node_file, asset_image, asset_pdf',
+    folderHint: 'Example: folder',
+  },
+  case_resolver_cases: {
+    title: 'Case Resolver Cases',
+    description: 'Controls hierarchy placeholders and drag/drop behavior on the Cases list page.',
+    fileHint: 'Not used (case hierarchy nodes are folder-type entries).',
+    folderHint: 'Example: case_entry',
+  },
+  validator_list_tree: {
+    title: 'Validator Lists',
+    description: 'Controls drag/drop behavior for validator list ordering in admin settings.',
+    fileHint: 'Example: validator-list',
+    folderHint: 'Not used (flat list at root).',
+  },
+  validator_pattern_tree: {
+    title: 'Validator Patterns',
+    description: 'Controls pattern-to-group nesting and placeholder behavior in validator settings.',
+    fileHint: 'Example: pattern',
+    folderHint: 'Example: sequence-group',
+  },
+  prompt_exploder_hierarchy: {
+    title: 'Prompt Exploder Hierarchy',
+    description: 'Controls hierarchy nesting and placeholders in Prompt Exploder tree editor.',
+    fileHint: 'Not used (hierarchy items are folder-type entries).',
+    folderHint: 'Example: folder',
+  },
+  brain_catalog_tree: {
+    title: 'AI Brain Catalog',
+    description: 'Controls drag/drop behavior for AI Brain catalog ordering.',
+    fileHint: 'Example: brain-catalog-entry',
+    folderHint: 'Not used (flat list at root).',
+  },
+};
+
+export const folderTreePersistFeedbackByInstance: Record<
+  FolderTreeInstance,
+  FolderTreePersistFeedback
+> = {
+  notes: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Folder tree updated.',
+  },
+  image_studio: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Folder tree updated.',
+  },
+  product_categories: {
+    notifySuccess: true,
+    notifyError: true,
+    successMessage: 'Category tree updated.',
+  },
+  cms_page_builder: {
+    notifySuccess: true,
+    notifyError: true,
+    successMessage: 'Component tree updated.',
+  },
+  case_resolver: {
+    notifySuccess: true,
+    notifyError: true,
+    successMessage: 'Case resolver tree updated.',
+  },
+  case_resolver_cases: {
+    notifySuccess: true,
+    notifyError: true,
+    successMessage: 'Case hierarchy updated.',
+  },
+  validator_list_tree: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Validation lists reordered.',
+  },
+  validator_pattern_tree: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Validation patterns reordered.',
+  },
+  prompt_exploder_hierarchy: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Hierarchy updated.',
+  },
+  brain_catalog_tree: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Catalog updated.',
+  },
+};
+
 export type CanNestTreeNodeV2Input = {
   profile: FolderTreeProfileV2;
   nodeType: MasterTreeNodeType;
@@ -163,6 +310,39 @@ const nestingRuleSchema = z.object({
   targetType: targetTypeSchema.optional().default('folder'),
   targetKinds: z.array(z.string().trim().min(1)).optional().default(['*']),
   allow: z.boolean().optional().default(false),
+});
+
+const badgeSpecSchema: z.ZodType<FolderTreeBadgeSpec> = z.object({
+  field: z.enum(['children_count', 'custom']).optional().default('children_count'),
+  position: z.enum(['inline_after_name', 'trailing']).optional().default('trailing'),
+  style: z.enum(['count', 'dot', 'status_icon']).optional().default('count'),
+  statusMap: z
+    .record(z.string(), z.enum(['info', 'warning', 'error', 'success']))
+    .optional(),
+});
+
+const keyboardConfigSchema: z.ZodType<Partial<FolderTreeKeyboardConfig>> = z.object({
+  enabled: z.boolean().optional(),
+  arrowNavigation: z.boolean().optional(),
+  enterToRename: z.boolean().optional(),
+  deleteKey: z.boolean().optional(),
+});
+
+const multiSelectConfigSchema: z.ZodType<Partial<FolderTreeMultiSelectConfig>> = z.object({
+  enabled: z.boolean().optional(),
+  ctrlClick: z.boolean().optional(),
+  shiftClick: z.boolean().optional(),
+  selectAll: z.boolean().optional(),
+});
+
+const searchConfigSchema: z.ZodType<Partial<FolderTreeSearchConfig>> = z.object({
+  enabled: z.boolean().optional(),
+  debounceMs: z.number().optional(),
+  filterMode: z.enum(['highlight', 'filter_tree']).optional(),
+  matchFields: z
+    .array(z.enum(['name', 'path', 'metadata']))
+    .optional(),
+  minQueryLength: z.number().optional(),
 });
 
 const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z.object({
@@ -225,6 +405,11 @@ const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z.object({
     .default({
       selectionBehavior: 'click_away',
     }),
+  // Optional capability sections — missing in old persisted JSON → undefined (safe default)
+  badges: badgeSpecSchema.optional(),
+  keyboard: keyboardConfigSchema.optional(),
+  multiSelect: multiSelectConfigSchema.optional(),
+  search: searchConfigSchema.optional(),
 });
 
 const normalizeKindList = (values: string[] | null | undefined, fallback: string[]): string[] => {
@@ -259,6 +444,10 @@ const cloneProfileV2 = (profile: FolderTreeProfileV2): FolderTreeProfileV2 => ({
   interactions: {
     selectionBehavior: profile.interactions.selectionBehavior,
   },
+  badges: profile.badges ? { ...profile.badges } : undefined,
+  keyboard: profile.keyboard ? { ...profile.keyboard } : undefined,
+  multiSelect: profile.multiSelect ? { ...profile.multiSelect } : undefined,
+  search: profile.search ? { ...profile.search } : undefined,
 });
 
 export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
@@ -614,16 +803,180 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  validator_list_tree: {
+    version: 2,
+    placeholders: {
+      preset: 'classic',
+      style: 'line',
+      emphasis: 'subtle',
+      rootDropLabel: 'Move here',
+      inlineDropLabel: '',
+    },
+    icons: {
+      slots: {
+        folderClosed: null,
+        folderOpen: null,
+        file: null,
+        root: null,
+        dragHandle: null,
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'file',
+          childKinds: ['validator-list'],
+          targetType: 'root',
+          targetKinds: ['*'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  validator_pattern_tree: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'line',
+      emphasis: 'subtle',
+      rootDropLabel: 'Move to root',
+      inlineDropLabel: 'Add to group',
+    },
+    icons: {
+      slots: {
+        folderClosed: null,
+        folderOpen: null,
+        file: null,
+        root: null,
+        dragHandle: null,
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'file',
+          childKinds: ['pattern'],
+          targetType: 'root',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['pattern'],
+          targetType: 'folder',
+          targetKinds: ['sequence-group'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['sequence-group'],
+          targetType: 'root',
+          targetKinds: ['*'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  prompt_exploder_hierarchy: {
+    version: 2,
+    placeholders: {
+      preset: 'classic',
+      style: 'line',
+      emphasis: 'balanced',
+      rootDropLabel: 'Move to Root',
+      inlineDropLabel: 'Drop item',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: null,
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  brain_catalog_tree: {
+    version: 2,
+    placeholders: {
+      preset: 'classic',
+      style: 'line',
+      emphasis: 'subtle',
+      rootDropLabel: 'Move here',
+      inlineDropLabel: '',
+    },
+    icons: {
+      slots: {
+        folderClosed: null,
+        folderOpen: null,
+        file: null,
+        root: null,
+        dragHandle: null,
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'file',
+          childKinds: ['brain-catalog-entry'],
+          targetType: 'root',
+          targetKinds: ['*'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
 };
 
-export const createDefaultFolderTreeProfilesV2 = (): FolderTreeProfilesV2Map => ({
-  notes: cloneProfileV2(defaultFolderTreeProfilesV2.notes),
-  image_studio: cloneProfileV2(defaultFolderTreeProfilesV2.image_studio),
-  product_categories: cloneProfileV2(defaultFolderTreeProfilesV2.product_categories),
-  cms_page_builder: cloneProfileV2(defaultFolderTreeProfilesV2.cms_page_builder),
-  case_resolver: cloneProfileV2(defaultFolderTreeProfilesV2.case_resolver),
-  case_resolver_cases: cloneProfileV2(defaultFolderTreeProfilesV2.case_resolver_cases),
-});
+export const createDefaultFolderTreeProfilesV2 = (): FolderTreeProfilesV2Map => {
+  const defaults = {} as FolderTreeProfilesV2Map;
+  folderTreeInstanceValues.forEach((instance: FolderTreeInstance) => {
+    defaults[instance] = cloneProfileV2(defaultFolderTreeProfilesV2[instance]);
+  });
+  return defaults;
+};
 
 const normalizeByKindIcons = (
   entries: Record<string, string | null>,
@@ -693,40 +1046,26 @@ const coerceProfileV2 = (
 export const parseFolderTreeProfilesV2 = (
   raw: string | null | undefined
 ): FolderTreeProfilesV2Map => {
-  if (!raw) return createDefaultFolderTreeProfilesV2();
+  const defaults = createDefaultFolderTreeProfilesV2();
+  if (!raw) return defaults;
 
   let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(raw);
   } catch {
-    return createDefaultFolderTreeProfilesV2();
+    return defaults;
   }
 
   if (!parsedJson || typeof parsedJson !== 'object' || Array.isArray(parsedJson)) {
-    return createDefaultFolderTreeProfilesV2();
+    return defaults;
   }
 
   const candidate = parsedJson as Partial<Record<FolderTreeInstance, unknown>>;
-  return {
-    notes: coerceProfileV2(candidate.notes, defaultFolderTreeProfilesV2.notes),
-    image_studio: coerceProfileV2(candidate.image_studio, defaultFolderTreeProfilesV2.image_studio),
-    product_categories: coerceProfileV2(
-      candidate.product_categories,
-      defaultFolderTreeProfilesV2.product_categories
-    ),
-    cms_page_builder: coerceProfileV2(
-      candidate.cms_page_builder,
-      defaultFolderTreeProfilesV2.cms_page_builder
-    ),
-    case_resolver: coerceProfileV2(
-      candidate.case_resolver,
-      defaultFolderTreeProfilesV2.case_resolver
-    ),
-    case_resolver_cases: coerceProfileV2(
-      candidate.case_resolver_cases,
-      defaultFolderTreeProfilesV2.case_resolver_cases
-    ),
-  };
+  const next = {} as FolderTreeProfilesV2Map;
+  folderTreeInstanceValues.forEach((instance: FolderTreeInstance) => {
+    next[instance] = coerceProfileV2(candidate[instance], defaults[instance]);
+  });
+  return next;
 };
 
 const listMatches = (allowed: string[], value: string): boolean =>
@@ -785,3 +1124,6 @@ export const resolveFolderTreeIconV2 = (
 };
 
 export const folderTreeProfileV2Instances = [...folderTreeInstanceValues];
+
+export const getFolderTreeInstanceSettingsHref = (instance: FolderTreeInstance): string =>
+  `/admin/settings/folder-trees#folder-tree-instance-${instance}`;

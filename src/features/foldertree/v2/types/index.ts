@@ -64,6 +64,8 @@ export interface MasterFolderTreeAdapterV3 {
 export type FolderTreeState = {
   nodes: MasterTreeNode[];
   selectedNodeId: MasterTreeId | null;
+  /** Multi-selected node IDs. Empty array means no multi-selection active. */
+  selectedNodeIds: MasterTreeId[];
   expandedNodeIds: MasterTreeId[];
   renamingNodeId: MasterTreeId | null;
   renameDraft: string;

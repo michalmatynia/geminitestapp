@@ -26,6 +26,8 @@ import {
   type FolderTreeInstance,
   folderTreePlaceholderEmphasisValues,
   folderTreePlaceholderPresetOptions,
+  folderTreeInstanceValues,
+  folderTreeSettingsMetaByInstance,
   folderTreeSelectionBehaviorValues,
   folderTreePlaceholderStyleValues,
   type FolderTreeNestingRuleV2,
@@ -39,50 +41,10 @@ const INSTANCE_META: Array<{
   description: string;
   fileHint: string;
   folderHint: string;
-}> = [
-  {
-    id: 'notes',
-    title: 'Notes App',
-    description: 'Controls the notes folder tree shown in the Notes workspace.',
-    fileHint: 'Example: note',
-    folderHint: 'Example: folder',
-  },
-  {
-    id: 'image_studio',
-    title: 'Image Studio',
-    description: 'Controls folder/card nesting and placeholders in Image Studio.',
-    fileHint: 'Example: card, generation, mask',
-    folderHint: 'Example: folder',
-  },
-  {
-    id: 'product_categories',
-    title: 'Product Categories',
-    description: 'Controls nesting behavior and visuals in Product Category tree.',
-    fileHint: 'Usually empty for categories-only trees.',
-    folderHint: 'Example: category',
-  },
-  {
-    id: 'cms_page_builder',
-    title: 'CMS Page Builder',
-    description: 'Controls drop placeholders in the CMS structure tree.',
-    fileHint: 'Example: section, block',
-    folderHint: 'Example: zone, section',
-  },
-  {
-    id: 'case_resolver',
-    title: 'Case Resolver',
-    description: 'Controls folder/case nesting and placeholders in Case Resolver.',
-    fileHint: 'Example: case_file, node_file, asset_image, asset_pdf',
-    folderHint: 'Example: folder',
-  },
-  {
-    id: 'case_resolver_cases',
-    title: 'Case Resolver Cases',
-    description: 'Controls hierarchy placeholders and drag/drop behavior on the Cases list page.',
-    fileHint: 'Not used (case hierarchy nodes are folder-type entries).',
-    folderHint: 'Example: case_entry',
-  },
-];
+}> = folderTreeInstanceValues.map((id: FolderTreeInstance) => ({
+  id,
+  ...folderTreeSettingsMetaByInstance[id],
+}));
 
 type NestingRuleKey = 'folder_to_folder' | 'file_to_folder' | 'folder_to_root' | 'file_to_root';
 

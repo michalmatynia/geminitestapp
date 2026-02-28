@@ -14,6 +14,7 @@ import {
   normalizeBrainModelId,
   type BrainModelVendor,
 } from './model-vendor';
+import { resolveOllamaBaseUrl } from './ollama-config';
 import { readStoredSettingValue } from './server';
 
 export type BrainRuntimeVendor = BrainModelVendor;
@@ -23,7 +24,7 @@ export type BrainChatMessage = {
   content: string | ChatCompletionContentPart[];
 };
 
-const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
+const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 
 const stringifyMessageContent = (value: string | ChatCompletionContentPart[]): string => {
   if (typeof value === 'string') return value;

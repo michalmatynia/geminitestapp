@@ -2,7 +2,12 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 
-import { FolderTreeViewportV2, useFolderTreeInstanceV2 } from '@/features/foldertree/v2';
+import { useMasterFolderTreeInstance } from '@/features/foldertree';
+import { FolderTreeViewportV2 } from '@/features/foldertree/v2';
+import type {
+  MasterFolderTreeAdapterV3,
+  MasterFolderTreeTransaction,
+} from '@/shared/contracts/master-folder-tree';
 import { Button, Input, Label } from '@/shared/ui';
 
 import { usePromptExploderHierarchyTreeContext } from './PromptExploderHierarchyTreeContext';
@@ -66,6 +71,10 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
   useEffect(() => {
     itemsRef.current = items;
   }, [items]);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const masterNodes = useMemo(() => buildPromptExploderMasterNodes(items), [items]);
   const treeRevision = useMemo(
@@ -77,24 +86,32 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
   );
   const expandedNodeIds = useMemo(() => masterNodes.map((node) => node.id), [masterNodes]);
 
-  const controller = useFolderTreeInstanceV2({
-    instanceId: 'prompt_exploder_hierarchy',
-    initialNodes: masterNodes,
-    initiallyExpandedNodeIds: expandedNodeIds,
-    externalRevision: treeRevision,
-    adapter: {
-      apply: async (tx) => {
+  const adapter = useMemo<MasterFolderTreeAdapterV3>(
+    () => ({
+      apply: async (tx: MasterFolderTreeTransaction) => {
         const nextItems = rebuildPromptExploderListFromMasterNodes({
           nodes: tx.nextNodes,
           previousItems: itemsRef.current,
         });
-        onChange(nextItems);
+        onChangeRef.current(nextItems);
         return {
           tx,
           appliedAt: Date.now(),
         };
       },
-    },
+    }),
+    []
+  );
+
+  const {
+    appearance: { rootDropUi },
+    controller,
+  } = useMasterFolderTreeInstance({
+    instance: 'prompt_exploder_hierarchy',
+    nodes: masterNodes,
+    initiallyExpandedNodeIds: expandedNodeIds,
+    externalRevision: treeRevision,
+    adapter,
   });
 
   const selectedItemId = controller.selectedNodeId
@@ -197,12 +214,7 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
           enableDnd
           className='space-y-0.5'
           emptyLabel={emptyLabel}
-          rootDropUi={{
-            enabled: true,
-            label: 'Move to Root',
-            idleClassName: 'border-blue-400/60 bg-blue-500/20 text-blue-100',
-            activeClassName: 'border-blue-200 bg-blue-500/40 text-white',
-          }}
+          rootDropUi={rootDropUi}
         />
       </div>
 

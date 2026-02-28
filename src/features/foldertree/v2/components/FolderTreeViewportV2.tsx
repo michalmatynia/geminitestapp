@@ -3,6 +3,8 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
+import type { FolderTreeNodeView } from '../types';
+
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { EmptyState } from '@/shared/ui';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
@@ -34,6 +36,8 @@ export type FolderTreeViewportRenderNodeInput = {
   hasChildren: boolean;
   isExpanded: boolean;
   isSelected: boolean;
+  /** True when this node is part of a multi-selection. */
+  isMultiSelected: boolean;
   isRenaming: boolean;
   isDragging: boolean;
   isDropTarget: boolean;
@@ -109,6 +113,21 @@ export type FolderTreeViewportV2Props = {
         activeClassName?: string | undefined;
       }
     | undefined;
+  /**
+   * Estimate row height for virtualization. Pass a number for a fixed height
+   * (default: 34) or a function for per-row dynamic sizing.
+   */
+  estimateRowHeight?: ((row: FolderTreeNodeView) => number) | number | undefined;
+  /**
+   * Milliseconds to wait while dragging over a collapsed folder before auto-expanding it.
+   * Default: 600. Set to 0 to disable.
+   */
+  autoExpandOnHoverMs?: number | undefined;
+  /**
+   * Ref that the viewport fills with a scroll-to-node function once mounted.
+   * Call `scrollToNodeRef.current(nodeId)` to bring a node into view.
+   */
+  scrollToNodeRef?: React.MutableRefObject<((nodeId: MasterTreeId) => void) | null> | undefined;
 };
 
 const defaultRootDropIdleClassName = 'border-border/45 bg-card/25 text-gray-400';
@@ -120,6 +139,7 @@ const DefaultRow = ({
   hasChildren,
   isExpanded,
   isSelected,
+  isMultiSelected,
   isDragging,
   dropPosition,
   select,
@@ -127,13 +147,15 @@ const DefaultRow = ({
 }: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
   const stateClassName = isSelected
     ? 'bg-blue-600 text-white'
-    : dropPosition === 'before'
-      ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
-      : dropPosition === 'after'
-        ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
-        : isDragging
-          ? 'opacity-50'
-          : 'text-gray-300 hover:bg-muted/40';
+    : isMultiSelected
+      ? 'bg-blue-500/20 text-blue-100 ring-1 ring-inset ring-blue-400/40'
+      : dropPosition === 'before'
+        ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
+        : dropPosition === 'after'
+          ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
+          : isDragging
+            ? 'opacity-50'
+            : 'text-gray-300 hover:bg-muted/40';
 
   return (
     <button
@@ -176,6 +198,9 @@ export function FolderTreeViewportV2({
   onNodeDragStart,
   canStartDrag,
   rootDropUi,
+  estimateRowHeight,
+  autoExpandOnHoverMs = 600,
+  scrollToNodeRef,
 }: FolderTreeViewportV2Props): React.JSX.Element {
   const runtime = useMasterFolderTreeRuntime();
   const nodeById = useMemo(
@@ -208,26 +233,69 @@ export function FolderTreeViewportV2({
 
   const [rootDropHoverZone, setRootDropHoverZone] = useState<'top' | 'bottom' | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-expand on drag hover
+  const autoExpandTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoExpandTargetRef = useRef<MasterTreeId | null>(null);
+
+  const resolvedEstimateSize = useMemo(() => {
+    const defaultHeight = 34;
+    if (typeof estimateRowHeight === 'function') {
+      return (index: number): number => {
+        const row = rows[index];
+        return row ? estimateRowHeight(row) : defaultHeight;
+      };
+    }
+    const fixedHeight = typeof estimateRowHeight === 'number' ? estimateRowHeight : defaultHeight;
+    return (): number => fixedHeight;
+  }, [estimateRowHeight, rows]);
+
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 34,
+    estimateSize: resolvedEstimateSize,
     overscan: 10,
   });
+
+  const defaultRowHeight =
+    typeof estimateRowHeight === 'number' ? estimateRowHeight : 34;
   const virtualItems = rowVirtualizer.getVirtualItems();
   const useFallbackRows = virtualItems.length === 0 && rows.length > 0;
   const renderedRows = useFallbackRows
     ? rows.map((_, index) => ({
       key: `fallback-${index}`,
       index,
-      start: index * 34,
+      start: index * defaultRowHeight,
     }))
     : virtualItems;
-  const totalSize = useFallbackRows ? rows.length * 34 : rowVirtualizer.getTotalSize();
+  const totalSize = useFallbackRows
+    ? rows.length * defaultRowHeight
+    : rowVirtualizer.getTotalSize();
+
+  // Wire scrollToNodeRef once the virtualizer is ready
+  useEffect(() => {
+    if (!scrollToNodeRef) return;
+    scrollToNodeRef.current = (nodeId: MasterTreeId): void => {
+      const index = rows.findIndex((r) => r.nodeId === nodeId);
+      if (index !== -1) {
+        rowVirtualizer.scrollToIndex(index, { align: 'auto' });
+      }
+    };
+    return (): void => {
+      if (scrollToNodeRef.current) {
+        scrollToNodeRef.current = null;
+      }
+    };
+  }, [rows, rowVirtualizer, scrollToNodeRef]);
 
   const clearDragState = (): void => {
     controller.clearDrag();
     setRootDropHoverZone(null);
+    if (autoExpandTimerRef.current) {
+      clearTimeout(autoExpandTimerRef.current);
+      autoExpandTimerRef.current = null;
+    }
+    autoExpandTargetRef.current = null;
   };
 
   const resolveDraggedNode = (event: React.DragEvent<HTMLElement>): MasterTreeId | null => {
@@ -461,6 +529,7 @@ export function FolderTreeViewportV2({
                 if (!node || !viewNode) return null;
 
                 const isSelected = controller.selectedNodeId === node.id;
+                const isMultiSelected = controller.selectedNodeIds?.has(node.id) ?? false;
                 const isDragging = controller.dragState?.draggedNodeId === node.id;
                 const isDropTarget = controller.dragState?.targetId === node.id;
                 const dropPosition =
@@ -473,6 +542,7 @@ export function FolderTreeViewportV2({
                     hasChildren: row.hasChildren,
                     isExpanded: row.isExpanded,
                     isSelected,
+                    isMultiSelected,
                     isRenaming: controller.renamingNodeId === node.id,
                     isDragging: Boolean(isDragging),
                     isDropTarget: Boolean(isDropTarget),
@@ -488,6 +558,7 @@ export function FolderTreeViewportV2({
                     hasChildren={row.hasChildren}
                     isExpanded={row.isExpanded}
                     isSelected={isSelected}
+                    isMultiSelected={isMultiSelected}
                     isRenaming={controller.renamingNodeId === node.id}
                     isDragging={Boolean(isDragging)}
                     isDropTarget={Boolean(isDropTarget)}
@@ -573,6 +644,29 @@ export function FolderTreeViewportV2({
                           setRootDropHoverZone(null);
                           controller.updateDragTarget(node.id, resolvedPosition);
                           event.dataTransfer.dropEffect = 'move';
+
+                          // Auto-expand collapsed folders on prolonged hover
+                          if (
+                            autoExpandOnHoverMs > 0 &&
+                            viewNode.type === 'folder' &&
+                            !row.isExpanded &&
+                            autoExpandTargetRef.current !== node.id
+                          ) {
+                            if (autoExpandTimerRef.current) {
+                              clearTimeout(autoExpandTimerRef.current);
+                            }
+                            autoExpandTargetRef.current = node.id;
+                            autoExpandTimerRef.current = setTimeout((): void => {
+                              controller.expandNode(node.id);
+                              autoExpandTargetRef.current = null;
+                            }, autoExpandOnHoverMs);
+                          } else if (autoExpandTargetRef.current !== node.id) {
+                            if (autoExpandTimerRef.current) {
+                              clearTimeout(autoExpandTimerRef.current);
+                              autoExpandTimerRef.current = null;
+                            }
+                            autoExpandTargetRef.current = null;
+                          }
                         }
                         : undefined
                     }

@@ -1,83 +1,31 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
   MasterFolderTreeRuntimeProvider,
-  useFolderTreeInstanceV2,
 } from '@/features/foldertree/v2';
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import type { FolderTreeProfileV2 } from '@/shared/contracts/master-folder-tree';
+import type {
+  MasterFolderTreeAdapterV3,
+  MasterFolderTreeTransaction,
+} from '@/shared/contracts/master-folder-tree';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { Button, FormField, Input } from '@/shared/ui';
 
 import {
   buildValidatorPatternMasterNodes,
   fromSeqGroupMasterNodeId,
+  resolveValidatorPatternReorderUpdates,
 } from './validator-pattern-master-tree';
 import { ValidatorPatternTreeContext } from './ValidatorPatternTreeContext';
-import { useValidatorPatternTreeActions } from './useValidatorPatternTreeActions';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 import { PatternNodeItem } from './pattern-tree/PatternNodeItem';
 import { SequenceGroupFolderNodeItem } from './pattern-tree/SequenceGroupFolderNodeItem';
-
-// ─── Tree Profile ─────────────────────────────────────────────────────────────
-
-const VALIDATOR_PATTERN_TREE_PROFILE: FolderTreeProfileV2 = {
-  version: 2,
-  placeholders: {
-    preset: 'sublime',
-    style: 'line',
-    emphasis: 'subtle',
-    rootDropLabel: 'Move to root',
-    inlineDropLabel: 'Add to group',
-  },
-  icons: {
-    slots: {
-      folderClosed: null,
-      folderOpen: null,
-      file: null,
-      root: null,
-      dragHandle: null,
-    },
-    byKind: {},
-  },
-  nesting: {
-    defaultAllow: false,
-    blockedTargetKinds: [],
-    rules: [
-      // Patterns allowed at root
-      {
-        childType: 'file',
-        childKinds: ['pattern'],
-        targetType: 'root',
-        targetKinds: ['*'],
-        allow: true,
-      },
-      // Patterns allowed inside sequence-group folders
-      {
-        childType: 'file',
-        childKinds: ['pattern'],
-        targetType: 'folder',
-        targetKinds: ['sequence-group'],
-        allow: true,
-      },
-      // Sequence groups allowed at root only
-      {
-        childType: 'folder',
-        childKinds: ['sequence-group'],
-        targetType: 'root',
-        targetKinds: ['*'],
-        allow: true,
-      },
-    ],
-  },
-  interactions: {
-    selectionBehavior: 'click_away',
-  },
-};
 
 // ─── Group Settings Panel ─────────────────────────────────────────────────────
 
@@ -182,22 +130,54 @@ export function ValidatorPatternTree(): React.JSX.Element {
     [orderedPatterns, sequenceGroups]
   );
 
-  // Create tree controller — group folders start expanded
-  const controller = useFolderTreeInstanceV2({
-    instanceId: 'validator_pattern_tree',
-    profile: VALIDATOR_PATTERN_TREE_PROFILE,
-    initialNodes: masterNodes,
-    initiallyExpandedNodeIds: masterNodes.filter((n) => n.type === 'folder').map((n) => n.id),
-  });
-
-  // Keep controller in sync with server-driven data changes
+  const reorderPatternsMutationRef = useRef(reorderPatternsMutation);
   useEffect(() => {
-    void controller.replaceNodes(masterNodes, 'external_sync');
-    // controller is a stable object; masterNodes changes are the trigger
-  }, [masterNodes]);
+    reorderPatternsMutationRef.current = reorderPatternsMutation;
+  }, [reorderPatternsMutation]);
 
-  const { onNodeDrop } = useValidatorPatternTreeActions({
-    reorderPatterns: reorderPatternsMutation,
+  const adapter = useMemo<MasterFolderTreeAdapterV3>(
+    () => ({
+      apply: async (tx: MasterFolderTreeTransaction) => {
+        const updates = resolveValidatorPatternReorderUpdates({
+          previousNodes: tx.previousNodes,
+          nextNodes: tx.nextNodes,
+        });
+
+        if (updates.length > 0) {
+          try {
+            await reorderPatternsMutationRef.current.mutateAsync({ updates });
+          } catch (error: unknown) {
+            logClientError(error, {
+              context: {
+                source: 'ValidatorPatternTree',
+                action: 'reorder',
+                operationType: tx.operation.type,
+                updateCount: updates.length,
+              },
+            });
+            throw error instanceof Error ? error : new Error('Failed to reorder patterns.');
+          }
+        }
+
+        return {
+          tx,
+          appliedAt: Date.now(),
+        };
+      },
+    }),
+    []
+  );
+
+  const {
+    appearance: { rootDropUi },
+    controller,
+  } = useMasterFolderTreeInstance({
+    instance: 'validator_pattern_tree',
+    nodes: masterNodes,
+    initiallyExpandedNodeIds: masterNodes
+      .filter((node) => node.type === 'folder')
+      .map((node) => node.id),
+    adapter,
   });
 
   const patternById = useMemo(() => new Map(patterns.map((p) => [p.id, p])), [patterns]);
@@ -284,8 +264,8 @@ export function ValidatorPatternTree(): React.JSX.Element {
       <ValidatorPatternTreeContext.Provider value={contextValue}>
         <FolderTreeViewportV2
           controller={controller}
+          rootDropUi={rootDropUi}
           renderNode={renderNode}
-          onNodeDrop={onNodeDrop}
           enableDnd={!isPending}
           emptyLabel='No patterns — click Add Pattern to create the first one'
         />

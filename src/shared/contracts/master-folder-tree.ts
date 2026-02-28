@@ -295,6 +295,52 @@ export type FolderTreeNestingRuleV2 = {
   allow: boolean;
 };
 
+export type FolderTreeBadgeSpec = {
+  /** Which data to display. 'children_count' shows folder child count; 'custom' uses metadata['_badge']. */
+  field: 'children_count' | 'custom';
+  /** Where the badge is rendered relative to the node label. */
+  position: 'inline_after_name' | 'trailing';
+  /** Visual style of the badge. */
+  style: 'count' | 'dot' | 'status_icon';
+  /** Maps metadata status values to semantic colors. Only used when style = 'status_icon'. */
+  statusMap?: Record<string, 'info' | 'warning' | 'error' | 'success'> | undefined;
+};
+
+export type FolderTreeKeyboardConfig = {
+  /** Enable keyboard navigation for this instance. Default true. */
+  enabled: boolean;
+  /** Arrow key navigation between nodes. Default true. */
+  arrowNavigation: boolean;
+  /** Enter key starts rename on selected node. Default true. */
+  enterToRename: boolean;
+  /** Delete/Backspace emits request_delete for selected node. Default false. */
+  deleteKey: boolean;
+};
+
+export type FolderTreeMultiSelectConfig = {
+  /** Enable multi-selection for this instance. Default false. */
+  enabled: boolean;
+  /** Ctrl/Cmd+click toggles a node in/out of selection. Default true. */
+  ctrlClick: boolean;
+  /** Shift+click selects a range. Default true. */
+  shiftClick: boolean;
+  /** Ctrl/Cmd+A selects all visible nodes. Default true. */
+  selectAll: boolean;
+};
+
+export type FolderTreeSearchConfig = {
+  /** Show a built-in search bar. Default false. */
+  enabled: boolean;
+  /** Debounce delay in ms for search input. Default 200. */
+  debounceMs: number;
+  /** 'highlight' shows all nodes; 'filter_tree' hides non-matching branches. Default 'highlight'. */
+  filterMode: 'highlight' | 'filter_tree';
+  /** Which node fields to search. Default ['name']. */
+  matchFields: Array<'name' | 'path' | 'metadata'>;
+  /** Minimum query length before searching. Default 1. */
+  minQueryLength: number;
+};
+
 export type FolderTreeProfileV2 = {
   version: 2;
   placeholders: {
@@ -316,6 +362,15 @@ export type FolderTreeProfileV2 = {
   interactions: {
     selectionBehavior: FolderTreeSelectionBehavior;
   };
+  // Optional capability sections — all new consumers can opt-in via these
+  /** Badge display configuration. Undefined = no badges. */
+  badges?: FolderTreeBadgeSpec | undefined;
+  /** Keyboard navigation configuration. Undefined = use defaults. */
+  keyboard?: Partial<FolderTreeKeyboardConfig> | undefined;
+  /** Multi-selection configuration. Undefined = disabled. */
+  multiSelect?: Partial<FolderTreeMultiSelectConfig> | undefined;
+  /** Built-in search/filter configuration. Undefined = disabled. */
+  search?: Partial<FolderTreeSearchConfig> | undefined;
 };
 
 export const useMasterFolderTreeOptionsSchema = z.object({
@@ -397,6 +452,23 @@ export interface MasterFolderTreeController {
   refreshFromAdapter: () => Promise<MasterFolderTreeActionResult>;
   undo: () => Promise<MasterFolderTreeActionResult>;
   clearError: () => void;
+  /** Expands all ancestor nodes of the given node so it becomes visible in the tree. */
+  expandToNode?: ((nodeId: MasterTreeId) => void) | undefined;
+  /** Programmatically scroll the viewport to bring a node into view. Requires scrollToNodeRef on FolderTreeViewportV2. */
+  scrollToNode?: ((nodeId: MasterTreeId) => void) | undefined;
+  // --- Multi-selection (optional; available when multiSelect is enabled in profile) ---
+  /** Set of currently multi-selected node IDs. Empty set means no multi-selection. */
+  selectedNodeIds?: Set<MasterTreeId> | undefined;
+  /** Toggle a single node in/out of the multi-selection. */
+  toggleSelectNode?: ((nodeId: MasterTreeId) => void) | undefined;
+  /** Select a contiguous range of visible nodes from anchorId to nodeId. */
+  selectNodeRange?: ((anchorId: MasterTreeId, nodeId: MasterTreeId, visibleNodeIds: MasterTreeId[]) => void) | undefined;
+  /** Select all nodes in the tree. */
+  selectAllNodes?: (() => void) | undefined;
+  /** Clear the multi-selection (does not affect selectedNodeId). */
+  clearMultiSelection?: (() => void) | undefined;
+  /** Replace the multi-selection with the given IDs. */
+  setSelectedNodeIds?: ((nodeIds: MasterTreeId[]) => void) | undefined;
 }
 
 export function toMasterFolderTreeActionFail(

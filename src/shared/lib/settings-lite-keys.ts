@@ -6,9 +6,19 @@ import {
 } from '@/shared/contracts/master-folder-tree';
 import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/contracts/products';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
-import { FOLDER_TREE_PROFILES_V2_SETTING_KEY } from '@/shared/utils/folder-tree-profiles-v2';
+import {
+  FOLDER_TREE_PROFILES_V2_SETTING_KEY,
+  folderTreeInstanceValues,
+} from '@/shared/utils/folder-tree-profiles-v2';
 
-export const LITE_SETTINGS_KEYS = [
+const FOLDER_TREE_UI_STATE_V2_LITE_KEYS = folderTreeInstanceValues.map(
+  (instance) => `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}${instance}`
+);
+const FOLDER_TREE_PROFILE_V2_LITE_KEYS = folderTreeInstanceValues.map(
+  (instance) => `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}${instance}`
+);
+
+export const LITE_SETTINGS_KEYS: readonly string[] = [
   APP_FONT_SET_SETTING_KEY,
   'background_sync_enabled',
   'background_sync_interval_seconds',
@@ -20,24 +30,14 @@ export const LITE_SETTINGS_KEYS = [
   'noteSettings:editorMode',
   'case_resolver_default_document_format_v1',
   'case_resolver_settings_v1',
-  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}notes`,
-  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}image_studio`,
-  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}product_categories`,
-  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}cms_page_builder`,
-  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}case_resolver`,
-  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}case_resolver_cases`,
-  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}notes`,
-  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}image_studio`,
-  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}product_categories`,
-  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}cms_page_builder`,
-  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}case_resolver`,
-  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}case_resolver_cases`,
+  ...FOLDER_TREE_UI_STATE_V2_LITE_KEYS,
+  ...FOLDER_TREE_PROFILE_V2_LITE_KEYS,
   FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
   FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   CLIENT_LOGGING_KEYS.featureFlags,
   CLIENT_LOGGING_KEYS.tags,
-] as const;
+];
 
 const LITE_SETTINGS_KEY_SET = new Set<string>(LITE_SETTINGS_KEYS);
 

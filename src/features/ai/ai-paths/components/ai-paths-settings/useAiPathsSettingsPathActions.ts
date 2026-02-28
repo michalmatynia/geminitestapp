@@ -29,9 +29,14 @@ import {
   normalizeAiPathsValidationConfig,
   normalizeNodes,
   sanitizeEdges,
+  migratePathConfigCollections,
+  repairPathNodeIdentities,
   triggers,
 } from '@/shared/lib/ai-paths';
-import { deleteAiPathsSettings } from '@/shared/lib/ai-paths/settings-store-client';
+import {
+  deleteAiPathsSettings,
+  fetchAiPathsSettingsCached,
+} from '@/shared/lib/ai-paths/settings-store-client';
 
 import {
   normalizeParserSamples,
@@ -145,6 +150,8 @@ export function useAiPathsSettingsPathActions({
   confirm,
   toast,
 }: UseAiPathsSettingsPathActionsInput): UseAiPathsSettingsPathActionsReturn {
+  const switchRequestSeqRef = React.useRef(0);
+
   const resolveDuplicatePathName = useCallback(
     (sourceName: string): string => {
       const baseName = sourceName.trim() || 'Untitled Path';
@@ -543,12 +550,74 @@ export function useAiPathsSettingsPathActions({
   const handleSwitchPath = useCallback(
     (value: string): void => {
       if (!value) return;
-      const config = pathConfigs[value] ?? createDefaultPathConfig(value);
+      const nextRequestSeq = switchRequestSeqRef.current + 1;
+      switchRequestSeqRef.current = nextRequestSeq;
+
+      const applyIfLatest = (config: PathConfig): void => {
+        if (switchRequestSeqRef.current !== nextRequestSeq) return;
+        setActivePathId(value);
+        applyPathConfigState(config);
+        void persistActivePathPreference(value);
+      };
+
+      const cachedConfig = pathConfigs[value];
+      if (cachedConfig) {
+        applyIfLatest(cachedConfig);
+        return;
+      }
+
       setActivePathId(value);
-      void persistActivePathPreference(value);
-      applyPathConfigState(config);
+      void (async (): Promise<void> => {
+        try {
+          const settings = await fetchAiPathsSettingsCached();
+          if (switchRequestSeqRef.current !== nextRequestSeq) return;
+
+          const configItem = settings.find((item) => item.key === `${PATH_CONFIG_PREFIX}${value}`);
+          let config: PathConfig = createDefaultPathConfig(value);
+          if (configItem?.value) {
+            try {
+              config = JSON.parse(configItem.value) as PathConfig;
+            } catch (error) {
+              reportAiPathsError(
+                error,
+                { action: 'switchPathParseConfig', pathId: value },
+                'Failed to parse selected path config:'
+              );
+            }
+          }
+
+          config = migratePathConfigCollections(config).config;
+          config = repairPathNodeIdentities(config).config;
+          config.nodes = normalizeNodes(config.nodes);
+
+          setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+            ...prev,
+            [value]: config,
+          }));
+          applyIfLatest(config);
+        } catch (error) {
+          reportAiPathsError(
+            error,
+            { action: 'switchPathLoadConfig', pathId: value },
+            'Failed to load selected path:'
+          );
+          const fallbackConfig = createDefaultPathConfig(value);
+          setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+            ...prev,
+            [value]: fallbackConfig,
+          }));
+          applyIfLatest(fallbackConfig);
+        }
+      })();
     },
-    [applyPathConfigState, pathConfigs, persistActivePathPreference, setActivePathId]
+    [
+      applyPathConfigState,
+      pathConfigs,
+      persistActivePathPreference,
+      reportAiPathsError,
+      setActivePathId,
+      setPathConfigs,
+    ]
   );
 
   return {

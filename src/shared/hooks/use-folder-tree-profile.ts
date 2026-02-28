@@ -11,6 +11,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   defaultFolderTreeProfilesV2,
+  folderTreeInstanceValues,
   parseFolderTreeProfilesV2,
   type FolderTreeInstance,
   type FolderTreeProfileV2,
@@ -27,65 +28,28 @@ export function useFolderTreeProfiles(): FolderTreeProfilesV2Map {
     [legacyRawProfiles]
   );
 
-  const notesProfileRaw = settingsStore.get(getFolderTreeProfileV2Key('notes'));
-  const imageStudioProfileRaw = settingsStore.get(getFolderTreeProfileV2Key('image_studio'));
-  const productCategoriesProfileRaw = settingsStore.get(
-    getFolderTreeProfileV2Key('product_categories')
-  );
-  const cmsPageBuilderProfileRaw = settingsStore.get(getFolderTreeProfileV2Key('cms_page_builder'));
-  const caseResolverProfileRaw = settingsStore.get(getFolderTreeProfileV2Key('case_resolver'));
-  const caseResolverCasesProfileRaw = settingsStore.get(
-    getFolderTreeProfileV2Key('case_resolver_cases')
+  const profileRawValues = folderTreeInstanceValues.map((instance: FolderTreeInstance) =>
+    settingsStore.get(getFolderTreeProfileV2Key(instance))
   );
 
   return useMemo(
-    () => ({
-      notes:
-        notesProfileRaw !== undefined
-          ? parseFolderTreeProfileV2Entry('notes', notesProfileRaw)
-          : useLegacyFallback
-            ? legacyProfiles.notes
-            : defaultFolderTreeProfilesV2.notes,
-      image_studio:
-        imageStudioProfileRaw !== undefined
-          ? parseFolderTreeProfileV2Entry('image_studio', imageStudioProfileRaw)
-          : useLegacyFallback
-            ? legacyProfiles.image_studio
-            : defaultFolderTreeProfilesV2.image_studio,
-      product_categories:
-        productCategoriesProfileRaw !== undefined
-          ? parseFolderTreeProfileV2Entry('product_categories', productCategoriesProfileRaw)
-          : useLegacyFallback
-            ? legacyProfiles.product_categories
-            : defaultFolderTreeProfilesV2.product_categories,
-      cms_page_builder:
-        cmsPageBuilderProfileRaw !== undefined
-          ? parseFolderTreeProfileV2Entry('cms_page_builder', cmsPageBuilderProfileRaw)
-          : useLegacyFallback
-            ? legacyProfiles.cms_page_builder
-            : defaultFolderTreeProfilesV2.cms_page_builder,
-      case_resolver:
-        caseResolverProfileRaw !== undefined
-          ? parseFolderTreeProfileV2Entry('case_resolver', caseResolverProfileRaw)
-          : useLegacyFallback
-            ? legacyProfiles.case_resolver
-            : defaultFolderTreeProfilesV2.case_resolver,
-      case_resolver_cases:
-        caseResolverCasesProfileRaw !== undefined
-          ? parseFolderTreeProfileV2Entry('case_resolver_cases', caseResolverCasesProfileRaw)
-          : useLegacyFallback
-            ? legacyProfiles.case_resolver_cases
-            : defaultFolderTreeProfilesV2.case_resolver_cases,
-    }),
+    () => {
+      const profiles = {} as FolderTreeProfilesV2Map;
+      folderTreeInstanceValues.forEach((instance: FolderTreeInstance, index: number) => {
+        const raw = profileRawValues[index];
+        profiles[instance] =
+          raw !== undefined
+            ? parseFolderTreeProfileV2Entry(instance, raw)
+            : useLegacyFallback
+              ? legacyProfiles[instance]
+              : defaultFolderTreeProfilesV2[instance];
+      });
+      return profiles;
+    },
     [
-      caseResolverCasesProfileRaw,
-      caseResolverProfileRaw,
-      cmsPageBuilderProfileRaw,
-      imageStudioProfileRaw,
       legacyProfiles,
       useLegacyFallback,
-      notesProfileRaw,
-      productCategoriesProfileRaw,
+      ...profileRawValues,
     ]
   );
 }

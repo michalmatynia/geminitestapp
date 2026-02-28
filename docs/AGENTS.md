@@ -80,7 +80,7 @@ Auth settings (roles, permissions, policies) are stored in the Mongo `settings` 
 - **Job workers** for chatbot/agent queues live in `src/features/jobs/workers/`
   (e.g. `chatbotJobQueue.ts`, `agentQueue.ts`).
 - **Agent runtime** lives in `src/features/agent-runtime/` with planning, execution, memory,
-  and tool orchestration. It uses `OLLAMA_BASE_URL` when targeting local models.
+  and tool orchestration. Model routing is resolved via AI Brain capabilities.
 - **Chatbot API** is implemented in `src/app/api/chatbot/route.ts`.
 - **Chatbot feature UI + state** live in `src/features/chatbot/`.
 - **Agent creator UI + settings** live in `src/features/agentcreator/`.

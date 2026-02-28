@@ -10,8 +10,11 @@ import type {
 import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/toast';
-import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
-import { FOLDER_TREE_PROFILES_V2_SETTING_KEY } from '@/shared/utils/folder-tree-profiles-v2';
+import {
+  FOLDER_TREE_PROFILES_V2_SETTING_KEY,
+  folderTreePersistFeedbackByInstance,
+  type FolderTreePlaceholderClassSet,
+} from '@/shared/utils/folder-tree-profiles-v2';
 import {
   FOLDER_TREE_UI_STATE_V1_SETTING_KEY,
   parseFolderTreeUiStateV1,
@@ -86,33 +89,6 @@ const areNodeListsEqual = (
     if (normalizedLeft[index] !== normalizedRight[index]) return false;
   }
   return true;
-};
-
-const shouldNotifyPersistSuccessByInstance: Record<FolderTreeInstance, boolean> = {
-  notes: false,
-  image_studio: false,
-  product_categories: true,
-  cms_page_builder: true,
-  case_resolver: true,
-  case_resolver_cases: true,
-};
-
-const shouldNotifyPersistErrorByInstance: Record<FolderTreeInstance, boolean> = {
-  notes: true,
-  image_studio: true,
-  product_categories: true,
-  cms_page_builder: true,
-  case_resolver: true,
-  case_resolver_cases: true,
-};
-
-const persistSuccessMessageByInstance: Record<FolderTreeInstance, string> = {
-  notes: 'Folder tree updated.',
-  image_studio: 'Folder tree updated.',
-  product_categories: 'Category tree updated.',
-  cms_page_builder: 'Component tree updated.',
-  case_resolver: 'Case resolver tree updated.',
-  case_resolver_cases: 'Case hierarchy updated.',
 };
 
 export function useMasterFolderTreeInstance({
@@ -363,8 +339,9 @@ export function useMasterFolderTreeInstance({
   const previousApplyingRef = useRef<boolean>(false);
   const lastErrorAtRef = useRef<string | null>(null);
   useEffect(() => {
-    const shouldNotifySuccess = shouldNotifyPersistSuccessByInstance[instance];
-    const shouldNotifyError = shouldNotifyPersistErrorByInstance[instance];
+    const feedback = folderTreePersistFeedbackByInstance[instance];
+    const shouldNotifySuccess = feedback.notifySuccess;
+    const shouldNotifyError = feedback.notifyError;
     if (!shouldNotifySuccess && !shouldNotifyError) {
       previousApplyingRef.current = controller.isApplying;
       return;
@@ -380,7 +357,7 @@ export function useMasterFolderTreeInstance({
         variant: 'error',
       });
     } else if (shouldNotifySuccess && wasApplying && !isApplying && !lastError) {
-      toast(persistSuccessMessageByInstance[instance], {
+      toast(feedback.successMessage, {
         variant: 'success',
       });
     }

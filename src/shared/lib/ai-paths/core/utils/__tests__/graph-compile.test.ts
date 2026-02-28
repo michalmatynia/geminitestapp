@@ -942,6 +942,66 @@ describe('compileGraph', () => {
     );
   });
 
+  it('coerces legacy object-map edge payloads instead of throwing', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'parser-1',
+        type: 'parser',
+        title: 'Parser',
+        inputs: ['entityJson'],
+        outputs: ['bundle'],
+      }),
+      buildNode({
+        id: 'prompt-1',
+        type: 'prompt',
+        title: 'Prompt',
+        inputs: ['bundle'],
+        outputs: ['prompt'],
+      }),
+    ];
+    const edgesMapPayload = {
+      edge_1: {
+        id: 'edge_1',
+        from: 'parser-1',
+        to: 'prompt-1',
+        fromPort: 'bundle',
+        toPort: 'bundle',
+      },
+    } as unknown as Edge[];
+
+    const sanitized = sanitizeEdges(nodes, edgesMapPayload);
+    expect(sanitized).toHaveLength(1);
+    expect(sanitized[0]).toMatchObject({
+      id: 'edge_1',
+      from: 'parser-1',
+      to: 'prompt-1',
+      fromPort: 'bundle',
+      toPort: 'bundle',
+    });
+  });
+
+  it('treats missing edge payload as an empty graph', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'parser-1',
+        type: 'parser',
+        title: 'Parser',
+        inputs: ['entityJson'],
+        outputs: ['bundle'],
+      }),
+      buildNode({
+        id: 'prompt-1',
+        type: 'prompt',
+        title: 'Prompt',
+        inputs: ['bundle'],
+        outputs: ['prompt'],
+      }),
+    ];
+
+    const sanitized = sanitizeEdges(nodes, undefined as unknown as Edge[]);
+    expect(sanitized).toEqual([]);
+  });
+
   it('warns when a wait-for-inputs cycle has only cycle-internal required dependencies', () => {
     const nodes: AiNode[] = [
       buildNode({

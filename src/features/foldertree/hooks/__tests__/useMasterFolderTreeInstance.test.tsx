@@ -237,7 +237,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
       expect(controller.setExpandedNodeIds).toHaveBeenCalledWith([]);
     });
 
-    const initialOptions = useFolderTreeInstanceV2Mock.mock.calls[0]?.[0];
+    const initialOptions = useFolderTreeInstanceV2Mock.mock.calls[0]?.[0] as { initiallyExpandedNodeIds: unknown[] };
     expect(initialOptions.initiallyExpandedNodeIds).toEqual([]);
     expect(result.current.hasPersistedUiState).toBe(true);
   });

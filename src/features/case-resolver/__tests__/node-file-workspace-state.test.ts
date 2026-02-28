@@ -23,7 +23,7 @@ const setViewMock = vi.fn();
 const logCaseResolverWorkspaceEventMock = vi.fn();
 
 vi.mock('@/features/case-resolver/workspace-persistence', () => ({
-  logCaseResolverWorkspaceEvent: (...args: unknown[]) => logCaseResolverWorkspaceEventMock(...args),
+  logCaseResolverWorkspaceEvent: (...args: unknown[]) => void logCaseResolverWorkspaceEventMock(...args),
 }));
 
 vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({

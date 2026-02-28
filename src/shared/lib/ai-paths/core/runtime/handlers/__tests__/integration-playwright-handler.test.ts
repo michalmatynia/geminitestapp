@@ -190,6 +190,7 @@ describe('handlePlaywright', () => {
       expect.objectContaining({
         jobId: 'run-queued-1',
         status: 'queued',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         bundle: expect.objectContaining({
           runId: 'run-queued-1',
           status: 'queued',

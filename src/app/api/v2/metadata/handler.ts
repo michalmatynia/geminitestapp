@@ -7,6 +7,7 @@ import { type CreateCurrencyDto } from '@/shared/contracts/internationalization'
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
+import { type CountryCode } from '@prisma/client';
 
 export async function GET_intl_handler(
   _req: NextRequest, 
@@ -54,10 +55,10 @@ export async function POST_intl_handler(
   if (type === 'countries') {
     const country = await prisma.country.create({
       data: {
-        code: data['code'] as string,
+        code: data['code'] as CountryCode,
         name: data['name'] as string,
         currencies: data['currencyIds'] ? {
-          connect: (data['currencyIds'] as string[]).map((id: string) => ({ id })),
+          create: (data['currencyIds'] as string[]).map((currencyId: string) => ({ currencyId })),
         } : undefined,
       },
       include: { currencies: true },
@@ -72,7 +73,7 @@ export async function POST_intl_handler(
         name: data['name'] as string,
         nativeName: data['nativeName'] as string,
         countries: data['countryIds'] ? {
-          connect: (data['countryIds'] as string[]).map((id: string) => ({ id })),
+          create: (data['countryIds'] as string[]).map((countryId: string) => ({ countryId })),
         } : undefined,
       },
       include: { countries: true },

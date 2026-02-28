@@ -78,7 +78,7 @@ export function useAiPathsPersistence(args: UseAiPathsPersistenceArgs): UseAiPat
 
   const enqueueSettingsWrite = useCallback(async <T>(operation: () => Promise<T>): Promise<T> => {
     const promise = settingsWriteQueueRef.current.then(operation);
-    settingsWriteQueueRef.current = promise.catch(() => {});
+    settingsWriteQueueRef.current = promise.then(() => {}).catch(() => {});
     return promise;
   }, []);
 

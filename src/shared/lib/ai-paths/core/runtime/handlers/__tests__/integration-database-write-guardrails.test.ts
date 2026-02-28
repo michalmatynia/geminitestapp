@@ -152,6 +152,7 @@ describe('resolveWriteTemplateGuardrail', () => {
           token: 'result.parameters',
           parseState: 'unparseable',
           truncationDetected: false,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           parseError: expect.stringContaining(''),
         }),
       ])

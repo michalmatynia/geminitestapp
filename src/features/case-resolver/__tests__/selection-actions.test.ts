@@ -17,7 +17,7 @@ const logCaseResolverWorkspaceEventMock = vi.fn();
 vi.mock('@/features/case-resolver/workspace-persistence', () => ({
   logCaseResolverWorkspaceEvent: (
     event: Omit<CaseResolverWorkspaceDebugEvent, 'id' | 'timestamp'>
-  ) => logCaseResolverWorkspaceEventMock(event),
+  ) => void logCaseResolverWorkspaceEventMock(event),
 }));
 
 const createWorkspace = (): CaseResolverWorkspace => ({

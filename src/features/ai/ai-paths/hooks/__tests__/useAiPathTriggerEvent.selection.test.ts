@@ -20,7 +20,7 @@ describe('selectTriggerCandidates', () => {
       activePathId: null,
     });
 
-    expect(selection.activeTriggerCandidates.map((candidate: any) => candidate.id)).toEqual(['path-b']);
+    expect(selection.activeTriggerCandidates.map((candidate: Candidate) => candidate.id)).toEqual(['path-b']);
     expect(selection.selectedConfig?.id).toBe('path-b');
   });
 

@@ -219,6 +219,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
       '/api/image-studio/slots/slot-1/analysis',
       expect.objectContaining({
         mode: 'server_analysis_v1',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         layout: expect.objectContaining(CENTER_LAYOUT_PAYLOAD),
       })
     );
@@ -267,6 +268,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
       '/api/image-studio/slots/slot-1/analysis',
       expect.objectContaining({
         mode: 'server_analysis_v1',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         layout: expect.objectContaining(AUTO_SCALE_LAYOUT_PAYLOAD),
       })
     );

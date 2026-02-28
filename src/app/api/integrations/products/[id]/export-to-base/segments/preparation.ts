@@ -43,7 +43,7 @@ const toBaseFieldMappings = (value: unknown): BaseFieldMapping[] => {
   if (!Array.isArray(value)) return [];
   return (value as unknown[]).filter(
     (item): item is BaseFieldMapping =>
-      item && typeof item === 'object' && !Array.isArray(item) && 'targetField' in item
+      item !== null && typeof item === 'object' && !Array.isArray(item) && 'targetField' in item
   );
 };
 

@@ -17,8 +17,11 @@ import {
 } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { parseJsonBody } from '@/features/products/server';
-import { getProductRepository } from '@/features/products/server';
+import { 
+  parseJsonBody,
+  getProductRepository,
+  type ProductWithImagesDto as ProductWithImages,
+} from '@/features/products/server';
 import type { ProductListingExportEvent } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
@@ -37,8 +40,8 @@ import {
   exportSchema,
   type BaseExportRequestData,
   type BaseFieldMapping,
-} from './helpers';
-import {
+  type BaseExportProductLike,
+} from './helpers';import {
   isBaseImageError,
   buildImageDiagnosticsLogger,
   logImageDiagnostics,
@@ -185,7 +188,7 @@ export async function postExportToBaseHandler(
         product: {
           ...product,
           categoryId: product.categoryId ?? null,
-        },
+        } as unknown as BaseExportProductLike,
       }),
       ErrorSystem.logInfo('[export-to-base] Resources loaded and mapping prepared', {
         productId,
@@ -461,22 +464,21 @@ export async function postExportToBaseHandler(
       includeStockWithoutWarehouse = false
     ) => {
       const exportData = (await buildBaseProductData(
-        exportProduct,
-        activeMappings,
-        targetWarehouseId,
-        {
-          imageBaseUrl,
-          includeStockWithoutWarehouse,
-          ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
-          ...(producerNameById ? { producerNameById } : {}),
-          ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
-          ...(tagNameById ? { tagNameById } : {}),
-          ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
-          exportImagesAsBase64: exportImagesAsBase64,
-          imageBase64Mode,
-          imageTransform,
-          imagesOnly,
-        }
+                exportProduct as unknown as ProductWithImages,
+                activeMappings,
+                targetWarehouseId,
+                {          imageBaseUrl,
+                  includeStockWithoutWarehouse,
+                  ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+                  ...(producerNameById ? { producerNameById } : {}),
+                  ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
+                  ...(tagNameById ? { tagNameById } : {}),
+                  ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
+                  exportImagesAsBase64: exportImagesAsBase64,
+                  imageBase64Mode,
+                  imageTransform,
+                  imagesOnly,
+                }
       )) as Record<string, unknown> & {
         text_fields?: Record<string, unknown>;
         prices?: Record<string, unknown>;
@@ -515,7 +517,7 @@ export async function postExportToBaseHandler(
       ? await exportProductImagesToBase(
         token,
         targetInventoryId,
-        exportProduct,
+        exportProduct as unknown as ProductWithImages,
           listingExternalId as string,
           {
             imageBaseUrl,
@@ -528,7 +530,7 @@ export async function postExportToBaseHandler(
       : await exportProductToBase(
         token,
         targetInventoryId,
-        exportProduct,
+        exportProduct as unknown as ProductWithImages,
         effectiveMappings,
         warehouseId,
         {
@@ -584,7 +586,7 @@ export async function postExportToBaseHandler(
       result = await exportProductToBase(
         token,
         targetInventoryId,
-        exportProduct,
+        exportProduct as unknown as ProductWithImages,
         effectiveMappings,
         warehouseId,
 
@@ -638,7 +640,7 @@ export async function postExportToBaseHandler(
       result = await exportProductToBase(
         token,
         targetInventoryId,
-        exportProduct,
+        exportProduct as unknown as ProductWithImages,
         effectiveMappings,
         warehouseId,
 
@@ -707,7 +709,7 @@ export async function postExportToBaseHandler(
             ? await exportProductImagesToBase(
               token,
               targetInventoryId,
-              exportProduct,
+              exportProduct as unknown as ProductWithImages,
                 listingExternalId as string,
                 {
                   imageBaseUrl,
@@ -720,7 +722,7 @@ export async function postExportToBaseHandler(
             : await exportProductToBase(
               token,
               targetInventoryId,
-              exportProduct,
+              exportProduct as unknown as ProductWithImages,
               effectiveMappings,
               warehouseId,
               {
@@ -750,7 +752,7 @@ export async function postExportToBaseHandler(
             result = await exportProductImagesToBase(
               token,
               targetInventoryId,
-              exportProduct,
+              exportProduct as unknown as ProductWithImages,
               existingExternalProductId,
               {
                 imageBaseUrl,
@@ -764,7 +766,7 @@ export async function postExportToBaseHandler(
             result = await exportProductToBase(
               token,
               targetInventoryId,
-              exportProduct,
+              exportProduct as unknown as ProductWithImages,
               effectiveMappings,
               warehouseId,
               {

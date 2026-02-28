@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 const {
   requireAiPathsAccessOrInternalMock,
@@ -9,12 +9,12 @@ const {
   getMongoDbMock,
   prismaMock,
 } = vi.hoisted(() => ({
-  requireAiPathsAccessOrInternalMock: vi.fn(),
-  enforceAiPathsActionRateLimitMock: vi.fn(),
-  isCollectionAllowedMock: vi.fn(),
-  parseJsonBodyMock: vi.fn(),
-  resolveCollectionProviderForRequestMock: vi.fn(),
-  getMongoDbMock: vi.fn(),
+  requireAiPathsAccessOrInternalMock: vi.fn() as Mock,
+  enforceAiPathsActionRateLimitMock: vi.fn() as Mock,
+  isCollectionAllowedMock: vi.fn() as Mock,
+  parseJsonBodyMock: vi.fn() as Mock,
+  resolveCollectionProviderForRequestMock: vi.fn() as Mock,
+  getMongoDbMock: vi.fn() as Mock,
   prismaMock: {} as Record<string, unknown>,
 }));
 
@@ -63,7 +63,7 @@ describe('AI Paths DB provider fallback', () => {
     resolveCollectionProviderForRequestMock.mockReset();
     getMongoDbMock.mockReset();
     Object.keys(prismaMock).forEach((key) => {
-      delete prismaMock[key];
+      delete (prismaMock)[key];
     });
 
     requireAiPathsAccessOrInternalMock.mockResolvedValue({
@@ -107,9 +107,9 @@ describe('AI Paths DB provider fallback', () => {
     delete process.env['DATABASE_URL'];
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
-    const response = await postAiPathsDbUpdateHandler(
-      createRequest('/api/ai-paths/db-update') as Parameters<typeof postAiPathsDbUpdateHandler>[0],
-      {} as Parameters<typeof postAiPathsDbUpdateHandler>[1]
+    const response = await (postAiPathsDbUpdateHandler as any)(
+      createRequest('/api/ai-paths/db-update'),
+      {}
     );
     const body = (await response.json()) as Record<string, unknown>;
 
@@ -186,9 +186,9 @@ describe('AI Paths DB provider fallback', () => {
 
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
-    const response = await postAiPathsDbUpdateHandler(
-      createRequest('/api/ai-paths/db-update') as Parameters<typeof postAiPathsDbUpdateHandler>[0],
-      {} as Parameters<typeof postAiPathsDbUpdateHandler>[1]
+    const response = await (postAiPathsDbUpdateHandler as any)(
+      createRequest('/api/ai-paths/db-update'),
+      {}
     );
     const body = (await response.json()) as Record<string, unknown>;
 
@@ -223,9 +223,9 @@ describe('AI Paths DB provider fallback', () => {
     delete process.env['DATABASE_URL'];
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
-    const response = await postAiPathsDbActionHandler(
-      createRequest('/api/ai-paths/db-action') as Parameters<typeof postAiPathsDbActionHandler>[0],
-      {} as Parameters<typeof postAiPathsDbActionHandler>[1]
+    const response = await (postAiPathsDbActionHandler as any)(
+      createRequest('/api/ai-paths/db-action'),
+      {}
     );
     const body = (await response.json()) as Record<string, unknown>;
 
@@ -275,9 +275,9 @@ describe('AI Paths DB provider fallback', () => {
     process.env['DATABASE_URL'] = 'postgresql://localhost/test';
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
-    const response = await postAiPathsDbActionHandler(
-      createRequest('/api/ai-paths/db-action') as Parameters<typeof postAiPathsDbActionHandler>[0],
-      {} as Parameters<typeof postAiPathsDbActionHandler>[1]
+    const response = await (postAiPathsDbActionHandler as any)(
+      createRequest('/api/ai-paths/db-action'),
+      {}
     );
     const body = (await response.json()) as Record<string, unknown>;
 

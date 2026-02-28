@@ -32,7 +32,7 @@ import {
 export function useLocalExecutionTriggers(
   args: LocalExecutionArgs,
   loop: { runLocalLoop: (mode: 'run' | 'step') => Promise<{ status: string; error?: unknown; state: RuntimeState }> },
-  outcome: { finalizeLocalRunOutcome: (outcome: unknown, meta: Record<string, unknown>) => void }
+  outcome: { finalizeLocalRunOutcome: (outcome: any, meta: any) => void }
 ) {
   const getConnectedSimulationNodesForTrigger = useCallback(
     (triggerNodeId: string): AiNode[] => {

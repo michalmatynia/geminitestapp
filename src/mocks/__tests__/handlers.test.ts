@@ -25,7 +25,7 @@ describe('MSW Handlers', () => {
 
     it('should fetch a single product by id', async () => {
       const response = await fetch('/api/products/1');
-      const data = (await response.json()) as Record<string, any>;
+      const data = (await response.json()) as Record<string, unknown>;
 
       expect(response.status).toBe(200);
       expect(data['id']).toBe('1');
@@ -55,7 +55,7 @@ describe('MSW Handlers', () => {
       });
 
       expect(response.status).toBe(201);
-      const data = (await response.json()) as Record<string, any>;
+      const data = (await response.json()) as Record<string, unknown>;
       expect(data['name_en']).toBe('New Product');
       expect(data['id']).toBeDefined();
     });
@@ -73,7 +73,7 @@ describe('MSW Handlers', () => {
       });
 
       expect(response.status).toBe(200);
-      const data = (await response.json()) as Record<string, any>;
+      const data = (await response.json()) as Record<string, unknown>;
       expect(data['name_en']).toBe('Updated Product');
       expect(data['price']).toBe(39.99);
     });
@@ -84,7 +84,7 @@ describe('MSW Handlers', () => {
       });
 
       expect(response.status).toBe(200);
-      const data = (await response.json()) as Record<string, any>;
+      const data = (await response.json()) as Record<string, unknown>;
       expect(data['success']).toBe(true);
     });
   });
@@ -92,7 +92,7 @@ describe('MSW Handlers', () => {
   describe('Catalogs API', () => {
     it('should fetch all catalogs', async () => {
       const response = await fetch('/api/catalogs');
-      const data = (await response.json()) as any[];
+      const data = (await response.json()) as unknown[];
 
       expect(response.status).toBe(200);
       expect(Array.isArray(data)).toBe(true);
@@ -101,7 +101,7 @@ describe('MSW Handlers', () => {
 
     it('should fetch a single catalog', async () => {
       const response = await fetch('/api/catalogs/1');
-      const data = (await response.json()) as Record<string, any>;
+      const data = (await response.json()) as Record<string, unknown>;
 
       expect(response.status).toBe(200);
       expect(data['id']).toBe('1');
@@ -112,7 +112,7 @@ describe('MSW Handlers', () => {
   describe('Settings API', () => {
     it('should fetch all settings', async () => {
       const response = await fetch('/api/settings');
-      const data = (await response.json()) as any[];
+      const data = (await response.json()) as unknown[];
 
       expect(response.status).toBe(200);
       expect(Array.isArray(data)).toBe(true);
@@ -120,7 +120,7 @@ describe('MSW Handlers', () => {
 
     it('should fetch a single setting', async () => {
       const response = await fetch('/api/settings/SITE_NAME');
-      const data = (await response.json()) as Record<string, any>;
+      const data = (await response.json()) as Record<string, unknown>;
 
       expect(response.status).toBe(200);
       expect(data['key']).toBe('SITE_NAME');
@@ -131,7 +131,7 @@ describe('MSW Handlers', () => {
   describe('Health Check', () => {
     it('should return health status', async () => {
       const response = await fetch('/api/health');
-      const data = (await response.json()) as Record<string, any>;
+      const data = (await response.json()) as Record<string, unknown>;
 
       expect(response.status).toBe(200);
       expect(data['status']).toBe('ok');

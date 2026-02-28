@@ -1,4 +1,4 @@
-import { test, expect, Dialog } from '@playwright/test';
+import { test, expect, Dialog, type Page } from '@playwright/test';
 
 test.describe('Products Management - Advanced', () => {
   test.beforeEach(async ({ page }) => {
@@ -14,7 +14,7 @@ test.describe('Products Management - Advanced', () => {
     await page.mouse.click(0, 0);
   });
 
-  async function createTestProduct(page: any, sku: string, name: string) {
+  async function createTestProduct(page: Page, sku: string, name: string) {
     page.once('dialog', async (dialog: Dialog) => {
       await dialog.accept(sku);
     });

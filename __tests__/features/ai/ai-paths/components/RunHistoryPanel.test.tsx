@@ -18,7 +18,7 @@ const orchestratorMock = vi.hoisted(() => {
     handleCancelRun: vi.fn().mockResolvedValue(undefined),
     handleRequeueDeadLetter: vi.fn().mockResolvedValue(undefined),
   };
-  return mock as AiPathsSettingsState;
+  return mock;
 });
 
 // Mock child components/utils

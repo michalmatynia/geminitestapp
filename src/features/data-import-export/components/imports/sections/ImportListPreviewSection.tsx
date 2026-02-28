@@ -6,7 +6,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import type { ImportListItem } from '@/shared/contracts/data-import-export';
 import {
   Button,

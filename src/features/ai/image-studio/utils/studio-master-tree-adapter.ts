@@ -1,4 +1,4 @@
-import { createMasterFolderTreeAdapter } from '@/shared/lib/foldertree';
+import { createMasterFolderTreeAdapter } from '@/features/foldertree';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import {

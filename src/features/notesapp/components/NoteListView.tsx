@@ -2,7 +2,7 @@ import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText, Palette } from
 import React, { useMemo } from 'react';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { DocumentSearchPage } from '@/shared/lib/document-search';
+import { DocumentSearchPage } from '@/features/document-search';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type {
   NoteWithRelationsDto as NoteWithRelations,

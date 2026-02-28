@@ -1,0 +1,92 @@
+import { z } from 'zod';
+import { dtoBaseSchema } from '../base';
+import { producerSchema, type Producer } from '../products';
+
+export const externalProducerSchema = dtoBaseSchema.extend({
+  connectionId: z.string(),
+  externalId: z.string(),
+  name: z.string(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
+  fetchedAt: z.string(),
+});
+
+export interface ExternalProducer {
+  id: string;
+  connectionId: string;
+  externalId: string;
+  name: string;
+  metadata: Record<string, unknown> | null;
+  fetchedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const producerMappingSchema = dtoBaseSchema.extend({
+  connectionId: z.string(),
+  externalProducerId: z.string(),
+  internalProducerId: z.string(),
+  isActive: z.boolean(),
+});
+
+export interface ProducerMapping {
+  id: string;
+  connectionId: string;
+  externalProducerId: string;
+  internalProducerId: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export const producerMappingWithDetailsSchema = producerMappingSchema.extend({
+  externalProducer: externalProducerSchema,
+  internalProducer: producerSchema.nullable(),
+});
+
+export interface ProducerMappingWithDetails extends ProducerMapping {
+  externalProducer: ExternalProducer;
+  internalProducer: Producer | null;
+}
+
+export const baseProducerFromApiSchema = z.object({
+  manufacturer_id: z.union([z.number(), z.string()]).optional(),
+  producer_id: z.union([z.number(), z.string()]).optional(),
+  id: z.union([z.number(), z.string()]).optional(),
+  name: z.string().optional(),
+});
+
+export type BaseProducerFromApi = z.infer<typeof baseProducerFromApiSchema>;
+
+export interface BaseProducer {
+  id: string;
+  name: string;
+}
+
+export interface ExternalProducerSyncInput {
+  connectionId: string;
+  externalId: string;
+  name: string;
+  metadata?: Record<string, unknown> | null;
+}
+
+export const producerMappingCreateInputSchema = z.object({
+  connectionId: z.string(),
+  externalProducerId: z.string(),
+  internalProducerId: z.string(),
+});
+
+export interface ProducerMappingCreateInput {
+  connectionId: string;
+  externalProducerId: string;
+  internalProducerId: string;
+}
+
+export const producerMappingUpdateInputSchema = z.object({
+  externalProducerId: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export interface ProducerMappingUpdateInput {
+  externalProducerId?: string;
+  isActive?: boolean;
+}

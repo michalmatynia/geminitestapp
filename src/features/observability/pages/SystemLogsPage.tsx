@@ -26,7 +26,7 @@ import {
   type LogTriagePreset,
   type SystemLogFilterFormValues,
 } from '@/shared/lib/observability/log-triage-presets';
-import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
 import {
   MongoIndexInfoDto as MongoIndexInfo,

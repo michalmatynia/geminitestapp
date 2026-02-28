@@ -2,7 +2,7 @@ import { SessionProvider } from 'next-auth/react';
 import { Suspense } from 'react';
 
 import PageAnalyticsTracker from '@/shared/lib/analytics/components/PageAnalyticsTracker';
-import { MasterFolderTreeRuntimeProvider } from '@/shared/lib/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
+import { MasterFolderTreeRuntimeProvider } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
 import ClientErrorReporter from '@/features/observability/components/ClientErrorReporter';
 import { AppFontProvider } from '@/shared/providers/AppFontProvider';
 import { BackgroundSyncProvider } from '@/shared/providers/BackgroundSyncProvider';

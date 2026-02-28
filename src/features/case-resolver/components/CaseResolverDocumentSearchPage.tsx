@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp, FileImage, FileText, FolderOpen, Plus } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { DocumentSearchPage } from '@/shared/lib/document-search';
+import { DocumentSearchPage } from '@/features/document-search';
 import type {
   CaseResolverCategory,
   CaseResolverFile,

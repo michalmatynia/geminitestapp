@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { DOCUMENTATION_MODULE_IDS, getDocumentationEntry } from '@/shared/lib/documentation';
-import { DocumentationTooltip, useDocsTooltipsSetting } from '@/shared/lib/tooltip-engine';
+import { DocumentationTooltip, useDocsTooltipsSetting } from '@/features/tooltip-engine';
 
 import type { ValidatorUiDoc } from './validator-docs-catalog';
 

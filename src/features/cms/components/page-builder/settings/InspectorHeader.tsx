@@ -4,7 +4,7 @@ import React, { useMemo, useCallback } from 'react';
 import { MousePointer2, Monitor, Smartphone, PanelRightClose, Paintbrush } from 'lucide-react';
 import { Button, SectionHeader, Tooltip } from '@/shared/ui';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { usePageBuilderState } from '../../../hooks/page-builder/PageStateContext';
 import { usePageBuilderDispatch } from '../../../hooks/page-builder/PageDispatchContext';
 import { useComponentSettingsContext } from '../context/ComponentSettingsContext';

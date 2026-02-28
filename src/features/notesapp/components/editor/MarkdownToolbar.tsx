@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { MarkdownToolbar as DocumentMarkdownToolbar } from '@/shared/lib/document-editor';
+import { MarkdownToolbar as DocumentMarkdownToolbar } from '@/features/document-editor';
 import { useMarkdownToolbarActions } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileDto as NoteFileRecord } from '@/shared/contracts/notes';

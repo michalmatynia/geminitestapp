@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { MarkdownSplitEditor } from '@/shared/lib/document-editor';
+import { MarkdownSplitEditor } from '@/features/document-editor';
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import { useToast } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';

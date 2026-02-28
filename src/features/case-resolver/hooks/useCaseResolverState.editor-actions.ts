@@ -23,7 +23,7 @@ import {
   ensureSafeDocumentHtml,
   stripHtmlToPlainText,
   toStorageDocumentValue,
-} from '@/shared/lib/document-editor/content-format';
+} from '@/features/document-editor/content-format';
 import { createCaseResolverFile } from '../settings';
 
 type CaseResolverOpenFileEditorOptions = {

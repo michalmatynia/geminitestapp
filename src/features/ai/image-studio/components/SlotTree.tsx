@@ -3,12 +3,12 @@
 import { Folder, FolderOpen, GripVertical, LayoutGrid } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/shared/lib/foldertree';
+import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
-} from '@/shared/lib/foldertree/v2';
+} from '@/features/foldertree/v2';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   type MasterTreeDropPosition,

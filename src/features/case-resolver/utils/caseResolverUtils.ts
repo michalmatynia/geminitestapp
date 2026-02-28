@@ -3,7 +3,7 @@
 import {
   ensureHtmlForPreview,
   ensureSafeDocumentHtml,
-} from '@/shared/lib/document-editor/content-format';
+} from '@/features/document-editor/content-format';
 import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverFile,

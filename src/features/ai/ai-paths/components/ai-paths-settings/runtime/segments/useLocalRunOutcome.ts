@@ -1,0 +1,254 @@
+import { useCallback } from 'react';
+import type {
+  PathConfig,
+  PathDebugSnapshot,
+  RuntimeState,
+} from '@/shared/lib/ai-paths';
+import {
+  PATH_DEBUG_PREFIX,
+  appendLocalRun,
+} from '@/shared/lib/ai-paths';
+import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+import {
+  buildActivePathConfig,
+  buildDebugSnapshot,
+  safeJsonStringify,
+} from '../utils';
+
+import type { LocalExecutionArgs } from '../types';
+
+export function useLocalRunOutcome(args: LocalExecutionArgs) {
+  const persistDebugSnapshot = useCallback(
+    async (pathId: string | null, runAt: string, state: RuntimeState): Promise<void> => {
+      if (!pathId) return;
+      const snapshot = buildDebugSnapshot({ pathId, runAt, state, nodes: args.normalizedNodes });
+      if (!snapshot) return;
+      const payload = safeJsonStringify(snapshot);
+      if (!payload) return;
+      try {
+        await updateAiPathsSetting(`${PATH_DEBUG_PREFIX}${pathId}`, payload);
+        args.setPathDebugSnapshots((prev: Record<string, PathDebugSnapshot>) => ({
+          ...prev,
+          [pathId]: snapshot,
+        }));
+      } catch (error) {
+        logClientError(error, {
+          context: { source: 'useAiPathsLocalExecution', action: 'persistDebugSnapshot', pathId },
+        });
+      }
+    },
+    [args.normalizedNodes, args.setPathDebugSnapshots]
+  );
+
+  const finalizeLocalRunOutcome = useCallback(
+    (
+      outcome: {
+        status: 'completed' | 'paused' | 'canceled' | 'error';
+        error?: unknown;
+        state: RuntimeState;
+      },
+      meta: {
+        startedAt: string;
+        startedAtMs: number;
+        triggerEvent: string | null;
+        triggerContext: Record<string, unknown> | null;
+      }
+    ): void => {
+      const finishedAt = new Date().toISOString();
+      if (outcome.status === 'completed') {
+        args.settleTransientNodeStatuses('completed');
+        args.appendRuntimeEvent({
+          source: 'local',
+          kind: 'run_completed',
+          level: 'info',
+          runId: args.currentRunIdRef.current ?? outcome.state?.currentRun?.id ?? null,
+          runStartedAt:
+            args.currentRunStartedAtRef.current ?? outcome.state?.currentRun?.startedAt ?? null,
+          timestamp: finishedAt,
+          message: 'Run completed.',
+        });
+        args.setLastRunAt(finishedAt);
+        void persistDebugSnapshot(args.activePathId ?? null, finishedAt, outcome.state);
+        if (args.activePathId) {
+          args.setPathConfigs((prev: Record<string, PathConfig>) => ({
+            ...prev,
+            [args.activePathId!]: {
+              ...(prev[args.activePathId!] ??
+                buildActivePathConfig({
+                  activePathId: args.activePathId,
+                  pathName: args.pathName,
+                  pathDescription: args.pathDescription,
+                  activeTrigger: args.activeTrigger,
+                  executionMode: args.executionMode,
+                  runMode: args.runMode,
+                  strictFlowMode: args.strictFlowMode,
+                  blockedRunPolicy: args.blockedRunPolicy,
+                  aiPathsValidation: args.aiPathsValidation,
+                  nodes: args.normalizedNodes,
+                  edges: args.sanitizedEdges,
+                  updatedAt: finishedAt,
+                  parserSamples: args.parserSamples,
+                  updaterSamples: args.updaterSamples,
+                  runtimeState: outcome.state,
+                  lastRunAt: finishedAt,
+                  runCount: 1,
+                })),
+              runtimeState: outcome.state,
+              lastRunAt: finishedAt,
+              runCount: Math.max(1, Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1)),
+            },
+          }));
+        }
+        const entityId =
+          typeof meta.triggerContext?.['entityId'] === 'string'
+            ? meta.triggerContext['entityId']
+            : null;
+        const entityType =
+          typeof meta.triggerContext?.['entityType'] === 'string'
+            ? meta.triggerContext['entityType']
+            : null;
+        void appendLocalRun({
+          pathId: args.activePathId ?? null,
+          pathName: args.pathName ?? null,
+          triggerEvent: meta['triggerEvent'] ?? null,
+          triggerLabel: args.activeTrigger ?? null,
+          entityId,
+          entityType,
+          status: 'success',
+          startedAt: meta['startedAt'] ?? '',
+          finishedAt,
+          durationMs: Date.now() - (meta['startedAtMs'] ?? 0),
+          nodeCount: args.normalizedNodes.length,
+          source: 'ai_paths_ui',
+        });
+        return;
+      }
+
+      if (outcome.status === 'error') {
+        args.settleTransientNodeStatuses('failed');
+        args.appendRuntimeEvent({
+          source: 'local',
+          kind: 'run_failed',
+          level: 'error',
+          runId: args.currentRunIdRef.current ?? outcome.state?.currentRun?.id ?? null,
+          runStartedAt:
+            args.currentRunStartedAtRef.current ?? outcome.state?.currentRun?.startedAt ?? null,
+          timestamp: finishedAt,
+          message:
+            outcome.error instanceof Error ? `Run failed: ${outcome.error.message}` : 'Run failed.',
+        });
+        if (outcome.state) {
+          args.setLastRunAt(finishedAt);
+          if (args.activePathId) {
+            args.setPathConfigs((prev: Record<string, PathConfig>) => ({
+              ...prev,
+              [args.activePathId!]: {
+                ...(prev[args.activePathId!] ??
+                  buildActivePathConfig({
+                    activePathId: args.activePathId,
+                    pathName: args.pathName,
+                    pathDescription: args.pathDescription,
+                    activeTrigger: args.activeTrigger,
+                    executionMode: args.executionMode,
+                    runMode: args.runMode,
+                    strictFlowMode: args.strictFlowMode,
+                    blockedRunPolicy: args.blockedRunPolicy,
+                    aiPathsValidation: args.aiPathsValidation,
+                    nodes: args.normalizedNodes,
+                    edges: args.sanitizedEdges,
+                    updatedAt: finishedAt,
+                    parserSamples: args.parserSamples,
+                    updaterSamples: args.updaterSamples,
+                    runtimeState: outcome.state,
+                    lastRunAt: finishedAt,
+                    runCount: 1,
+                  })),
+                runtimeState: outcome.state,
+                lastRunAt: finishedAt,
+                runCount: Math.max(1, Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1)),
+              },
+            }));
+          }
+        }
+        void appendLocalRun({
+          pathId: args.activePathId ?? null,
+          pathName: args.pathName ?? null,
+          triggerEvent: meta['triggerEvent'] ?? null,
+          triggerLabel: args.activeTrigger ?? null,
+          status: 'error',
+          startedAt: meta['startedAt'] ?? '',
+          finishedAt,
+          durationMs: Date.now() - (meta['startedAtMs'] ?? 0),
+          nodeCount: args.normalizedNodes.length,
+          error: outcome.error instanceof Error ? outcome.error.message : 'Local run failed',
+          source: 'ai_paths_ui',
+        });
+        return;
+      }
+
+      if (outcome.status === 'canceled') {
+        args.settleTransientNodeStatuses('canceled');
+        args.appendRuntimeEvent({
+          source: 'local',
+          kind: 'run_canceled',
+          level: 'info',
+          runId: args.currentRunIdRef.current ?? outcome.state?.currentRun?.id ?? null,
+          runStartedAt:
+            args.currentRunStartedAtRef.current ?? outcome.state?.currentRun?.startedAt ?? null,
+          timestamp: finishedAt,
+          message: 'Run cancelled.',
+        });
+        args.toast('Run cancelled.', { variant: 'info' });
+        args.setLastRunAt(finishedAt);
+        if (args.activePathId) {
+          args.setPathConfigs((prev: Record<string, PathConfig>) => ({
+            ...prev,
+            [args.activePathId!]: {
+              ...(prev[args.activePathId!] ??
+                buildActivePathConfig({
+                  activePathId: args.activePathId,
+                  pathName: args.pathName,
+                  pathDescription: args.pathDescription,
+                  activeTrigger: args.activeTrigger,
+                  executionMode: args.executionMode,
+                  runMode: args.runMode,
+                  strictFlowMode: args.strictFlowMode,
+                  blockedRunPolicy: args.blockedRunPolicy,
+                  aiPathsValidation: args.aiPathsValidation,
+                  nodes: args.normalizedNodes,
+                  edges: args.sanitizedEdges,
+                  updatedAt: finishedAt,
+                  parserSamples: args.parserSamples,
+                  updaterSamples: args.updaterSamples,
+                  runtimeState: outcome.state,
+                  lastRunAt: finishedAt,
+                  runCount: 1,
+                })),
+              runtimeState: outcome.state,
+              lastRunAt: finishedAt,
+              runCount: Math.max(1, Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1)),
+            },
+          }));
+        }
+        void appendLocalRun({
+          pathId: args.activePathId ?? null,
+          pathName: args.pathName ?? null,
+          triggerEvent: meta['triggerEvent'] ?? null,
+          triggerLabel: args.activeTrigger ?? null,
+          status: 'error',
+          startedAt: meta['startedAt'] ?? '',
+          finishedAt,
+          durationMs: Date.now() - (meta['startedAtMs'] ?? 0),
+          nodeCount: args.normalizedNodes.length,
+          error: 'Run cancelled',
+          source: 'ai_paths_ui',
+        });
+      }
+    },
+    [args, persistDebugSnapshot]
+  );
+
+  return { finalizeLocalRunOutcome, persistDebugSnapshot };
+}

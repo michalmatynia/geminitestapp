@@ -12,12 +12,12 @@ import {
   fromCaseResolverCaseNodeId,
   toCaseResolverCaseNodeId,
 } from '@/features/case-resolver/master-tree';
-import { useMasterFolderTreeInstance } from '@/shared/lib/foldertree';
+import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
   type FolderTreeViewportRenderNodeInput,
-} from '@/shared/lib/foldertree/v2';
+} from '@/features/foldertree/v2';
 import { CaseListSearchPanel } from './list/search';
 import { Button, Card, StandardDataTablePanel } from '@/shared/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

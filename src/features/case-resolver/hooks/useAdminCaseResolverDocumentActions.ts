@@ -20,7 +20,7 @@ import {
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
   type DocumentContentCanonical,
-} from '@/shared/lib/document-editor';
+} from '@/features/document-editor';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt-exploder/bridge';
 import type { CaseResolverFileEditDraft } from '../types';
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';

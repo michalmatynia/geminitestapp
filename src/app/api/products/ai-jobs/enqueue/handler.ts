@@ -33,7 +33,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     context: { productId, type },
   });
 
-  const job = await enqueueProductAiJob(productId, type as ProductAiJobType, payload);
+  const job = await enqueueProductAiJob(productId, type, payload);
   await logSystemEvent({
     level: 'info',
     message: `[api/products/ai-jobs/enqueue] Job ${job.id} created`,

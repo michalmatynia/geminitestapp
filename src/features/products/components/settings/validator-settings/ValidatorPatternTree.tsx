@@ -6,8 +6,8 @@ import {
   FolderTreeViewportV2,
   MasterFolderTreeRuntimeProvider,
   useFolderTreeInstanceV2,
-} from '@/shared/lib/foldertree/v2';
-import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/v2';
+} from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { FolderTreeProfileV2 } from '@/shared/contracts/master-folder-tree';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';

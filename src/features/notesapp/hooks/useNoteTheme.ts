@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react';
 
-import { findFolderById } from '@/shared/lib/foldertree';
+import { findFolderById } from '@/features/foldertree';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { UseNoteThemeProps } from '@/shared/contracts/notes';
 import type {

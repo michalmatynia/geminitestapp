@@ -7,7 +7,7 @@ import type {
 } from '@/features/case-resolver-capture/proposals';
 import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver-capture/proposals';
 import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
-import { deriveDocumentContentSync, toStorageDocumentValue } from '@/shared/lib/document-editor';
+import { deriveDocumentContentSync, toStorageDocumentValue } from '@/features/document-editor';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import {
   FILEMAKER_DATABASE_KEY,

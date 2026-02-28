@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 
-import { FolderTreeViewportV2, useFolderTreeInstanceV2 } from '@/shared/lib/foldertree/v2';
+import { FolderTreeViewportV2, useFolderTreeInstanceV2 } from '@/features/foldertree/v2';
 import { Button, Input, Label } from '@/shared/ui';
 
 import { usePromptExploderHierarchyTreeContext } from './PromptExploderHierarchyTreeContext';

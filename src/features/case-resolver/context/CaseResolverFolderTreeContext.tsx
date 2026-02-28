@@ -28,7 +28,7 @@ import {
   fromCaseResolverFileNodeId,
   fromCaseResolverAssetNodeId,
 } from '../master-tree';
-import { createMasterFolderTreeAdapterV3 } from '@/shared/lib/foldertree/v2';
+import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2';
 import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
 import {
   type FolderCaseFileStats,
@@ -147,15 +147,6 @@ const resolveFolderAncestorNodeIds = (folderPath: string): string[] => {
   return parts.map((_: string, index: number): string =>
     toCaseResolverFolderNodeId(parts.slice(0, index + 1).join('/'))
   );
-};
-
-const forEachFolderPathAncestor = (folderPath: string, callback: (path: string) => void): void => {
-  const normalizedFolder = folderPath.trim();
-  if (!normalizedFolder) return;
-  const parts = normalizedFolder.split('/').filter(Boolean);
-  for (let index = 0; index < parts.length; index += 1) {
-    callback(parts.slice(0, index + 1).join('/'));
-  }
 };
 
 const areStringArraysEqual = (left: string[], right: string[]): boolean =>
@@ -345,12 +336,12 @@ export function CaseResolverFolderTreeProvider({
   const activeCaseFile = useMemo(() => {
     if (activeCaseId) {
       const explicitCase = workspaceIndexes.filesById.get(activeCaseId) ?? null;
-      if (explicitCase) return explicitCase;
+      if (explicitCase?.fileType === 'case') return explicitCase;
     }
     if (activeFile?.fileType === 'case') return activeFile;
     if (activeFile?.parentCaseId) {
       const parentCase = workspaceIndexes.filesById.get(activeFile.parentCaseId) ?? null;
-      if (parentCase) return parentCase;
+      if (parentCase?.fileType === 'case') return parentCase;
     }
     return null;
   }, [activeCaseId, activeFile, workspaceIndexes.filesById]);
@@ -361,8 +352,7 @@ export function CaseResolverFolderTreeProvider({
     if (!rootActiveCaseId) return 0;
     const subtreeCaseIds = workspaceIndexes.subtreeCaseIdsByCaseId.get(rootActiveCaseId);
     if (!subtreeCaseIds) return 0;
-    return Array.from(subtreeCaseIds).filter((caseId: string): boolean => caseId !== rootActiveCaseId)
-      .length;
+    return Math.max(0, subtreeCaseIds.size - 1);
   }, [rootActiveCaseId, workspaceIndexes.subtreeCaseIdsByCaseId]);
 
   useEffect((): void => {

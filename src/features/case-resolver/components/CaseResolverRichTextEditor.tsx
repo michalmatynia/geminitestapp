@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { DocumentWysiwygEditor } from '@/shared/lib/document-editor';
+import { DocumentWysiwygEditor } from '@/features/document-editor';
 
 type CaseResolverRichTextEditorProps = {
   value: string;

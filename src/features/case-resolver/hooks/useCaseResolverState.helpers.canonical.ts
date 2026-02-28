@@ -6,7 +6,7 @@ import {
   stripHtmlToPlainText,
   toStorageDocumentValue,
   type DocumentContentCanonical,
-} from '@/shared/lib/document-editor/content-format';
+} from '@/features/document-editor/content-format';
 import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver';
 import { buildFileEditDraft } from '@/features/case-resolver/utils/caseResolverUtils';
 import { stableStringify } from '../../ai/ai-paths/lib';

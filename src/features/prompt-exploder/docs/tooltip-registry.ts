@@ -5,7 +5,7 @@ import {
   getDocumentationEntry,
   resolveDocumentationEntryFromElement,
 } from '@/shared/lib/documentation';
-import { formatDocumentationTooltip } from '@/shared/lib/tooltip-engine';
+import { formatDocumentationTooltip } from '@/features/tooltip-engine';
 
 import { type PromptExploderDocEntry } from './catalog';
 

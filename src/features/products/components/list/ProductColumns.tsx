@@ -21,7 +21,7 @@ import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,
 } from '@/shared/lib/products/utils/priceCalculation';
-import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { Badge, Button, Checkbox, ActionMenu, DropdownMenuItem, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';

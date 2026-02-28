@@ -13,7 +13,7 @@ describe('log-triage-presets', () => {
     expect(preset).toBeDefined();
 
     const now = new Date(2026, 1, 10, 12, 0, 0);
-    const resolved = resolveSystemLogPresetFilters(preset!, now);
+    const resolved = resolveSystemLogPresetFilters(preset, now);
 
     expect(resolved.level).toBe('error');
     expect(resolved.fromDate).toBe('2026-02-09');
@@ -25,7 +25,7 @@ describe('log-triage-presets', () => {
     expect(preset).toBeDefined();
 
     const now = new Date(2026, 1, 10, 12, 0, 0);
-    const resolved = resolveSystemLogPresetFilters(preset!, now);
+    const resolved = resolveSystemLogPresetFilters(preset, now);
 
     const exactState = {
       ...SYSTEM_LOG_FILTER_DEFAULTS,

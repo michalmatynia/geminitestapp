@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { DocumentWysiwygEditor } from '@/shared/lib/document-editor';
+import { DocumentWysiwygEditor } from '@/features/document-editor';
 import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,

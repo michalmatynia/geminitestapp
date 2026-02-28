@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { FolderPlus, FilePlus, FileImage, FileCode2 } from 'lucide-react';
 
 import { Button, Switch } from '@/shared/ui';
-import { FolderTreeSearchBar } from '@/shared/lib/foldertree/v2/search';
+import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   useCaseResolverFolderTreeDataContext,

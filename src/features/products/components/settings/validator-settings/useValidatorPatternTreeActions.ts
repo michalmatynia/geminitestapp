@@ -6,7 +6,7 @@ import type { ReorderValidationPatternUpdatePayload } from '@/features/products/
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import { applyInternalMasterTreeDrop } from '@/shared/lib/foldertree/v2';
+import { applyInternalMasterTreeDrop } from '@/features/foldertree/v2';
 import type {
   MasterTreeDropPosition,
   MasterTreeId,

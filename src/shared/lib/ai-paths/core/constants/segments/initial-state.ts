@@ -1,0 +1,215 @@
+import { 
+  type AiNode, 
+  type Edge 
+} from '../../../../contracts/ai-paths-core';
+import { 
+  CONTEXT_INPUT_PORTS, 
+  CONTEXT_OUTPUT_PORTS, 
+  PROMPT_OUTPUT_PORTS, 
+  MODEL_OUTPUT_PORTS, 
+  DATABASE_INPUT_PORTS 
+} from './ports';
+import { DEFAULT_CONTEXT_ROLE } from './base';
+
+export const initialNodes = [
+  {
+    id: 'node-context',
+    instanceId: 'node-context',
+    nodeTypeId: 'context.context_filter',
+    type: 'context',
+    title: 'Context Filter',
+    description: 'Filter Product modal context into scoped fields.',
+    inputs: CONTEXT_INPUT_PORTS,
+    outputs: CONTEXT_OUTPUT_PORTS,
+    position: { x: 520, y: 590 },
+    config: {
+      context: {
+        role: DEFAULT_CONTEXT_ROLE,
+      },
+    },
+  },
+  {
+    id: 'node-parser',
+    instanceId: 'node-parser',
+    nodeTypeId: 'parser.json_parser',
+    type: 'parser',
+    title: 'JSON Parser',
+    description: 'Extract [images], [title], [productId], [content_en].',
+    inputs: ['entityJson'],
+    outputs: ['images', 'title', 'productId', 'content_en'],
+    position: { x: 820, y: 590 },
+    config: {
+      parser: {
+        mappings: {
+          images: '$.images',
+          title: '$.title',
+          productId: '$.id',
+          content_en: '$.content_en',
+        },
+      },
+    },
+  },
+  {
+    id: 'node-vision-prompt',
+    instanceId: 'node-vision-prompt',
+    nodeTypeId: 'prompt.prompt',
+    type: 'prompt',
+    title: 'Vision Prompt',
+    description: 'Prompt: Analyze [images] and [title].',
+    inputs: ['images', 'title'],
+    outputs: PROMPT_OUTPUT_PORTS,
+    position: { x: 1120, y: 510 },
+  },
+  {
+    id: 'node-vision-model',
+    instanceId: 'node-vision-model',
+    nodeTypeId: 'model.model',
+    type: 'model',
+    title: 'Gemma Vision',
+    description: 'Image analysis.',
+    inputs: ['prompt', 'images'],
+    outputs: MODEL_OUTPUT_PORTS,
+    position: { x: 1400, y: 510 },
+    config: {
+      model: {
+        temperature: 0.4,
+        maxTokens: 512,
+        vision: true,
+      },
+    },
+  },
+  {
+    id: 'node-desc-prompt',
+    instanceId: 'node-desc-prompt',
+    nodeTypeId: 'prompt.prompt',
+    type: 'prompt',
+    title: 'Description Prompt',
+    description: 'Prompt: Use [result] and [title].',
+    inputs: ['result', 'title'],
+    outputs: PROMPT_OUTPUT_PORTS,
+    position: { x: 1120, y: 690 },
+  },
+  {
+    id: 'node-desc-model',
+    instanceId: 'node-desc-model',
+    nodeTypeId: 'model.model',
+    type: 'model',
+    title: 'GPT-4o',
+    description: 'Generate description.',
+    inputs: ['prompt'],
+    outputs: MODEL_OUTPUT_PORTS,
+    position: { x: 1400, y: 690 },
+    config: {
+      model: {
+        temperature: 0.6,
+        maxTokens: 900,
+        vision: false,
+      },
+    },
+  },
+  {
+    id: 'node-updater',
+    instanceId: 'node-updater',
+    nodeTypeId: 'database.database_query',
+    type: 'database',
+    title: 'Database Update',
+    description: 'Update product fields from AI results.',
+    inputs: DATABASE_INPUT_PORTS,
+    outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
+    position: { x: 1680, y: 600 },
+    config: {
+      database: {
+        operation: 'update',
+        entityType: 'product',
+        idField: 'productId',
+        mode: 'replace',
+        updatePayloadMode: 'custom',
+        mappings: [],
+        query: {
+          provider: 'auto',
+          collection: 'products',
+          mode: 'custom',
+          preset: 'by_id',
+          field: '_id',
+          idType: 'string',
+          queryTemplate: '{\n  "id": "{{value}}"\n}',
+          limit: 20,
+          sort: '',
+          projection: '',
+          single: false,
+        },
+        writeSource: 'bundle',
+        writeOutcomePolicy: {
+          onZeroAffected: 'fail',
+        },
+        aiPrompt: '',
+      },
+    },
+  },
+] as unknown as AiNode[];
+
+export const initialEdges: Edge[] = [
+  {
+    id: 'edge-1',
+    from: 'node-context',
+    to: 'node-parser',
+    fromPort: 'entityJson',
+    toPort: 'entityJson',
+  },
+  {
+    id: 'edge-2',
+    from: 'node-parser',
+    to: 'node-vision-prompt',
+    fromPort: 'images',
+    toPort: 'images',
+  },
+  {
+    id: 'edge-3',
+    from: 'node-parser',
+    to: 'node-vision-prompt',
+    fromPort: 'title',
+    toPort: 'title',
+  },
+  {
+    id: 'edge-4',
+    from: 'node-vision-prompt',
+    to: 'node-vision-model',
+    fromPort: 'prompt',
+    toPort: 'prompt',
+  },
+  {
+    id: 'edge-5',
+    from: 'node-vision-model',
+    to: 'node-desc-prompt',
+    fromPort: 'result',
+    toPort: 'result',
+  },
+  {
+    id: 'edge-6',
+    from: 'node-desc-prompt',
+    to: 'node-desc-model',
+    fromPort: 'prompt',
+    toPort: 'prompt',
+  },
+  {
+    id: 'edge-7',
+    from: 'node-desc-model',
+    to: 'node-updater',
+    fromPort: 'result',
+    toPort: 'result',
+  },
+  {
+    id: 'edge-8',
+    from: 'node-parser',
+    to: 'node-updater',
+    fromPort: 'productId',
+    toPort: 'productId',
+  },
+  {
+    id: 'edge-9',
+    from: 'node-parser',
+    to: 'node-updater',
+    fromPort: 'content_en',
+    toPort: 'content_en',
+  },
+];

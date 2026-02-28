@@ -1,4 +1,4 @@
-import { createMasterFolderTreeAdapter } from '@/shared/lib/foldertree';
+import { createMasterFolderTreeAdapter } from '@/features/foldertree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { decodeCmsMasterNodeId, fromCmsZoneNodeId } from './cms-master-tree';

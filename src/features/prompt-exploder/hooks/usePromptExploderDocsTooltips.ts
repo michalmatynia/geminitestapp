@@ -1,6 +1,6 @@
 'use client';
 
-import { readDocsTooltipsEnabled, useDocsTooltipsSetting } from '@/shared/lib/tooltip-engine';
+import { readDocsTooltipsEnabled, useDocsTooltipsSetting } from '@/features/tooltip-engine';
 
 export const PROMPT_EXPLODER_DOCS_TOOLTIP_KEY = 'prompt_exploder:docs_tooltips_enabled';
 

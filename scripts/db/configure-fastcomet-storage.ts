@@ -8,7 +8,7 @@ import type {
   FastCometStorageConfig,
   FileStorageSource,
 } from '@/features/files/constants/storage-settings';
-import { invalidateFileStorageSettingsCache } from '@/features/files/services/storage/file-storage-service';
+import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

@@ -41,7 +41,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   // For now, simple loop using the service
   const jobs = await Promise.all(
     products.map((p: ProductWithImages) =>
-      enqueueProductAiJob(p.id, type as ProductAiJobType, {
+      enqueueProductAiJob(p.id, type, {
         ...(config as Record<string, unknown>),
         // We don't include full product data here,
         // the worker will fetch it to ensure it's fresh

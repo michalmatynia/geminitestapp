@@ -3,7 +3,7 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, Lock, Unlock, Trash2, GitBranch } from 'lucide-react';
 
-import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   useCaseResolverFolderTreeDataContext,

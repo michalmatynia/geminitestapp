@@ -3,12 +3,12 @@
 import { FileText, Folder, FolderOpen, GripVertical } from 'lucide-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/shared/lib/foldertree';
+import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
-} from '@/shared/lib/foldertree/v2';
+} from '@/features/foldertree/v2';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { FolderTreePanel } from '@/shared/ui';
 import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils';

@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-02-28T00:41:32.984Z
+Generated at: 2026-02-28T05:27:43.354Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 

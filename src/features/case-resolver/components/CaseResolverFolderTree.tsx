@@ -3,17 +3,17 @@
 import { FileCode2, FileImage, FileText, Folder, FolderOpen, GripVertical } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/shared/lib/foldertree';
+import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
   type FolderTreeViewportRenderNodeInput,
-} from '@/shared/lib/foldertree/v2';
+} from '@/features/foldertree/v2';
 import {
   useMasterFolderTreeSearch,
   MasterFolderTreeSearchResults,
-} from '@/shared/lib/foldertree/v2/search';
+} from '@/features/foldertree/v2/search';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { FolderTreePanel } from '@/shared/ui';
 import { DRAG_KEYS, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';

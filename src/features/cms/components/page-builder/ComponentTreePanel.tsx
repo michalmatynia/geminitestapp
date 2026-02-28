@@ -3,8 +3,8 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/shared/lib/foldertree';
-import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/v2';
+import { useMasterFolderTreeInstance } from '@/features/foldertree';
+import { FolderTreeViewportV2 } from '@/features/foldertree/v2';
 import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, FolderTreePanel, TreeHeader, EmptyState } from '@/shared/ui';

@@ -1,5 +1,5 @@
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 
 export const CASE_RESOLVER_DOC_KEYS = {
   advancedFilters: 'case_resolver_advanced_filters',

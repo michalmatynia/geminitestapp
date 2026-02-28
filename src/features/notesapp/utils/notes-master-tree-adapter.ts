@@ -1,4 +1,4 @@
-import { createMasterFolderTreeAdapter } from '@/shared/lib/foldertree';
+import { createMasterFolderTreeAdapter } from '@/features/foldertree';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 
 import { decodeNotesMasterNodeId, fromFolderMasterNodeId } from './master-folder-tree';

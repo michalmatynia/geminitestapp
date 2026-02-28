@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-02-28T06:28:42.723Z",
+  "generatedAt": "2026-02-28T06:09:00.447Z",
   "source": {
-    "totalFiles": 3704,
-    "totalLines": 607530,
+    "totalFiles": 3701,
+    "totalLines": 607505,
     "useClientFiles": 1287,
-    "filesOver800": 93,
-    "filesOver1000": 20,
+    "filesOver800": 94,
+    "filesOver1000": 21,
     "filesOver1500": 1,
     "largestFile": {
       "path": "src/features/case-resolver/__tests__/settings.test.ts",
@@ -240,8 +240,8 @@
       },
       {
         "feature": "integrations",
-        "files": 178,
-        "lines": 30473
+        "files": 175,
+        "lines": 30448
       },
       {
         "feature": "prompt-exploder",
@@ -423,6 +423,10 @@
         "lines": 1116
       },
       {
+        "path": "src/features/integrations/services/integration-repository.ts",
+        "lines": 1111
+      },
+      {
         "path": "src/features/ai/image-studio/components/generation-toolbar/GenerationToolbar.handlers.ts",
         "lines": 1110
       },
@@ -485,10 +489,6 @@
       {
         "path": "src/features/integrations/services/exports/base-exporter-template-mappings.ts",
         "lines": 958
-      },
-      {
-        "path": "src/features/integrations/context/IntegrationsContext.tsx",
-        "lines": 956
       }
     ],
     "topPagesByLines": [

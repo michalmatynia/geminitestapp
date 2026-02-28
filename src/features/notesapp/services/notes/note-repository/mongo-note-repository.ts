@@ -55,6 +55,9 @@ import {
 
 import type { Filter, WithId, UpdateFilter } from 'mongodb';
 
+import { mongoThemeImpl } from './mongo/themes';
+import { mongoFileImpl } from './mongo/files';
+
 const noteCollectionName = 'notes';
 const tagCollectionName = 'tags';
 const categoryCollectionName = 'categories';
@@ -63,6 +66,8 @@ const noteFileCollectionName = 'noteFiles';
 const themeCollectionName = 'themes';
 
 export const mongoNoteRepository: NoteRepository = {
+  ...mongoThemeImpl,
+  ...mongoFileImpl,
   async getOrCreateDefaultNotebook(): Promise<NotebookRecord> {
     const db = await getMongoDb();
     const collection = db.collection<NotebookDocument>(notebookCollectionName);
@@ -1063,53 +1068,6 @@ export const mongoNoteRepository: NoteRepository = {
     const result = await collection.deleteOne({
       $or: [{ id }, { _id: id }],
     } as Filter<ThemeDocument>);
-    return result.deletedCount > 0;
-  },
-
-  async createNoteFile(_data: NoteFileCreateInput): Promise<NoteFileRecord> {
-    const db = await getMongoDb();
-    const collection = db.collection<NoteFileDocument>(noteFileCollectionName);
-    const id = randomUUID();
-    const now = new Date();
-    await collection.deleteMany({
-      noteId: _data.noteId,
-      slotIndex: _data.slotIndex,
-    } as Filter<NoteFileDocument>);
-    const doc: NoteFileDocument = {
-      _id: id,
-      id,
-      noteId: _data.noteId,
-      slotIndex: _data.slotIndex,
-      filename: _data.filename,
-      filepath: _data.filepath,
-      mimetype: _data.mimetype,
-      size: _data.size,
-      width: _data.width ?? null,
-      height: _data.height ?? null,
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-    };
-    await collection.insertOne(doc);
-    return toNoteFileResponse(doc as WithId<NoteFileDocument>);
-  },
-
-  async getNoteFiles(_noteId: string): Promise<NoteFileRecord[]> {
-    const db = await getMongoDb();
-    const collection = db.collection<NoteFileDocument>(noteFileCollectionName);
-    const docs = await collection
-      .find({ noteId: _noteId } as Filter<NoteFileDocument>)
-      .sort({ slotIndex: 1 })
-      .toArray();
-    return docs.map(toNoteFileResponse);
-  },
-
-  async deleteNoteFile(_noteId: string, _slotIndex: number): Promise<boolean> {
-    const db = await getMongoDb();
-    const collection = db.collection<NoteFileDocument>(noteFileCollectionName);
-    const result = await collection.deleteOne({
-      noteId: _noteId,
-      slotIndex: _slotIndex,
-    } as Filter<NoteFileDocument>);
     return result.deletedCount > 0;
   },
 };

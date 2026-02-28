@@ -1,13 +1,13 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-28T06:09:00.447Z
+Generated at: 2026-02-28T06:28:42.723Z
 
 ## Snapshot
 
-- Source files: 3701
-- Source lines: 607505
+- Source files: 3704
+- Source lines: 607530
 - use client files: 1287
-- Files >= 1000 LOC: 21
+- Files >= 1000 LOC: 20
 - Files >= 1500 LOC: 1
 - Largest file: `src/features/case-resolver/__tests__/settings.test.ts` (1774 LOC)
 - API routes: 316
@@ -75,10 +75,10 @@ Generated at: 2026-02-28T06:09:00.447Z
 | `src/features/ai/ai-paths/server/settings-store-parameter-inference.ts` | 1128 |
 | `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts` | 1127 |
 | `src/features/notesapp/services/notes/note-repository/mongo-note-repository.ts` | 1116 |
-| `src/features/integrations/services/integration-repository.ts` | 1111 |
 | `src/features/ai/image-studio/components/generation-toolbar/GenerationToolbar.handlers.ts` | 1110 |
 | `src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts` | 1072 |
 | `src/features/ai/agent-runtime/tools/index.ts` | 1056 |
 | `src/app/api/image-studio/slots/[slotId]/upscale/handler.ts` | 1030 |
 | `src/features/ai/image-studio/server/sequence-executor.ts` | 1030 |
 | `src/features/ai/image-studio/server/run-executor.ts` | 1022 |
+| `src/features/prompt-exploder/pattern-pack-rules.ts` | 1000 |

@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-02-28T06:28:42.723Z",
+  "generatedAt": "2026-02-28T05:30:48.582Z",
   "source": {
-    "totalFiles": 3704,
-    "totalLines": 607530,
+    "totalFiles": 3681,
+    "totalLines": 608294,
     "useClientFiles": 1287,
-    "filesOver800": 93,
-    "filesOver1000": 20,
+    "filesOver800": 97,
+    "filesOver1000": 26,
     "filesOver1500": 1,
     "largestFile": {
       "path": "src/features/case-resolver/__tests__/settings.test.ts",
@@ -108,13 +108,13 @@
   },
   "imports": {
     "appFeatureBarrelImports": 0,
-    "appFeatureDeepImports": 314,
-    "sharedToFeaturesStaticImports": 2,
+    "appFeatureDeepImports": 311,
+    "sharedToFeaturesStaticImports": 0,
     "sharedToFeaturesDynamicImports": 5,
-    "sharedToFeaturesTotalImports": 7
+    "sharedToFeaturesTotalImports": 5
   },
   "architecture": {
-    "crossFeatureEdgePairs": 72,
+    "crossFeatureEdgePairs": 53,
     "topCrossFeatureEdges": [
       {
         "edge": "cms -> gsap",
@@ -145,14 +145,6 @@
         "references": 12
       },
       {
-        "edge": "case-resolver -> document-editor",
-        "references": 11
-      },
-      {
-        "edge": "case-resolver -> foldertree",
-        "references": 10
-      },
-      {
         "edge": "case-resolver -> ai",
         "references": 10
       },
@@ -181,19 +173,7 @@
         "references": 6
       },
       {
-        "edge": "case-resolver-capture -> case-resolver",
-        "references": 6
-      },
-      {
         "edge": "cms -> app-embeds",
-        "references": 6
-      },
-      {
-        "edge": "notesapp -> foldertree",
-        "references": 6
-      },
-      {
-        "edge": "products -> foldertree",
         "references": 6
       },
       {
@@ -205,23 +185,43 @@
         "references": 5
       },
       {
-        "edge": "ai -> tooltip-engine",
+        "edge": "ai -> auth",
         "references": 4
       },
       {
-        "edge": "ai -> auth",
+        "edge": "case-resolver-capture -> case-resolver",
         "references": 4
       },
       {
         "edge": "data-import-export -> products",
         "references": 4
+      },
+      {
+        "edge": "filemaker -> internationalization",
+        "references": 4
+      },
+      {
+        "edge": "integrations -> product-sync",
+        "references": 4
+      },
+      {
+        "edge": "product-sync -> integrations",
+        "references": 4
+      },
+      {
+        "edge": "admin -> ai",
+        "references": 3
+      },
+      {
+        "edge": "ai -> playwright",
+        "references": 3
       }
     ],
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 720,
-        "lines": 163403
+        "files": 714,
+        "lines": 163812
       },
       {
         "feature": "case-resolver",
@@ -240,8 +240,8 @@
       },
       {
         "feature": "integrations",
-        "files": 178,
-        "lines": 30473
+        "files": 175,
+        "lines": 30448
       },
       {
         "feature": "prompt-exploder",
@@ -279,11 +279,6 @@
         "lines": 5516
       },
       {
-        "feature": "foldertree",
-        "files": 41,
-        "lines": 5294
-      },
-      {
         "feature": "viewer3d",
         "files": 29,
         "lines": 4524
@@ -295,8 +290,8 @@
       },
       {
         "feature": "case-resolver-capture",
-        "files": 13,
-        "lines": 3180
+        "files": 9,
+        "lines": 3158
       },
       {
         "feature": "drafter",
@@ -319,11 +314,6 @@
         "lines": 2213
       },
       {
-        "feature": "document-editor",
-        "files": 15,
-        "lines": 2172
-      },
-      {
         "feature": "internationalization",
         "files": 20,
         "lines": 1910
@@ -344,19 +334,9 @@
         "lines": 370
       },
       {
-        "feature": "tooltip-engine",
-        "files": 7,
-        "lines": 359
-      },
-      {
         "feature": "app-embeds",
         "files": 6,
         "lines": 242
-      },
-      {
-        "feature": "document-search",
-        "files": 2,
-        "lines": 65
       },
       {
         "feature": "constants.ts",
@@ -375,6 +355,10 @@
         "lines": 1774
       },
       {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.logic.ts",
+        "lines": 1443
+      },
+      {
         "path": "src/app/api/image-studio/slots/[slotId]/autoscale/handler.ts",
         "lines": 1306
       },
@@ -385,6 +369,14 @@
       {
         "path": "src/features/cms/components/page-builder/ThemeSettingsPanel.tsx",
         "lines": 1286
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/constants/index.ts",
+        "lines": 1285
+      },
+      {
+        "path": "src/features/ai/ai-paths/services/path-run-executor.ts",
+        "lines": 1277
       },
       {
         "path": "src/features/ai/image-studio/analysis/shared.ts",
@@ -411,6 +403,14 @@
         "lines": 1147
       },
       {
+        "path": "src/features/case-resolver-capture/proposals.ts",
+        "lines": 1145
+      },
+      {
+        "path": "src/shared/contracts/ai-paths-core.ts",
+        "lines": 1144
+      },
+      {
         "path": "src/features/ai/ai-paths/server/settings-store-parameter-inference.ts",
         "lines": 1128
       },
@@ -421,6 +421,10 @@
       {
         "path": "src/features/notesapp/services/notes/note-repository/mongo-note-repository.ts",
         "lines": 1116
+      },
+      {
+        "path": "src/features/integrations/services/integration-repository.ts",
+        "lines": 1111
       },
       {
         "path": "src/features/ai/image-studio/components/generation-toolbar/GenerationToolbar.handlers.ts",
@@ -465,30 +469,6 @@
       {
         "path": "src/features/ai/insights/generator.ts",
         "lines": 976
-      },
-      {
-        "path": "src/shared/utils/prompt-params.ts",
-        "lines": 969
-      },
-      {
-        "path": "src/features/integrations/services/category-mapping-repository.ts",
-        "lines": 963
-      },
-      {
-        "path": "src/features/foldertree/v2/hooks/useFolderTreeInstanceV2.ts",
-        "lines": 962
-      },
-      {
-        "path": "src/features/case-resolver/utils/caseResolverUtils.ts",
-        "lines": 961
-      },
-      {
-        "path": "src/features/integrations/services/exports/base-exporter-template-mappings.ts",
-        "lines": 958
-      },
-      {
-        "path": "src/features/integrations/context/IntegrationsContext.tsx",
-        "lines": 956
       }
     ],
     "topPagesByLines": [
